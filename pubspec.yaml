@@ -1,0 +1,40 @@
+name: juyo
+description: "A premium educational platform login and registration flow."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI & Design
+  google_fonts: ^6.2.1
+  flutter_animate: ^4.5.0
+  lucide_icons: ^0.257.0
+  flutter_svg: ^2.0.10+1
+
+  # Networking & State
+  dio: ^5.7.0
+  pretty_dio_logger: ^1.4.0
+  shared_preferences: ^2.3.2
+  
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  
+  # fonts:
+  #   - family: Plus Jakarta Sans
+  #     fonts:
+  #       - asset: assets/fonts/PlusJakartaSans-Regular.ttf
+  #       - asset: assets/fonts/PlusJakartaSans-Bold.ttf
+  #         weight: 700
