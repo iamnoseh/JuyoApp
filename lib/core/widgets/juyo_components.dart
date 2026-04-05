@@ -27,26 +27,26 @@ class JuyoInput extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          padding: const EdgeInsets.only(left: 4, bottom: 6),
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               color: isDark ? Colors.white70 : Colors.black87,
             ),
           ),
         ),
         Container(
-          height: 60,
+          height: 52,
           decoration: BoxDecoration(
             color: isDark ? AppColors.darkSlate : Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.04),
-                blurRadius: 15,
-                offset: const Offset(0, 5),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -54,21 +54,21 @@ class JuyoInput extends StatelessWidget {
             controller: controller,
             obscureText: isPassword,
             keyboardType: keyboardType,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
                 color: (isDark ? Colors.white : Colors.black).withOpacity(0.2),
-                fontSize: 15,
+                fontSize: 14,
               ),
               prefixIcon: icon != null 
-                ? Icon(icon, size: 20, color: AppColors.slate) 
+                ? Icon(icon, size: 18, color: AppColors.slate) 
                 : null,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: AppColors.aqua, width: 2),
               ),
             ),
@@ -99,15 +99,15 @@ class JuyoButton extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      height: 60,
+      height: 50,
       decoration: isSecondary ? null : BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
         color: AppColors.gold,
         boxShadow: [
           BoxShadow(
             color: AppColors.gold.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -121,18 +121,18 @@ class JuyoButton extends StatelessWidget {
             ? (isDark ? AppColors.aqua : Colors.black87) 
             : Colors.black, // High contrast black on Gold
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
         ),
         child: isLoading
             ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 3, color: Colors.black),
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.black),
               )
             : Text(
                 text,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 0.2),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 0.1),
               ),
       ),
     );

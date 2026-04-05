@@ -25,11 +25,11 @@ class AuthLayout extends StatelessWidget {
             Stack(
               children: [
                 Container(
-                  height: MediaQuery.of(context).size.height * 0.35,
+                  height: MediaQuery.of(context).size.height * 0.30,
                   decoration: BoxDecoration(
                     color: AppColors.navy,
                     borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(100),
+                      bottomLeft: Radius.circular(80),
                     ),
                     image: DecorationImage(
                       image: const NetworkImage(
@@ -51,20 +51,20 @@ class AuthLayout extends StatelessWidget {
                         Hero(
                           tag: 'logo',
                           child: Container(
-                            width: 84,
-                            height: 84,
+                            width: 68,
+                            height: 68,
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.4),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 8),
                                 ),
                               ],
                             ),
-                            child: const Icon(LucideIcons.graduationCap, color: AppColors.navy, size: 44),
+                            child: const Icon(LucideIcons.graduationCap, color: AppColors.navy, size: 32),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -72,9 +72,9 @@ class AuthLayout extends StatelessWidget {
                         RichText(
                           text: const TextSpan(
                             style: TextStyle(
-                              fontSize: 28,
+                              fontSize: 22,
                               fontWeight: FontWeight.w900,
-                              letterSpacing: 4.0,
+                              letterSpacing: 3.0,
                             ),
                             children: [
                               TextSpan(text: 'J', style: TextStyle(color: AppColors.gold)),
@@ -101,23 +101,23 @@ class AuthLayout extends StatelessWidget {
 
             // Form Section
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 32),
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 38,
+                    style: TextStyle(
+                      fontSize: 28,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: -1.0,
-                      color: Colors.black87,
+                      letterSpacing: -0.8,
+                      color: isDark ? Colors.white : Colors.black87,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
                   child,
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

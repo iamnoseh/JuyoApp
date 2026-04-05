@@ -29,11 +29,11 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 _buildCurvedHeader(),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 110), // Space for slim dock
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 90), // Space for slim dock
                   child: Column(
                     children: [
                       const WelcomeCard(),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 18),
                       const StatsSection(),
                     ],
                   ),
@@ -61,11 +61,11 @@ class _DashboardPageState extends State<DashboardPage> {
     return Stack(
       children: [
         Container(
-          height: 180,
+          height: 140,
           decoration: const BoxDecoration(
             color: AppColors.navy,
             borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(80),
+              bottomLeft: Radius.circular(60),
             ),
             image: DecorationImage(
               image: NetworkImage('https://www.transparenttextures.com/patterns/cubes.png'),
@@ -101,17 +101,17 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildTopBadge(IconData icon, String text, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 8),
-          Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11)),
         ],
       ),
     );
@@ -124,14 +124,14 @@ class WelcomeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Transform.translate(
-      offset: const Offset(0, -30),
+      offset: const Offset(0, -20),
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 30, offset: const Offset(0, 15)),
+            BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 10)),
           ],
         ),
         child: Row(
@@ -140,16 +140,16 @@ class WelcomeCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Привет,\nАлишер!', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, height: 1.1, color: AppColors.navy)),
-                  const SizedBox(height: 12),
-                  const Text('«Ман танҳо як чиз медонам...»', style: TextStyle(color: Colors.black45, fontSize: 13, fontStyle: FontStyle.italic)),
-                  const SizedBox(height: 20),
-                  SizedBox(height: 48, child: JuyoButton(text: 'Обучение', onPressed: () {})),
+                  const Text('Привет,\nАлишер!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, height: 1.1, color: AppColors.navy)),
+                  const SizedBox(height: 8),
+                  const Text('«Ман танҳо як чиз медонам...»', style: TextStyle(color: Colors.black45, fontSize: 11, fontStyle: FontStyle.italic)),
+                  const SizedBox(height: 16),
+                  SizedBox(height: 40, child: JuyoButton(text: 'Обучение', onPressed: () {})),
                 ],
               ),
             ),
-            const SizedBox(width: 20),
-            Icon(LucideIcons.brain, size: 80, color: AppColors.aqua.withOpacity(0.8)),
+            const SizedBox(width: 14),
+            Icon(LucideIcons.brain, size: 54, color: AppColors.aqua.withOpacity(0.8)),
           ],
         ),
       ),
@@ -168,22 +168,22 @@ class StatsSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('АКТИВНОСТЬ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1.2)),
+            const Text('АКТИВНОСТЬ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.0)),
             Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(color: Colors.black.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(color: Colors.black.withOpacity(0.05), borderRadius: BorderRadius.circular(10)),
               child: Row(children: [_buildPill('30д', true), _buildPill('90д', false)]),
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 1.5,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.6,
           children: [
             _buildStatCard('Тесты', '45', LucideIcons.checkCircle, AppColors.aqua),
             _buildStatCard('Дуэли', '12', LucideIcons.swords, Colors.orange),
@@ -197,28 +197,28 @@ class StatsSection extends StatelessWidget {
 
   Widget _buildPill(String text, bool active) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: active ? Colors.white : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: active ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)] : null,
       ),
-      child: Text(text, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: active ? Colors.black : Colors.black38)),
+      child: Text(text, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: active ? Colors.black : Colors.black38)),
     );
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.black.withOpacity(0.05))),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.black.withOpacity(0.05))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(icon, color: color, size: 20),
+          Icon(icon, color: color, size: 18),
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
-            Text(title, style: const TextStyle(fontSize: 12, color: Colors.black38, fontWeight: FontWeight.bold)),
+            Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+            Text(title, style: const TextStyle(fontSize: 11, color: Colors.black38, fontWeight: FontWeight.bold)),
           ]),
         ],
       ),
@@ -355,7 +355,7 @@ class SidebarDrawer extends StatelessWidget {
                 child: Center(
                   child: RichText(
                     text: const TextSpan(
-                      style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 4.0),
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 3.0),
                       children: [
                         TextSpan(text: 'J', style: TextStyle(color: AppColors.gold)),
                         TextSpan(text: 'UYO', style: TextStyle(color: AppColors.aqua)),
@@ -374,7 +374,7 @@ class SidebarDrawer extends StatelessWidget {
               _buildMenuItem(LucideIcons.crown, 'Premium', false, isPremium: true),
               const Spacer(),
               Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(20.0),
                 child: JuyoButton(
                   text: 'Выйти',
                   isSecondary: true,
@@ -395,19 +395,24 @@ class SidebarDrawer extends StatelessWidget {
 
   Widget _buildMenuItem(IconData icon, String title, bool active, {bool isLocked = false, bool isPremium = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: ListTile(
+            dense: true,
             tileColor: active ? Colors.white.withOpacity(0.1) : Colors.transparent,
-            leading: Icon(icon, color: active ? AppColors.aqua : (isPremium ? AppColors.gold : Colors.white60)),
+            leading: Icon(icon, color: active ? AppColors.aqua : (isPremium ? AppColors.gold : Colors.white60), size: 20),
             title: Text(
               title,
-              style: TextStyle(color: active ? Colors.white : Colors.white60, fontWeight: active ? FontWeight.bold : FontWeight.normal),
+              style: TextStyle(
+                fontSize: 13,
+                color: active ? Colors.white : Colors.white60, 
+                fontWeight: active ? FontWeight.bold : FontWeight.normal
+              ),
             ),
-            trailing: isLocked ? const Icon(LucideIcons.lock, size: 16, color: Colors.white24) : null,
+            trailing: isLocked ? const Icon(LucideIcons.lock, size: 14, color: Colors.white24) : null,
             onTap: () {},
           ),
         ),

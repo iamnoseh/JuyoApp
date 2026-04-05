@@ -38,14 +38,14 @@ class AppTheme {
       ).copyWith(
         displayLarge: TextStyle(
           fontWeight: FontWeight.w900, 
-          letterSpacing: -1.2, 
-          fontSize: 32,
+          letterSpacing: -1.0, 
+          fontSize: 26,
           color: isDark ? Colors.white : Colors.black87,
         ),
         headlineMedium: TextStyle(
           fontWeight: FontWeight.w800, 
-          letterSpacing: -0.6, 
-          fontSize: 26,
+          letterSpacing: -0.5, 
+          fontSize: 20,
           color: isDark ? Colors.white : Colors.black87,
         ),
       ),
@@ -53,18 +53,18 @@ class AppTheme {
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.aqua, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );
   }
