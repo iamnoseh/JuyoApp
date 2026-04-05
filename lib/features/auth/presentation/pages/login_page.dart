@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dio/dio.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:juyo/core/widgets/juyo_components.dart';
 import 'package:juyo/features/auth/presentation/widgets/auth_layout.dart';
 import 'package:juyo/core/theme/app_theme.dart';
-import 'package:juyo/core/network/api_client.dart';
+import 'package:juyo/core/services/auth_service.dart';
 import 'package:juyo/features/home/presentation/pages/dashboard_page.dart';
 import 'register_page.dart';
 import 'forgot_password_page.dart';
@@ -32,30 +32,42 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await ApiClient.dio.post('/Auth/login', data: {
-        'username': _usernameController.text,
-        'password': _passwordController.text,
-      });
-
-      if (response.statusCode == 200) {
-        // Success
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Вход выполнен успешно!'), backgroundColor: Colors.green),
-        );
-        
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const DashboardPage()),
-        );
-      }
-    } on DioException catch (e) {
-      String errorMessage = 'Ошибка при входе';
-      if (e.response?.data != null && e.response?.data['message'] != null) {
-        errorMessage = e.response?.data['message'];
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage), backgroundColor: AppColors.red),
+      final success = await AuthService.login(
+        _usernameController.text,
+        _passwordController.text,
       );
+
+      if (success) {
+        // Success
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Вход выполнен успешно!'), backgroundColor: Colors.green),
+          );
+          
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const DashboardPage()),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Неверное имя пользователя или пароль'), backgroundColor: AppColors.red),
+          );
+        }
+      }
+    } catch (e) {
+      String errorMessage = 'Ошибка при входе';
+      if (e is DioException) {
+        if (e.response?.data != null && e.response?.data['message'] != null) {
+          errorMessage = e.response?.data['message'];
+        }
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage), backgroundColor: AppColors.red),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
