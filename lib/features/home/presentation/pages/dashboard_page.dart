@@ -1,10 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:juyo/app/router/app_routes.dart';
 import 'package:juyo/core/theme/app_theme.dart';
 import 'package:juyo/core/widgets/juyo_components.dart';
-import 'package:juyo/features/auth/presentation/pages/login_page.dart';
-import 'package:juyo/core/services/auth_service.dart';
+import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:juyo/features/auth/presentation/bloc/auth_event.dart';
 import 'package:juyo/core/models/user_model.dart';
 import 'package:juyo/core/services/user_service.dart';
 import 'package:juyo/features/home/data/models/dashboard_stats_model.dart';
@@ -283,12 +285,13 @@ class _DashboardPageState extends State<DashboardPage> {
                   text: 'ВЫЙТИ',
                   isDanger: true,
                   onPressed: () async {
-                    await AuthService.logout();
+                    context.read<AuthBloc>().add(const AuthLoggedOut());
                     if (!mounted) return;
-                    Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LoginPage()),
-                        (route) => false);
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.login,
+                      (route) => false,
+                    );
                   },
                 ),
               ),
@@ -850,4 +853,3 @@ class JuyoBottomDock extends StatelessWidget {
 }
 
 // SidebarDrawer class has been removed. TopMenuOverlay is now used for navigation.
-

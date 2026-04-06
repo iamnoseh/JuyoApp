@@ -99,8 +99,9 @@ class _ProfilePageState extends State<ProfilePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: const Color(0xFFE3E9F2)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.11), blurRadius: 22, offset: const Offset(0, 10)),
         ],
       ),
       child: Column(
@@ -252,9 +253,9 @@ class _ProfilePageState extends State<ProfilePage> {
       decoration: BoxDecoration(
         color: AppColors.milkyCard,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFEFF2F6)),
+        border: Border.all(color: const Color(0xFFE3E9F2)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 22, offset: const Offset(0, 10)),
         ],
       ),
       child: Column(
@@ -490,7 +491,7 @@ class _ProfilePageState extends State<ProfilePage> {
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: const Color(0xFFE2E8F0)),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 16, offset: const Offset(0, 8)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 18, offset: const Offset(0, 8)),
           ],
         ),
         child: Column(
@@ -546,8 +547,9 @@ class _ProfilePageState extends State<ProfilePage> {
         decoration: BoxDecoration(
           color: AppColors.milkyCard,
           borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE3E9F2)),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 16, offset: const Offset(0, 8)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 18, offset: const Offset(0, 8)),
           ],
         ),
         child: const Center(
@@ -564,8 +566,9 @@ class _ProfilePageState extends State<ProfilePage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE3E9F2)),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 16, offset: const Offset(0, 8)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 18, offset: const Offset(0, 8)),
             ],
           ),
           child: Column(
@@ -602,8 +605,9 @@ class _ProfilePageState extends State<ProfilePage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE3E9F2)),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 16, offset: const Offset(0, 8)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 18, offset: const Offset(0, 8)),
           ],
         ),
         child: const Center(
@@ -630,8 +634,9 @@ class _ProfilePageState extends State<ProfilePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE3E9F2)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 16, offset: const Offset(0, 8)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 18, offset: const Offset(0, 8)),
         ],
       ),
       child: Row(

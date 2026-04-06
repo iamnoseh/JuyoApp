@@ -8,9 +8,9 @@ class AppColors {
   static const Color navy = Color(0xFF0F172A);      // Deep Navy for curves/accents
   
   // Neutral Palette
-  static const Color lightBg = Color(0xFFFFFFFF);
-  static const Color background = Color(0xFFFFFFFF);
-  static const Color milkyCard = Color(0xFFFCFCFD);
+  static const Color lightBg = Color(0xFFF3F6FB);
+  static const Color background = Color(0xFFF3F6FB);
+  static const Color milkyCard = Color(0xFFFFFFFF);
   static const Color slate = Color(0xFF64748B);
   static const Color darkSlate = Color(0xFF1E293B);
   static const Color red = Color(0xFFF43F5E);
