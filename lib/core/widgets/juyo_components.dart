@@ -55,6 +55,7 @@ class JuyoInput extends StatelessWidget {
             controller: controller,
             obscureText: isPassword,
             keyboardType: keyboardType,
+            textAlignVertical: TextAlignVertical.center,
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
             decoration: InputDecoration(
               hintText: hint,
@@ -62,10 +63,17 @@ class JuyoInput extends StatelessWidget {
                 color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2),
                 fontSize: 14,
               ),
-              prefixIcon: icon != null 
-                ? Icon(icon, size: 18, color: AppColors.slate) 
-                : null,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              prefixIcon: icon != null
+                  ? Icon(icon, size: 18, color: AppColors.slate)
+                  : null,
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 42,
+                minHeight: 42,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: OutlineInputBorder(

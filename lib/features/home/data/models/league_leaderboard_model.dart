@@ -11,17 +11,22 @@ class LeagueLeaderboardModel {
     required this.isMe,
   });
 
-  factory LeagueLeaderboardModel.fromJson(Map<String, dynamic> json, {String? currentUserId}) {
-    // Assuming backend returns id, fullName/name, and points/xp
-    final id = json['id']?.toString() ?? '';
-    final firstName = json['firstName'] ?? '';
-    final lastName = json['lastName'] ?? '';
-    final fullName = json['fullName'] ?? '$firstName $lastName'.trim();
-    
+  factory LeagueLeaderboardModel.fromJson(
+    Map<String, dynamic> json, {
+    String? currentUserId,
+  }) {
+    final id = (json['id'] ?? json['Id'])?.toString() ?? '';
+    final firstName = (json['firstName'] ?? json['FirstName'] ?? '').toString();
+    final lastName = (json['lastName'] ?? json['LastName'] ?? '').toString();
+    final fullName =
+        (json['fullName'] ?? json['FullName'] ?? '$firstName $lastName'.trim())
+            .toString();
+
     return LeagueLeaderboardModel(
-      rank: json['rank'] ?? 0,
+      rank: json['rank'] ?? json['Rank'] ?? 0,
       name: fullName.isNotEmpty ? fullName : 'Пользователь',
-      xp: '${json['xp'] ?? json['points'] ?? 0} XP',
+      xp:
+          '${json['xp'] ?? json['XP'] ?? json['points'] ?? json['Points'] ?? 0} XP',
       isMe: id == currentUserId,
     );
   }

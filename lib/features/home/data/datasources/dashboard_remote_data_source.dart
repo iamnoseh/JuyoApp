@@ -78,12 +78,13 @@ class DashboardRemoteDataSource {
   }
 
   Map<String, dynamic>? _extractMap(dynamic body) {
-    if (body is Map<String, dynamic>) {
-      final wrapped = body['data'];
+    if (body is Map) {
+      final source = Map<String, dynamic>.from(body);
+      final wrapped = source['data'];
       if (wrapped is Map) {
         return Map<String, dynamic>.from(wrapped);
       }
-      return body;
+      return source;
     }
     return null;
   }
@@ -92,8 +93,9 @@ class DashboardRemoteDataSource {
     if (body is List) {
       return body;
     }
-    if (body is Map<String, dynamic>) {
-      final wrapped = body['data'] ?? body['items'];
+    if (body is Map) {
+      final source = Map<String, dynamic>.from(body);
+      final wrapped = source['data'] ?? source['items'];
       if (wrapped is List) {
         return wrapped;
       }

@@ -39,15 +39,33 @@ class _DashboardPageState extends State<DashboardPage> {
   List<LeagueLeaderboardModel> _leaderboard = [];
   List<SkillProgressModel> _skills = [];
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (context.read<DashboardBloc>().state is DashboardInitial) {
+        context.read<DashboardBloc>().add(const DashboardLoadRequested());
+      }
+    });
+  }
+
   Future<void> _refresh() async {
     context.read<DashboardBloc>().add(const DashboardRefreshRequested());
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<DashboardBloc, DashboardState>(
+    return BlocConsumer<DashboardBloc, DashboardState>(
       listener: (context, state) {
-        if (state is DashboardLoading) {
+        if (state is DashboardFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: AppColors.red),
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is DashboardLoading || state is DashboardInitial) {
           _isLoading = true;
         } else if (state is DashboardLoaded) {
           _user = state.data.user;
@@ -59,13 +77,10 @@ class _DashboardPageState extends State<DashboardPage> {
           _isLoading = false;
         } else if (state is DashboardFailure) {
           _isLoading = false;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppColors.red),
-          );
         }
-        setState(() {});
+
+        return _buildBody(context);
       },
-      child: _buildBody(context),
     );
   }
 
@@ -122,6 +137,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   user: _user,
                   skills: _skills,
                   onRefresh: _refresh,
+                  onNavigateTab: (index) => setState(() => _selectedIndex = index),
                   topInset: topInset,
                   bottomInset: bottomInset,
                 ),

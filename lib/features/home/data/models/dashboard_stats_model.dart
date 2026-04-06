@@ -14,22 +14,29 @@ class DashboardStatsModel {
   });
 
   factory DashboardStatsModel.fromJson(Map<String, dynamic> json) {
+    final dailyActivityRaw = json['dailyActivity'] ?? json['DailyActivity'];
+    final subjectPerformanceRaw =
+        json['subjectPerformance'] ?? json['SubjectPerformance'];
+    final universityProbabilityRaw =
+        json['universityProbability'] ?? json['UniversityProbability'];
+    final dailyProgressRaw = json['dailyProgress'] ?? json['DailyProgress'];
+
     return DashboardStatsModel(
-      dailyActivity: (json['dailyActivity'] as List?)
+      dailyActivity: (dailyActivityRaw as List?)
               ?.map((e) => DailyActivityModel.fromJson(e))
               .toList() ??
           [],
-      subjectPerformance: (json['subjectPerformance'] as List?)
+      subjectPerformance: (subjectPerformanceRaw as List?)
               ?.map((e) => SubjectPerformanceModel.fromJson(e))
               .toList() ??
           [],
-      todoRedListCount: json['todoRedListCount'] ?? 0,
-      universityProbability: (json['universityProbability'] as List?)
+      todoRedListCount: json['todoRedListCount'] ?? json['TodoRedListCount'] ?? 0,
+      universityProbability: (universityProbabilityRaw as List?)
               ?.map((e) => UniversityProbabilityModel.fromJson(e))
               .toList() ??
           [],
-      dailyProgress: json['dailyProgress'] != null
-          ? DailyProgressModel.fromJson(json['dailyProgress'])
+      dailyProgress: dailyProgressRaw != null
+          ? DailyProgressModel.fromJson(Map<String, dynamic>.from(dailyProgressRaw as Map))
           : DailyProgressModel(completed: 0, goal: 0),
     );
   }
@@ -43,8 +50,8 @@ class DailyProgressModel {
 
   factory DailyProgressModel.fromJson(Map<String, dynamic> json) {
     return DailyProgressModel(
-      completed: json['completed'] ?? 0,
-      goal: json['goal'] ?? 0,
+      completed: json['completed'] ?? json['Completed'] ?? 0,
+      goal: json['goal'] ?? json['Goal'] ?? 0,
     );
   }
 }
@@ -57,8 +64,8 @@ class DailyActivityModel {
 
   factory DailyActivityModel.fromJson(Map<String, dynamic> json) {
     return DailyActivityModel(
-      date: json['date'] ?? '',
-      testsCount: json['testsCount'] ?? 0,
+      date: json['date'] ?? json['Date'] ?? '',
+      testsCount: json['testsCount'] ?? json['TestsCount'] ?? 0,
     );
   }
 }
@@ -71,8 +78,8 @@ class SubjectPerformanceModel {
 
   factory SubjectPerformanceModel.fromJson(Map<String, dynamic> json) {
     return SubjectPerformanceModel(
-      subject: json['subject'] ?? '',
-      score: json['score'] ?? 0,
+      subject: json['subject'] ?? json['Subject'] ?? '',
+      score: json['score'] ?? json['Score'] ?? 0,
     );
   }
 }
@@ -85,8 +92,8 @@ class UniversityProbabilityModel {
 
   factory UniversityProbabilityModel.fromJson(Map<String, dynamic> json) {
     return UniversityProbabilityModel(
-      name: json['name'] ?? '',
-      percent: json['percent'] ?? 0,
+      name: json['name'] ?? json['Name'] ?? '',
+      percent: json['percent'] ?? json['Percent'] ?? 0,
     );
   }
 }

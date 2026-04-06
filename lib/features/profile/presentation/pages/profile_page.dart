@@ -18,6 +18,7 @@ class ProfilePage extends StatelessWidget {
   final UserModel? user;
   final List<SkillProgressModel>? skills;
   final VoidCallback onRefresh;
+  final ValueChanged<int>? onNavigateTab;
   final double topInset;
   final double bottomInset;
 
@@ -26,6 +27,7 @@ class ProfilePage extends StatelessWidget {
     required this.user,
     this.skills,
     required this.onRefresh,
+    this.onNavigateTab,
     this.topInset = 120,
     this.bottomInset = 100,
   });
@@ -46,6 +48,7 @@ class ProfilePage extends StatelessWidget {
       child: _ProfileView(
         skills: skills ?? const [],
         onRefresh: onRefresh,
+        onNavigateTab: onNavigateTab,
         topInset: topInset,
         bottomInset: bottomInset,
       ),
@@ -56,12 +59,14 @@ class ProfilePage extends StatelessWidget {
 class _ProfileView extends StatelessWidget {
   final List<SkillProgressModel> skills;
   final VoidCallback onRefresh;
+  final ValueChanged<int>? onNavigateTab;
   final double topInset;
   final double bottomInset;
 
   const _ProfileView({
     required this.skills,
     required this.onRefresh,
+    required this.onNavigateTab,
     required this.topInset,
     required this.bottomInset,
   });
@@ -160,7 +165,7 @@ class _ProfileView extends StatelessWidget {
                 ? null
                 : () async {
                     final bloc = context.read<ProfileBloc>();
-                    final updated = await Navigator.of(context).push<bool>(
+                    final result = await Navigator.of(context).push<dynamic>(
                       MaterialPageRoute(
                         builder: (_) => MultiBlocProvider(
                           providers: [
@@ -179,8 +184,12 @@ class _ProfileView extends StatelessWidget {
                       ),
                     );
 
-                    if (updated == true) {
+                    if (result == true) {
                       onRefresh();
+                    }
+
+                    if (result is int) {
+                      onNavigateTab?.call(result);
                     }
                   },
           ),

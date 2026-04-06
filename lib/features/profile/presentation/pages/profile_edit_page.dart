@@ -31,7 +31,14 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   static const double _topInset = 112;
   static const double _dockHeight = 66;
 
-  static const List<String> _provinces = ['Душанбе', 'ГБАО', 'Согдийская область', 'Хатлонская область', 'РРП'];
+  static const List<String> _provinces = [
+    'Душанбе',
+    'ГБАО',
+    'Согдийская область',
+    'Хатлонская область',
+    'РРП',
+  ];
+
   static const List<_ClusterItem> _clusters = [
     _ClusterItem(1, 'Естественные и технические науки'),
     _ClusterItem(2, 'Экономика и география'),
@@ -42,6 +49,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
   late final TextEditingController _firstName;
   late final TextEditingController _lastName;
+
   String? _province;
   int? _gender;
   int? _schoolId;
@@ -51,12 +59,13 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   int? _targetMajorId;
   DateTime? _dob;
 
-  List<SchoolEntity> _schools = [];
-  List<UniversityEntity> _universities = [];
-  List<MajorEntity> _majors = [];
+  List<SchoolEntity> _schools = const [];
+  List<UniversityEntity> _universities = const [];
+  List<MajorEntity> _majors = const [];
+
   bool _loadingRefs = true;
-  final ImagePicker _picker = ImagePicker();
   File? _avatarFile;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -74,7 +83,11 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
     final referenceBloc = context.read<ReferenceBloc>();
     if (referenceBloc.state is ReferenceInitial) {
-      referenceBloc.add(ReferenceLoadRequested(selectedUniversityId: _targetUniversityId));
+      referenceBloc.add(
+        ReferenceLoadRequested(
+          selectedUniversityId: _targetUniversityId,
+        ),
+      );
     }
   }
 
@@ -85,9 +98,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     super.dispose();
   }
 
-  DateTime? _parseDate(String? iso) {
-    if (iso == null || iso.trim().isEmpty) return null;
-    return DateTime.tryParse(iso);
+  DateTime? _parseDate(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    return DateTime.tryParse(value);
   }
 
   Future<void> _pickDob() async {
@@ -98,40 +111,59 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       firstDate: DateTime(1950, 1, 1),
       lastDate: now,
     );
+
     if (picked != null && mounted) {
       setState(() => _dob = picked);
     }
   }
 
   Future<void> _pickAvatar() async {
-    final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+    );
     if (picked == null || !mounted) return;
+
     final file = File(picked.path);
     if (await file.length() > 10 * 1024 * 1024) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Файл слишком большой. Максимум 10MB')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Файл слишком большой. Максимум 10MB')),
+      );
       return;
     }
+
     setState(() => _avatarFile = file);
   }
 
   Future<MultipartFile?> _buildAvatarPart() async {
     if (_avatarFile == null) return null;
+
     final fileName = _avatarFile!.path.split(Platform.pathSeparator).last;
     var subtype = 'jpeg';
     if (fileName.toLowerCase().endsWith('.png')) subtype = 'png';
     if (fileName.toLowerCase().endsWith('.webp')) subtype = 'webp';
-    return MultipartFile.fromFile(_avatarFile!.path, filename: fileName, contentType: MediaType('image', subtype));
+
+    return MultipartFile.fromFile(
+      _avatarFile!.path,
+      filename: fileName,
+      contentType: MediaType('image', subtype),
+    );
   }
 
   Future<void> _save() async {
     final avatar = await _buildAvatarPart();
     if (!mounted) return;
+
     context.read<ProfileBloc>().add(
           ProfileUpdateRequested(
             UpdateProfileRequestModel(
-              firstName: _firstName.text.trim().isEmpty ? null : _firstName.text.trim(),
-              lastName: _lastName.text.trim().isEmpty ? null : _lastName.text.trim(),
+              firstName: _firstName.text.trim().isEmpty
+                  ? null
+                  : _firstName.text.trim(),
+              lastName: _lastName.text.trim().isEmpty
+                  ? null
+                  : _lastName.text.trim(),
               gender: _gender,
               province: _province,
               schoolId: _schoolId,
@@ -146,29 +178,46 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         );
   }
 
-  void _onReferenceState(ReferenceState state) {
+  void _handleReferenceState(ReferenceState state) {
     if (state is ReferenceLoading) {
       setState(() => _loadingRefs = true);
       return;
     }
+
     if (state is ReferenceFailure) {
       setState(() => _loadingRefs = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(state.message)),
+      );
       return;
     }
+
     if (state is! ReferenceLoaded) return;
 
-    final validSchoolIds = state.schools.where((s) => _province == null || _province!.isEmpty || s.province == _province).map((s) => s.id).toSet();
-    final validUniversityIds = state.universities.map((u) => u.id).toSet();
-    final validMajorIds = state.majors.map((m) => m.id).toSet();
+    final validSchoolIds = state.schools
+        .where(
+          (school) =>
+              _province == null ||
+              _province!.isEmpty ||
+              school.province == _province,
+        )
+        .map((school) => school.id)
+        .toSet();
+
+    final validUniversityIds =
+        state.universities.map((item) => item.id).toSet();
+    final validMajorIds = state.majors.map((item) => item.id).toSet();
 
     setState(() {
       _schools = state.schools;
       _universities = state.universities;
       _majors = state.majors;
       _schoolId = validSchoolIds.contains(_schoolId) ? _schoolId : null;
-      _targetUniversityId = validUniversityIds.contains(_targetUniversityId) ? _targetUniversityId : null;
-      _targetMajorId = validMajorIds.contains(_targetMajorId) ? _targetMajorId : null;
+      _targetUniversityId = validUniversityIds.contains(_targetUniversityId)
+          ? _targetUniversityId
+          : null;
+      _targetMajorId =
+          validMajorIds.contains(_targetMajorId) ? _targetMajorId : null;
       _loadingRefs = false;
     });
   }
@@ -178,43 +227,76 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     return MultiBlocListener(
       listeners: [
         BlocListener<ProfileBloc, ProfileState>(
-          listenWhen: (_, state) => state is ProfileUpdateSuccess || state is ProfileFailure,
+          listenWhen: (_, state) =>
+              state is ProfileUpdateSuccess || state is ProfileFailure,
           listener: (context, state) {
-            if (state is ProfileUpdateSuccess) Navigator.of(context).pop(true);
+            if (state is ProfileUpdateSuccess) {
+              Navigator.of(context).pop(true);
+            }
+
             if (state is ProfileFailure) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
             }
           },
         ),
-        BlocListener<ReferenceBloc, ReferenceState>(listener: (_, state) => _onReferenceState(state)),
+        BlocListener<ReferenceBloc, ReferenceState>(
+          listener: (_, state) => _handleReferenceState(state),
+        ),
       ],
       child: BlocBuilder<ProfileBloc, ProfileState>(
         builder: (context, state) {
           final isSaving = state is ProfileSaving;
           final avatarUrl = widget.profile.avatarUrl;
-          final bottomInset = 20 + MediaQuery.of(context).padding.bottom + _dockHeight + 16;
+          final bottomInset =
+              20 + MediaQuery.of(context).padding.bottom + _dockHeight + 16;
 
           return Scaffold(
             backgroundColor: AppColors.background,
             bottomNavigationBar: Padding(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.of(context).padding.bottom),
-              child: const _EditBottomDock(),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                0,
+                16,
+                16 + MediaQuery.of(context).padding.bottom,
+              ),
+              child: _EditBottomDock(
+                onSelectTab: (index) => Navigator.of(context).pop(index),
+              ),
             ),
             body: Stack(
               children: [
                 if (_loadingRefs)
-                  const Center(child: CircularProgressIndicator(color: AppColors.aqua))
+                  const Center(
+                    child: CircularProgressIndicator(color: AppColors.aqua),
+                  )
                 else
                   ListView(
-                    padding: EdgeInsets.fromLTRB(16, _topInset + 8, 16, bottomInset),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      _topInset + 8,
+                      16,
+                      bottomInset,
+                    ),
                     children: [
                       _buildInfoBanner(),
                       const SizedBox(height: 14),
                       _buildAvatarSection(avatarUrl),
                       const SizedBox(height: 14),
-                      JuyoInput(label: 'Имя', hint: 'Введите имя', icon: LucideIcons.user, controller: _firstName),
+                      JuyoInput(
+                        label: 'Имя',
+                        hint: 'Введите имя',
+                        icon: LucideIcons.user,
+                        controller: _firstName,
+                      ),
                       const SizedBox(height: 12),
-                      JuyoInput(label: 'Фамилия', hint: 'Введите фамилию', icon: LucideIcons.userCheck, controller: _lastName),
+                      JuyoInput(
+                        label: 'Фамилия',
+                        hint: 'Введите фамилию',
+                        icon: LucideIcons.userCheck,
+                        controller: _lastName,
+                      ),
                       const SizedBox(height: 12),
                       _buildDropdownString(
                         label: 'Область',
@@ -232,7 +314,8 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                         icon: LucideIcons.user,
                         value: _gender,
                         options: const [0, 1],
-                        itemLabel: (value) => value == 0 ? 'Мужской' : 'Женский',
+                        itemLabel: (value) =>
+                            value == 0 ? 'Мужской' : 'Женский',
                         onChanged: (value) => setState(() => _gender = value),
                       ),
                       const SizedBox(height: 12),
@@ -240,8 +323,17 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                         label: 'Школа',
                         icon: LucideIcons.school,
                         value: _schoolId,
-                        options: _schools.where((s) => _province == null || _province!.isEmpty || s.province == _province).map((s) => s.id).toList(),
-                        itemLabel: (id) => _schools.firstWhere((s) => s.id == id).name,
+                        options: _schools
+                            .where(
+                              (school) =>
+                                  _province == null ||
+                                  _province!.isEmpty ||
+                                  school.province == _province,
+                            )
+                            .map((school) => school.id)
+                            .toList(),
+                        itemLabel: (id) =>
+                            _schools.firstWhere((school) => school.id == id).name,
                         onChanged: (value) => setState(() => _schoolId = value),
                       ),
                       const SizedBox(height: 12),
@@ -258,24 +350,32 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                         icon: LucideIcons.sparkles,
                         value: _clusterId,
                         options: const [1, 2, 3, 4, 5],
-                        itemLabel: (value) => _clusters.firstWhere((c) => c.id == value).name,
-                        onChanged: widget.profile.clusterId != null ? null : (value) => setState(() => _clusterId = value),
+                        itemLabel: (value) =>
+                            _clusters.firstWhere((item) => item.id == value).name,
+                        onChanged: widget.profile.clusterId != null
+                            ? null
+                            : (value) => setState(() => _clusterId = value),
                       ),
                       const SizedBox(height: 12),
                       _buildDropdownInt(
                         label: 'Университет',
                         icon: LucideIcons.building2,
                         value: _targetUniversityId,
-                        options: _universities.map((u) => u.id).toList(),
-                        itemLabel: (id) => _universities.firstWhere((u) => u.id == id).name,
+                        options: _universities.map((item) => item.id).toList(),
+                        itemLabel: (id) => _universities
+                            .firstWhere((item) => item.id == id)
+                            .name,
                         onChanged: (universityId) {
                           setState(() {
                             _targetUniversityId = universityId;
                             _targetMajorId = null;
-                            _majors = [];
+                            _majors = const [];
                           });
+
                           if (universityId != null) {
-                            context.read<ReferenceBloc>().add(ReferenceMajorsRequested(universityId));
+                            context
+                                .read<ReferenceBloc>()
+                                .add(ReferenceMajorsRequested(universityId));
                           }
                         },
                       ),
@@ -284,16 +384,29 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                         label: 'Профессия',
                         icon: LucideIcons.target,
                         value: _targetMajorId,
-                        options: _majors.map((m) => m.id).toList(),
-                        itemLabel: (id) => _majors.firstWhere((m) => m.id == id).name,
-                        onChanged: _targetUniversityId == null ? null : (value) => setState(() => _targetMajorId = value),
+                        options: _majors.map((item) => item.id).toList(),
+                        itemLabel: (id) =>
+                            _majors.firstWhere((item) => item.id == id).name,
+                        onChanged: _targetUniversityId == null
+                            ? null
+                            : (value) => setState(() => _targetMajorId = value),
                       ),
                       const SizedBox(height: 12),
                       _buildDobTile(),
                       const SizedBox(height: 18),
-                      JuyoButton(text: 'СОХРАНИТЬ', isLoading: isSaving, onPressed: isSaving ? null : _save),
+                      JuyoButton(
+                        text: 'СОХРАНИТЬ',
+                        isLoading: isSaving,
+                        onPressed: isSaving ? null : _save,
+                      ),
                       const SizedBox(height: 10),
-                      JuyoButton(text: 'ОТМЕНА', isSecondary: true, onPressed: isSaving ? null : () => Navigator.of(context).pop(false)),
+                      JuyoButton(
+                        text: 'ОТМЕНА',
+                        isSecondary: true,
+                        onPressed: isSaving
+                            ? null
+                            : () => Navigator.of(context).pop(false),
+                      ),
                     ],
                   ),
                 Positioned(
@@ -303,14 +416,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                   child: JuyoStickyHeader(
                     streak: widget.profile.streak,
                     points: widget.profile.xp,
-                  ),
-                ),
-                Positioned(
-                  top: MediaQuery.of(context).padding.top + 8,
-                  left: 8,
-                  child: IconButton(
-                    onPressed: isSaving ? null : () => Navigator.of(context).pop(false),
-                    icon: const Icon(LucideIcons.arrowLeft, color: Colors.white),
                   ),
                 ),
               ],
@@ -336,7 +441,11 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           Expanded(
             child: Text(
               'Изменения сохраняются в вашем аккаунте.',
-              style: TextStyle(color: AppColors.slate, fontSize: 12, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: AppColors.slate,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -345,47 +454,93 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   }
 
   Widget _buildAvatarSection(String? avatarUrl) {
-    final ImageProvider<Object>? provider =
-        _avatarFile != null ? FileImage(_avatarFile!) : (avatarUrl != null && avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null);
+    final ImageProvider<Object>? provider = _avatarFile != null
+        ? FileImage(_avatarFile!)
+        : (avatarUrl != null && avatarUrl.isNotEmpty
+            ? NetworkImage(avatarUrl)
+            : null);
+
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: AppColors.milkyCard, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: AppColors.milkyCard,
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 32,
             backgroundColor: Colors.white12,
             backgroundImage: provider,
-            child: (_avatarFile == null && (avatarUrl == null || avatarUrl.isEmpty)) ? const Icon(LucideIcons.user, color: Colors.white54) : null,
+            child: (_avatarFile == null &&
+                    (avatarUrl == null || avatarUrl.isEmpty))
+                ? const Icon(LucideIcons.user, color: Colors.white54)
+                : null,
           ),
           const SizedBox(width: 14),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Фото профиля', style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w800)),
+                Text(
+                  'Фото профиля',
+                  style: TextStyle(
+                    color: AppColors.navy,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 SizedBox(height: 4),
-                Text('JPG/PNG/WebP, максимум 10MB', style: TextStyle(color: AppColors.slate, fontSize: 12)),
+                Text(
+                  'JPG/PNG/WebP, максимум 10MB',
+                  style: TextStyle(color: AppColors.slate, fontSize: 12),
+                ),
               ],
             ),
           ),
-          TextButton.icon(onPressed: _pickAvatar, icon: const Icon(LucideIcons.camera, size: 16), label: const Text('Изменить')),
+          TextButton.icon(
+            onPressed: _pickAvatar,
+            icon: const Icon(LucideIcons.camera, size: 16),
+            label: const Text('Изменить'),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildDobTile() {
-    final text = _dob == null ? 'Не выбрано' : '${_dob!.day.toString().padLeft(2, '0')}.${_dob!.month.toString().padLeft(2, '0')}.${_dob!.year}';
+    final text = _dob == null
+        ? 'Не выбрано'
+        : '${_dob!.day.toString().padLeft(2, '0')}.${_dob!.month.toString().padLeft(2, '0')}.${_dob!.year}';
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(color: AppColors.milkyCard, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: AppColors.milkyCard,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: ListTile(
         contentPadding: EdgeInsets.zero,
         leading: const Icon(LucideIcons.calendar, color: AppColors.aqua, size: 18),
-        title: const Text('Дата рождения', style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w800, fontSize: 13)),
-        subtitle: Text(text, style: const TextStyle(color: AppColors.slate, fontSize: 12, fontWeight: FontWeight.w700)),
-        trailing: const Icon(LucideIcons.chevronRight, color: AppColors.slate),
+        title: const Text(
+          'Дата рождения',
+          style: TextStyle(
+            color: AppColors.navy,
+            fontWeight: FontWeight.w800,
+            fontSize: 13,
+          ),
+        ),
+        subtitle: Text(
+          text,
+          style: const TextStyle(
+            color: AppColors.slate,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        trailing: const Icon(
+          LucideIcons.chevronRight,
+          color: AppColors.slate,
+        ),
         onTap: _pickDob,
       ),
     );
@@ -400,10 +555,14 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     required ValueChanged<int?>? onChanged,
   }) {
     final safeValue = options.contains(value) ? value : null;
+
     return Container(
       height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: AppColors.milkyCard, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: AppColors.milkyCard,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         children: [
           Icon(icon, size: 18, color: AppColors.slate),
@@ -413,16 +572,38 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
               child: DropdownButton<int>(
                 value: safeValue,
                 isExpanded: true,
-                hint: Text(label, style: TextStyle(color: AppColors.slate.withValues(alpha: 0.9), fontWeight: FontWeight.w700)),
+                isDense: true,
+                alignment: Alignment.centerLeft,
+                icon: const Icon(
+                  LucideIcons.chevronDown,
+                  size: 16,
+                  color: AppColors.slate,
+                ),
+                hint: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.slate.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
                 dropdownColor: Colors.white,
-                iconEnabledColor: AppColors.slate,
                 selectedItemBuilder: (_) => options
                     .map(
-                      (item) => Text(
-                        itemLabel?.call(item) ?? item.toString(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppColors.navy, fontSize: 14, fontWeight: FontWeight.w600),
+                      (item) => Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          itemLabel?.call(item) ?? item.toString(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.navy,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     )
                     .toList(),
@@ -434,7 +615,10 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                           itemLabel?.call(item) ?? item.toString(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.navy, fontSize: 14),
+                          style: const TextStyle(
+                            color: AppColors.navy,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     )
@@ -443,7 +627,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
               ),
             ),
           ),
-          const Icon(LucideIcons.chevronDown, size: 16, color: AppColors.slate),
         ],
       ),
     );
@@ -457,10 +640,14 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     required ValueChanged<String?> onChanged,
   }) {
     final safeValue = options.contains(value) ? value : null;
+
     return Container(
       height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: AppColors.milkyCard, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: AppColors.milkyCard,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         children: [
           Icon(icon, size: 18, color: AppColors.slate),
@@ -470,16 +657,38 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
               child: DropdownButton<String>(
                 value: safeValue,
                 isExpanded: true,
-                hint: Text(label, style: TextStyle(color: AppColors.slate.withValues(alpha: 0.9), fontWeight: FontWeight.w700)),
+                isDense: true,
+                alignment: Alignment.centerLeft,
+                icon: const Icon(
+                  LucideIcons.chevronDown,
+                  size: 16,
+                  color: AppColors.slate,
+                ),
+                hint: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.slate.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
                 dropdownColor: Colors.white,
-                iconEnabledColor: AppColors.slate,
                 selectedItemBuilder: (_) => options
                     .map(
-                      (item) => Text(
-                        item,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppColors.navy, fontSize: 14, fontWeight: FontWeight.w600),
+                      (item) => Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          item,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.navy,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     )
                     .toList(),
@@ -487,7 +696,15 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                     .map(
                       (item) => DropdownMenuItem<String>(
                         value: item,
-                        child: Text(item, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.navy, fontSize: 14)),
+                        child: Text(
+                          item,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.navy,
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
                     )
                     .toList(),
@@ -495,7 +712,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
               ),
             ),
           ),
-          const Icon(LucideIcons.chevronDown, size: 16, color: AppColors.slate),
         ],
       ),
     );
@@ -510,7 +726,11 @@ class _ClusterItem {
 }
 
 class _EditBottomDock extends StatelessWidget {
-  const _EditBottomDock();
+  final ValueChanged<int> onSelectTab;
+
+  const _EditBottomDock({
+    required this.onSelectTab,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -518,14 +738,36 @@ class _EditBottomDock extends StatelessWidget {
       borderRadius: BorderRadius.circular(28),
       child: Container(
         height: 66,
-        decoration: BoxDecoration(color: const Color(0xFF2C3545), borderRadius: BorderRadius.circular(28)),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2C3545),
+          borderRadius: BorderRadius.circular(28),
+        ),
         child: Row(
-          children: const [
-            _DockItem(icon: LucideIcons.layoutDashboard, label: 'ПАРАМ'),
-            _DockItem(icon: LucideIcons.swords, label: 'ДУЭЛЬ'),
-            _DockCenter(),
-            _DockItem(icon: LucideIcons.brain, label: 'ТЕСТЫ'),
-            _DockItem(icon: LucideIcons.user, label: 'ПРОФИЛЬ', active: true),
+          children: [
+            _DockItem(
+              icon: LucideIcons.layoutDashboard,
+              label: 'PARAM',
+              onTap: () => onSelectTab(0),
+            ),
+            _DockItem(
+              icon: LucideIcons.swords,
+              label: 'DUEL',
+              onTap: () => onSelectTab(1),
+            ),
+            _DockCenter(
+              onTap: () => onSelectTab(0),
+            ),
+            _DockItem(
+              icon: LucideIcons.brain,
+              label: 'TESTS',
+              onTap: () => onSelectTab(2),
+            ),
+            _DockItem(
+              icon: LucideIcons.user,
+              label: 'PROFILE',
+              active: true,
+              onTap: () => onSelectTab(3),
+            ),
           ],
         ),
       ),
@@ -537,31 +779,63 @@ class _DockItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool active;
+  final VoidCallback onTap;
 
-  const _DockItem({required this.icon, required this.label, this.active = false});
+  const _DockItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.active = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 18, color: active ? AppColors.gold : const Color(0xFFAEB8C8)),
-          const SizedBox(height: 2),
-          Text(label, style: TextStyle(fontSize: 8, color: active ? AppColors.gold : const Color(0xFFAEB8C8))),
-        ],
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: active ? AppColors.gold : const Color(0xFFAEB8C8),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 8,
+                color: active ? AppColors.gold : const Color(0xFFAEB8C8),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _DockCenter extends StatelessWidget {
-  const _DockCenter();
+  final VoidCallback onTap;
+
+  const _DockCenter({
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const Expanded(
-      child: Icon(LucideIcons.layoutGrid, color: AppColors.gold, size: 22),
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: const Icon(
+          LucideIcons.layoutGrid,
+          color: AppColors.gold,
+          size: 22,
+        ),
+      ),
     );
   }
 }

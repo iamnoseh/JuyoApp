@@ -17,40 +17,56 @@ class DashboardRepositoryImpl implements DashboardRepository {
 
   @override
   Future<Result<DashboardData>> getDashboardData() async {
-    try {
-      final results = await Future.wait([
-        remoteDataSource.getProfile(),
-        remoteDataSource.getMotivation(),
-        remoteDataSource.getStudentStats(),
-        remoteDataSource.getAdmissionStats(),
-        remoteDataSource.getSkillsProgress(),
-      ]);
+    final user = await _safeCall<UserModel?>(() => remoteDataSource.getProfile());
+    final motivation = await _safeCall<String>(
+      () => remoteDataSource.getMotivation(),
+      fallback: 'Знание - это единственное сокровище, которое растет, когда им делятся.',
+    );
+    final dashboardStats = await _safeCall<DashboardStatsModel?>(() => remoteDataSource.getStudentStats());
+    final admissionStats = await _safeCall<AdmissionStatsModel?>(() => remoteDataSource.getAdmissionStats());
+    final skills = await _safeCall<List<SkillProgressModel>>(
+      () => remoteDataSource.getSkillsProgress(),
+      fallback: const <SkillProgressModel>[],
+    );
 
-      final user = results[0] as UserModel?;
-      final motivation = results[1] as String;
-      final dashboardStats = results[2] as DashboardStatsModel?;
-      final admissionStats = results[3] as AdmissionStatsModel?;
-      final skills = results[4] as List<SkillProgressModel>;
-
-      var leaderboard = <LeagueLeaderboardModel>[];
-      if (user != null) {
-        leaderboard = await remoteDataSource.getLeagueLeaderboard(user.id);
-      }
-
-      return Success<DashboardData>(
-        DashboardData(
-          user: user,
-          motivation: motivation,
-          dashboardStats: dashboardStats,
-          admissionStats: admissionStats,
-          leaderboard: leaderboard,
-          skills: skills,
-        ),
+    var leaderboard = <LeagueLeaderboardModel>[];
+    if (user != null) {
+      leaderboard = await _safeCall<List<LeagueLeaderboardModel>>(
+        () => remoteDataSource.getLeagueLeaderboard(user.id),
+        fallback: const <LeagueLeaderboardModel>[],
       );
-    } catch (_) {
+    }
+
+    if (user == null &&
+        dashboardStats == null &&
+        admissionStats == null &&
+        skills.isEmpty &&
+        leaderboard.isEmpty) {
       return const Error<DashboardData>(
         NetworkFailure('Failed to load dashboard data'),
       );
+    }
+
+    return Success<DashboardData>(
+      DashboardData(
+        user: user,
+        motivation: motivation,
+        dashboardStats: dashboardStats,
+        admissionStats: admissionStats,
+        leaderboard: leaderboard,
+        skills: skills,
+      ),
+    );
+  }
+
+  Future<T> _safeCall<T>(Future<T> Function() request, {T? fallback}) async {
+    try {
+      return await request();
+    } catch (_) {
+      if (fallback != null) {
+        return fallback;
+      }
+      rethrow;
     }
   }
 }
