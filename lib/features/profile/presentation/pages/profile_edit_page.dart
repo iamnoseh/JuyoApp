@@ -248,12 +248,15 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             appBar: AppBar(
               backgroundColor: const Color(0xFF2C3545),
               foregroundColor: Colors.white,
-              title: const Text('Редактировать профиль'),
+              title: const Text(
+                'Редактировать профиль',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+              ),
             ),
             body: _loadingRefs
                 ? const Center(child: CircularProgressIndicator(color: AppColors.aqua))
                 : ListView(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, 20 + MediaQuery.of(context).padding.bottom),
                     children: [
                       _buildInfoBanner(),
                       const SizedBox(height: 16),
@@ -469,14 +472,30 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             child: DropdownButtonHideUnderline(
               child: DropdownButton<int>(
                 value: safeValue,
+                isExpanded: true,
                 hint: Text(label, style: TextStyle(color: AppColors.slate.withValues(alpha: 0.9), fontWeight: FontWeight.w700)),
                 dropdownColor: Colors.white,
                 iconEnabledColor: AppColors.slate,
+                selectedItemBuilder: (_) => options
+                    .map(
+                      (item) => Text(
+                        itemLabel?.call(item) ?? item.toString(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: AppColors.navy, fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                    )
+                    .toList(),
                 items: options
                     .map(
                       (item) => DropdownMenuItem<int>(
                         value: item,
-                        child: Text(itemLabel?.call(item) ?? item.toString(), style: const TextStyle(color: AppColors.navy), overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          itemLabel?.call(item) ?? item.toString(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: AppColors.navy, fontSize: 14),
+                        ),
                       ),
                     )
                     .toList(),
@@ -514,14 +533,30 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: safeValue,
+                isExpanded: true,
                 hint: Text(label, style: TextStyle(color: AppColors.slate.withValues(alpha: 0.9), fontWeight: FontWeight.w700)),
                 dropdownColor: Colors.white,
                 iconEnabledColor: AppColors.slate,
+                selectedItemBuilder: (_) => options
+                    .map(
+                      (item) => Text(
+                        item,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: AppColors.navy, fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                    )
+                    .toList(),
                 items: options
                     .map(
                       (item) => DropdownMenuItem<String>(
                         value: item,
-                        child: Text(item, style: const TextStyle(color: AppColors.navy), overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          item,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: AppColors.navy, fontSize: 14),
+                        ),
                       ),
                     )
                     .toList(),

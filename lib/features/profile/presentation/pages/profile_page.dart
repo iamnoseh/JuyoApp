@@ -245,7 +245,7 @@ class _ProfileView extends StatelessWidget {
           Text(
             profile?.fullName ?? 'Загрузка...',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.navy, fontSize: 22, fontWeight: FontWeight.w900),
+            style: const TextStyle(color: AppColors.navy, fontSize: 18, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 4),
           Row(
@@ -349,7 +349,7 @@ class _ProfileView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('ГОТОВНОСТЬ К ПОСТУПЛЕНИЮ', style: TextStyle(color: AppColors.navy, fontSize: 18, fontWeight: FontWeight.w900)),
+          const Text('ГОТОВНОСТЬ К ПОСТУПЛЕНИЮ', style: TextStyle(color: AppColors.navy, fontSize: 16, fontWeight: FontWeight.w900)),
           const SizedBox(height: 18),
           _goalLine(LucideIcons.graduationCap, 'ВЫБРАННЫЙ УНИВЕРСИТЕТ', university),
           const SizedBox(height: 12),
@@ -423,7 +423,7 @@ class _ProfileView extends StatelessWidget {
           children: [
             Text(year, style: TextStyle(color: isTarget ? AppColors.gold : const Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.w900)),
             const SizedBox(height: 3),
-            Text(value, style: TextStyle(color: isTarget ? AppColors.gold : const Color(0xFF1E293B), fontSize: 28, height: 0.95, fontWeight: FontWeight.w900)),
+            Text(value, style: TextStyle(color: isTarget ? AppColors.gold : const Color(0xFF1E293B), fontSize: 22, height: 0.95, fontWeight: FontWeight.w900)),
           ],
         ),
       ),
