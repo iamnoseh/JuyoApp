@@ -84,6 +84,7 @@ class JuyoButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
   final bool isSecondary;
+  final bool isDanger;
 
   const JuyoButton({
     super.key,
@@ -91,21 +92,35 @@ class JuyoButton extends StatelessWidget {
     this.onPressed,
     this.isLoading = false,
     this.isSecondary = false,
+    this.isDanger = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
+    Color bgColor = isSecondary 
+        ? (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08))
+        : AppColors.gold;
+    
+    Color fgColor = isSecondary 
+        ? (isDark ? AppColors.aqua : Colors.black87) 
+        : Colors.black;
+
+    if (isDanger) {
+      bgColor = Colors.red.withOpacity(0.15);
+      fgColor = Colors.redAccent;
+    }
+
     return Container(
       width: double.infinity,
       height: 50,
-      decoration: isSecondary ? null : BoxDecoration(
+      decoration: (isSecondary || isDanger) ? null : BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: AppColors.gold,
+        color: bgColor,
         boxShadow: [
           BoxShadow(
-            color: AppColors.gold.withOpacity(0.3),
+            color: bgColor.withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),
@@ -114,21 +129,18 @@ class JuyoButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isSecondary 
-            ? (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08))
-            : Colors.transparent,
-          foregroundColor: isSecondary 
-            ? (isDark ? AppColors.aqua : Colors.black87) 
-            : Colors.black, // High contrast black on Gold
+          backgroundColor: (isSecondary || isDanger) ? bgColor : Colors.transparent,
+          foregroundColor: fgColor,
           shadowColor: Colors.transparent,
+          side: isDanger ? const BorderSide(color: Colors.redAccent, width: 1) : null,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.black),
+                child: CircularProgressIndicator(strokeWidth: 2.5, color: fgColor),
               )
             : Text(
                 text,

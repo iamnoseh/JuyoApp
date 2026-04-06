@@ -27,11 +27,18 @@ class _DashboardPageState extends State<DashboardPage> {
   String _motivation = 'Загрузка мудрости...';
   DashboardStatsModel? _dashboardStats;
   AdmissionStatsModel? _admissionStats;
+  bool _isMenuOpen = false;
 
   @override
   void initState() {
     super.initState();
     _fetchData();
+  }
+
+  void _toggleMenu() {
+    setState(() {
+      _isMenuOpen = !_isMenuOpen;
+    });
   }
 
   Future<void> _fetchData() async {
@@ -75,26 +82,30 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
-      drawer: const SidebarDrawer(),
-      bottomNavigationBar: Padding(
+      bottomNavigationBar: Container(
         padding: EdgeInsets.fromLTRB(
           16, 0, 16,
-          16 + MediaQuery.of(context).padding.bottom, // Clears home indicator
+          16 + MediaQuery.of(context).padding.bottom,
         ),
         child: JuyoBottomDock(
           currentIndex: _selectedIndex,
-          onTap: (index) => setState(() => _selectedIndex = index),
+          isMenuOpen: _isMenuOpen,
+          onToggleMenu: _toggleMenu,
+          onTap: (index) {
+            if (_isMenuOpen) _toggleMenu();
+            setState(() => _selectedIndex = index);
+          },
         ),
       ),
       body: Stack(
         children: [
-          // 1. Scrollable Body (Behind the header)
+          // 1. Scrollable Body
           Positioned.fill(
             child: RefreshIndicator(
               onRefresh: _fetchData,
               backgroundColor: AppColors.navy,
               color: AppColors.aqua,
-              displacement: 110, // Adjusted for the sticky header
+              displacement: 110,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                 padding: const EdgeInsets.only(top: 130, bottom: 40),
@@ -118,7 +129,29 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
 
-          // 2. Sticky Top Header (Anchored at top, bottom-only radii)
+          // 2. Menu Backdrop (Closes on tap)
+          if (_isMenuOpen)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _toggleMenu,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: Container(color: Colors.black.withOpacity(0.4)),
+                ),
+              ),
+            ),
+
+          // 3. Animated Top Menu
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.fastOutSlowIn,
+            top: _isMenuOpen ? 0 : -MediaQuery.of(context).size.height * 0.8,
+            left: 0,
+            right: 0,
+            child: _buildTopMenuOverlay(context),
+          ),
+
+          // 4. Sticky Header (Branding only)
           Positioned(
             top: 0, left: 0, right: 0,
             child: Container(
@@ -135,15 +168,19 @@ class _DashboardPageState extends State<DashboardPage> {
               child: SafeArea(
                 bottom: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      IconButton(
-                        icon: const Icon(LucideIcons.menu, color: Colors.white, size: 26),
-                        onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
+                      const Opacity(opacity: 0, child: Icon(LucideIcons.menu)), // Hidden spacer
+                      const Text(
+                        'JUYO',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 4.0,
+                        ),
                       ),
                       Row(
                         children: [
@@ -160,6 +197,98 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTopMenuOverlay(BuildContext context) {
+    final double height = MediaQuery.of(context).size.height * 0.75;
+    const Color juyoNavy = Color(0xFF343F51);
+
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: juyoNavy.withOpacity(0.98),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(44),
+          bottomRight: Radius.circular(44),
+        ),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 30, offset: const Offset(0, 20)),
+        ],
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Branding & Profile Section
+              Padding(
+                padding: const EdgeInsets.fromLTRB(28, 20, 28, 10),
+                child: Column(
+                  children: [
+                    const Text('JUYO', style: TextStyle(color: AppColors.aqua, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 8.0)),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(colors: [AppColors.aqua, AppColors.gold]),
+                      ),
+                      child: Container(
+                        width: 84, height: 84,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: juyoNavy,
+                          image: DecorationImage(image: NetworkImage('https://i.pravatar.cc/150?u=alisher'), fit: BoxFit.cover),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('АЛИШЕР НАЗАРОВ', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                  ],
+                ),
+              ),
+
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 40),
+                child: Divider(color: Colors.white10),
+              ),
+
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    _buildTopMenuItem(LucideIcons.listTodo, 'КРАСНЫЙ СПИСОК', isLocked: true),
+                    _buildTopMenuItem(LucideIcons.trophy, 'РЕЙТИНГ ЛИГИ'),
+                    _buildTopMenuItem(LucideIcons.building2, 'РЕЙТИНГ ШКОЛ'),
+                    _buildTopMenuItem(LucideIcons.zap, 'PREMIUM JUYO', isPremium: true),
+                  ],
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.fromLTRB(36, 10, 36, 30),
+                child: JuyoButton(
+                  text: 'ВЫЙТИ',
+                  isDanger: true,
+                  onPressed: () {},
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopMenuItem(IconData icon, String title, {bool isLocked = false, bool isPremium = false}) {
+    return ListTile(
+      leading: Icon(icon, color: isPremium ? AppColors.gold : Colors.white60, size: 20),
+      title: Text(title.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.0)),
+      trailing: isLocked ? const Icon(LucideIcons.lock, size: 14, color: Colors.white24) : null,
+      onTap: () {},
     );
   }
 
@@ -616,21 +745,25 @@ class MobileAdmissionGaugeCard extends StatelessWidget {
 class JuyoBottomDock extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
+  final bool isMenuOpen;
+  final VoidCallback onToggleMenu;
 
-  const JuyoBottomDock({super.key, required this.currentIndex, required this.onTap});
+  const JuyoBottomDock({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+    required this.isMenuOpen,
+    required this.onToggleMenu,
+  });
 
   static const Color _navBg = Color(0xFF2C3545);
-  static const Color _activeColor = Color(0xFF5DBCCF);
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double totalWidth = constraints.maxWidth;
-        final double slotWidth = totalWidth / 4;
-        const double dropWidth = 64;
-        final double leftOffset =
-            (slotWidth * currentIndex) + (slotWidth - dropWidth) / 2;
+        final double slotWidth = constraints.maxWidth / 5; // 5 Items now
+        const double dropWidth = 58;
 
         return ClipRRect(
           borderRadius: BorderRadius.circular(28),
@@ -642,48 +775,19 @@ class JuyoBottomDock extends StatelessWidget {
                 color: _navBg,
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    blurRadius: 20,
-                    offset: const Offset(0, 4),
-                  ),
+                  BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 20, offset: const Offset(0, 4)),
                 ],
               ),
               child: Stack(
                 children: [
-                  // Sliding active highlight capsule
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 350),
-                    curve: Curves.easeInOutCubic,
-                    left: leftOffset,
-                    top: (66 - 48) / 2,
-                    child: Container(
-                      width: dropWidth,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.15),
-                            Colors.white.withValues(alpha: 0.02),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          width: 1.0,
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Icon row on top
+                  // Indicators etc...
                   Row(
                     children: [
-                      _buildItem(LucideIcons.layoutGrid, 'ПАНЕЛЬ', 0),
-                      _buildItem(LucideIcons.swords, 'ДУЭЛЬ', 1),
-                      _buildItem(LucideIcons.brain, 'ТЕСТЫ', 2),
-                      _buildItem(LucideIcons.user, 'ПРОФИЛЬ', 3),
+                      _buildItem(LucideIcons.layoutDashboard, 'ПАРАМ', 0, slotWidth),
+                      _buildItem(LucideIcons.swords, 'ДУЭЛЬ', 1, slotWidth),
+                      _buildCenterMenu(slotWidth),
+                      _buildItem(LucideIcons.brain, 'ТЕСТЫ', 2, slotWidth),
+                      _buildItem(LucideIcons.user, 'ПРОФИЛЬ', 3, slotWidth),
                     ],
                   ),
                 ],
@@ -695,30 +799,41 @@ class JuyoBottomDock extends StatelessWidget {
     );
   }
 
-  Widget _buildItem(IconData icon, String label, int index) {
-    final bool active = currentIndex == index;
-    return Expanded(
+  Widget _buildCenterMenu(double width) {
+    return SizedBox(
+      width: width,
+      child: GestureDetector(
+        onTap: onToggleMenu,
+        child: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isMenuOpen ? AppColors.gold : Colors.white.withOpacity(0.05),
+            boxShadow: isMenuOpen ? [BoxShadow(color: AppColors.gold.withOpacity(0.3), blurRadius: 10)] : null,
+          ),
+          child: Icon(
+            isMenuOpen ? LucideIcons.x : LucideIcons.layoutGrid,
+            color: isMenuOpen ? Colors.black : Colors.white60,
+            size: 24,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItem(IconData icon, String label, int index, double width) {
+    final bool active = currentIndex == index && !isMenuOpen;
+    return SizedBox(
+      width: width,
       child: GestureDetector(
         onTap: () => onTap(index),
         behavior: HitTestBehavior.opaque,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: active ? AppColors.gold : const Color(0xFFAEB8C8),
-              size: 22,
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: TextStyle(
-                color: active ? AppColors.gold : const Color(0xFFAEB8C8),
-                fontSize: 9,
-                fontWeight: active ? FontWeight.w800 : FontWeight.w500,
-                letterSpacing: 0.5,
-              ),
-            ),
+            Icon(icon, color: active ? AppColors.gold : const Color(0xFFAEB8C8), size: 20),
+            const SizedBox(height: 2),
+            Text(label, style: TextStyle(color: active ? AppColors.gold : const Color(0xFFAEB8C8), fontSize: 8, fontWeight: active ? FontWeight.w900 : FontWeight.w500)),
           ],
         ),
       ),
@@ -726,149 +841,5 @@ class JuyoBottomDock extends StatelessWidget {
   }
 }
 
-class SidebarDrawer extends StatelessWidget {
-  const SidebarDrawer({super.key});
+// SidebarDrawer class has been removed. TopMenuOverlay is now used for navigation.
 
-  @override
-  Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Drawer(
-      width: MediaQuery.of(context).size.width * 0.8,
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.navy.withOpacity(0.92),
-          borderRadius: const BorderRadius.only(
-            topRight: Radius.circular(40),
-            bottomRight: Radius.circular(40),
-          ),
-          border: Border(right: BorderSide(color: Colors.white.withOpacity(0.1))),
-        ),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: SafeArea(
-            child: Column(
-              children: [
-                // Profile Hero Section
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.aqua, width: 2),
-                          image: const DecorationImage(
-                            image: NetworkImage('https://i.pravatar.cc/150?u=alisher'),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Алишер Назаров',
-                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.gold.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.gold.withOpacity(0.3)),
-                        ),
-                        child: const Text(
-                          'PREMIUM',
-                          style: TextStyle(color: AppColors.gold, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.0),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const Divider(color: Colors.white12, indent: 24, endIndent: 24),
-                const SizedBox(height: 12),
-
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    children: [
-                      _buildMenuItem(LucideIcons.layoutDashboard, 'Панель управления', true),
-                      _buildMenuItem(LucideIcons.swords, 'Дуэль', false),
-                      _buildMenuItem(LucideIcons.brain, 'Тесты', false),
-                      _buildMenuItem(LucideIcons.flame, 'Красный Список', false, isLocked: true),
-                      _buildMenuItem(LucideIcons.barChart3, 'Рейтинг лиги', false),
-                      _buildMenuItem(LucideIcons.school, 'Рейтинг школ', false),
-                      _buildMenuItem(LucideIcons.crown, 'Premium Juyo', false, isPremium: true),
-                    ],
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: JuyoButton(
-                    text: 'Выйти',
-                    isSecondary: true,
-                    onPressed: () async {
-                      await AuthService.logout();
-                      if (context.mounted) {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (context) => const LoginPage()),
-                          (Route<dynamic> route) => false,
-                        );
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMenuItem(IconData icon, String title, bool active, {bool isLocked = false, bool isPremium = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: active ? LinearGradient(
-            colors: [
-              Colors.white.withOpacity(0.12),
-              Colors.white.withOpacity(0.04),
-            ],
-          ) : null,
-          border: active ? Border.all(color: Colors.white.withOpacity(0.1), width: 1) : null,
-        ),
-        child: ListTile(
-          dense: true,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          leading: Icon(
-            icon, 
-            color: active ? AppColors.aqua : (isPremium ? AppColors.gold : Colors.white60), 
-            size: 22
-          ),
-          title: Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              color: active ? Colors.white : Colors.white60, 
-              fontWeight: active ? FontWeight.w900 : FontWeight.bold
-            ),
-          ),
-          trailing: isLocked 
-            ? const Icon(LucideIcons.lock, size: 14, color: Colors.white24) 
-            : (active ? Container(width: 4, height: 4, decoration: const BoxDecoration(color: AppColors.aqua, shape: BoxShape.circle)) : null),
-          onTap: () {},
-        ),
-      ),
-    );
-  }
-}
