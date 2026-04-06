@@ -115,7 +115,7 @@ class JuyoButton extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      height: 50,
+      height: 48,
       decoration: (isSecondary || isDanger) ? null : BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: bgColor,
@@ -145,7 +145,7 @@ class JuyoButton extends StatelessWidget {
               )
             : Text(
                 text,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 0.1),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.1),
               ),
       ),
     );
@@ -186,23 +186,23 @@ class JuyoStickyHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               JuyoBadge(
-                icon: LucideIcons.flame,
-                text: '$streak',
-                color: Colors.orangeAccent,
+                icon: LucideIcons.zap,
+                text: '$points',
+                color: AppColors.gold,
               ),
               const Text(
                 'JUYO',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 4.0,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 5.0,
                 ),
               ),
               JuyoBadge(
-                icon: LucideIcons.coins,
-                text: '$points',
-                color: AppColors.gold,
+                icon: LucideIcons.flame,
+                text: '$streak',
+                color: Colors.orangeAccent,
               ),
             ],
           ),
@@ -227,7 +227,7 @@ class JuyoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
@@ -242,8 +242,8 @@ class JuyoBadge extends StatelessWidget {
             text,
             style: const TextStyle(
               color: Colors.white,
-              fontWeight: FontWeight.w900,
-              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              fontSize: 10,
             ),
           ),
         ],

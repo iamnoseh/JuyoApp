@@ -1,20 +1,21 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:juyo/app/router/app_routes.dart';
+import 'package:juyo/core/models/user_model.dart';
 import 'package:juyo/core/theme/app_theme.dart';
 import 'package:juyo/core/widgets/juyo_components.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_event.dart';
-import 'package:juyo/core/models/user_model.dart';
-import 'package:juyo/features/home/data/models/dashboard_stats_model.dart';
 import 'package:juyo/features/home/data/models/admission_stats_model.dart';
+import 'package:juyo/features/home/data/models/dashboard_stats_model.dart';
 import 'package:juyo/features/home/data/models/league_leaderboard_model.dart';
+import 'package:juyo/features/home/presentation/bloc/dashboard_bloc.dart';
 import 'package:juyo/features/home/presentation/bloc/dashboard_event.dart';
 import 'package:juyo/features/home/presentation/bloc/dashboard_state.dart';
-import 'package:juyo/features/home/presentation/bloc/dashboard_bloc.dart';
 import 'package:juyo/features/profile/presentation/pages/profile_page.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -24,30 +25,19 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  static const _dockHeight = 66.0;
+  static const _topHeight = 92.0;
   int _selectedIndex = 0;
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
   bool _isLoading = true;
+  bool _isMenuOpen = false;
   UserModel? _user;
-  String _motivation = 'Загрузка мудрости...';
+  String _motivation = 'Загрузка...';
   DashboardStatsModel? _dashboardStats;
   AdmissionStatsModel? _admissionStats;
   List<LeagueLeaderboardModel> _leaderboard = [];
   List<SkillProgressModel> _skills = [];
-  bool _isMenuOpen = false;
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  void _toggleMenu() {
-    setState(() {
-      _isMenuOpen = !_isMenuOpen;
-    });
-  }
-
-  Future<void> _fetchData() async {
+  Future<void> _refresh() async {
     context.read<DashboardBloc>().add(const DashboardRefreshRequested());
   }
 
@@ -55,705 +45,215 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return BlocListener<DashboardBloc, DashboardState>(
       listener: (context, state) {
-        if (state is DashboardLoading) {
-          if (!_isLoading) {
-            setState(() {
-              _isLoading = true;
-            });
-          }
-        }
-
+        if (state is DashboardLoading) _isLoading = true;
         if (state is DashboardLoaded) {
-          setState(() {
-            _user = state.data.user;
-            _motivation = state.data.motivation;
-            _dashboardStats = state.data.dashboardStats;
-            _admissionStats = state.data.admissionStats;
-            _skills = state.data.skills;
-            _leaderboard = state.data.leaderboard;
-            _isLoading = false;
-          });
+          _user = state.data.user;
+          _motivation = state.data.motivation;
+          _dashboardStats = state.data.dashboardStats;
+          _admissionStats = state.data.admissionStats;
+          _leaderboard = state.data.leaderboard;
+          _skills = state.data.skills;
+          _isLoading = false;
         }
-
         if (state is DashboardFailure) {
-          setState(() {
-            _isLoading = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.red,
-            ),
-          );
+          _isLoading = false;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.red));
         }
+        setState(() {});
       },
-      child: _buildBody(context),
+      child: _buildScaffold(context),
     );
   }
 
-  Widget _buildBody(BuildContext context) {
+  Widget _buildScaffold(BuildContext context) {
+    final topInset = _topHeight + 24;
+    final bottomInset = MediaQuery.of(context).padding.bottom + _dockHeight + 28;
+
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Colors.white,
-        body: Center(
-          child: CircularProgressIndicator(color: AppColors.aqua),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppColors.aqua)));
     }
 
     return Scaffold(
-      key: _scaffoldKey,
       backgroundColor: AppColors.background,
       extendBody: true,
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(
-          16, 0, 16,
-          16 + MediaQuery.of(context).padding.bottom,
-        ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.of(context).padding.bottom),
         child: JuyoBottomDock(
           currentIndex: _selectedIndex,
           isMenuOpen: _isMenuOpen,
-          onToggleMenu: _toggleMenu,
-          onTap: (index) {
-            if (_isMenuOpen) _toggleMenu();
-            setState(() => _selectedIndex = index);
-          },
+          onToggleMenu: () => setState(() => _isMenuOpen = !_isMenuOpen),
+          onTap: (i) => setState(() {
+            _selectedIndex = i;
+            _isMenuOpen = false;
+          }),
         ),
       ),
       body: Stack(
         children: [
-          // 1. Conditional Viewport (Dashboard or Profile)
           Positioned.fill(
             child: IndexedStack(
-              index: (_selectedIndex == 0 || _selectedIndex == 3) ? (_selectedIndex == 0 ? 0 : 1) : 0,
+              index: (_selectedIndex == 3) ? 1 : 0,
               children: [
-                // INDEX 0: Dashboard View
                 RefreshIndicator(
-                  onRefresh: _fetchData,
-                  backgroundColor: AppColors.background,
-                  color: AppColors.aqua,
-                  edgeOffset: 110,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                    padding: const EdgeInsets.only(top: 130, bottom: 40),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        children: [
-                          _isLoading ? _buildJuyoLoading() : WelcomeCard(
-                            firstName: _user?.fullName.split(' ').first ?? 'Пользователь',
-                            motivation: _motivation,
-                          ),
-                          const SizedBox(height: 18),
-                          StatsSection(
-                            dashboardStats: _dashboardStats,
-                            admissionStats: _admissionStats,
-                            user: _user,
-                            leaderboard: _leaderboard,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                
-                // INDEX 1 (mapped from _selectedIndex == 3): Profile View
-                ProfilePage(
-                  user: _user,
-                  skills: _skills,
-                  onRefresh: _fetchData,
-                ),
-              ],
-            ),
-          ),
-
-          // 2. Menu Backdrop (Closes on tap)
-          if (_isMenuOpen)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: _toggleMenu,
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                  child: Container(color: Colors.black.withValues(alpha: 0.4)),
-                ),
-              ),
-            ),
-
-          // 3. Top Menu Overlay
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.fastOutSlowIn,
-            top: _isMenuOpen ? 0 : -MediaQuery.of(context).size.height * 0.8,
-            left: 0,
-            right: 0,
-            child: _buildTopMenuOverlay(context),
-          ),
-
-          // 4. Shared JuyoStickyHeader
-          Positioned(
-            top: 0, left: 0, right: 0,
-            child: JuyoStickyHeader(
-              streak: _user?.streak ?? 0,
-              points: _user?.points ?? 0,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopMenuOverlay(BuildContext context) {
-    final double height = MediaQuery.of(context).size.height * 0.75;
-    const Color juyoNavy = Color(0xFF343F51);
-
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: juyoNavy.withValues(alpha: 0.98),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(44),
-          bottomRight: Radius.circular(44),
-        ),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 30, offset: const Offset(0, 20)),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(44),
-          bottomRight: Radius.circular(44),
-        ),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: _isMenuOpen ? 20 : 0, 
-            sigmaY: _isMenuOpen ? 20 : 0
-          ),
-          child: SafeArea(
-            child: Column(
-            children: [
-              // Branding & Profile Section
-              Padding(
-                padding: const EdgeInsets.fromLTRB(28, 20, 28, 10),
-                child: Column(
-                  children: [
-                    const Text('JUYO', style: TextStyle(color: AppColors.aqua, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 8.0)),
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(colors: [AppColors.aqua, AppColors.gold]),
-                      ),
-                      child: Container(
-                        width: 84, height: 84,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: juyoNavy,
-                          image: DecorationImage(
-                            image: NetworkImage(_user?.profilePictureUrl ?? 'https://i.pravatar.cc/150?u=alisher'), 
-                            fit: BoxFit.cover
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(_user?.fullName.toUpperCase() ?? 'ПОЛЬЗОВАТЕЛЬ', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-                  ],
-                ),
-              ),
-
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 40),
-                child: Divider(color: Colors.white10),
-              ),
-
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _buildTopMenuItem(LucideIcons.listTodo, 'КРАСНЫЙ СПИСОК', isLocked: true),
-                    _buildTopMenuItem(LucideIcons.trophy, 'РЕЙТИНГ ЛИГИ'),
-                    _buildTopMenuItem(LucideIcons.building2, 'РЕЙТИНГ ШКОЛ'),
-                    _buildTopMenuItem(LucideIcons.zap, 'PREMIUM JUYO', isPremium: true),
-                  ],
-                ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.fromLTRB(36, 10, 36, 30),
-                child: JuyoButton(
-                  text: 'ВЫЙТИ',
-                  isDanger: true,
-                  onPressed: () async {
-                    context.read<AuthBloc>().add(const AuthLoggedOut());
-                    if (!mounted) return;
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      AppRoutes.login,
-                      (route) => false,
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-  Widget _buildTopMenuItem(IconData icon, String title, {bool isLocked = false, bool isPremium = false}) {
-    return ListTile(
-      leading: Icon(icon, color: isPremium ? AppColors.gold : Colors.white60, size: 20),
-      title: Text(title.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.0)),
-      trailing: isLocked ? const Icon(LucideIcons.lock, size: 14, color: Colors.white24) : null,
-      onTap: () {},
-    );
-  }
-
-  Widget _buildJuyoLoading() {
-    return Container(
-      height: 140,
-      width: double.infinity,
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.8, end: 1.2),
-            duration: const Duration(milliseconds: 600),
-            builder: (context, value, child) => Transform.scale(
-              scale: value,
-              child: const Icon(LucideIcons.brain, color: AppColors.aqua, size: 40),
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'JUYO',
-            style: TextStyle(
-              color: AppColors.navy,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 4.0,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text('ОБНОВЛЯЕМ...', style: TextStyle(color: Colors.black26, fontSize: 10, fontWeight: FontWeight.w800)),
-        ],
-      ),
-    );
-  }
-}
-
-class WelcomeCard extends StatelessWidget {
-  final String firstName;
-  final String motivation;
-
-  const WelcomeCard({
-    super.key,
-    required this.firstName,
-    required this.motivation,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 25, offset: const Offset(0, 12)),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Привет,\n$firstName!', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, height: 1.1, color: AppColors.navy)),
-                const SizedBox(height: 10),
-                Text('«$motivation»', style: const TextStyle(color: Colors.black45, fontSize: 11, fontStyle: FontStyle.italic)),
-                const SizedBox(height: 18),
-                SizedBox(height: 44, width: 140, child: JuyoButton(text: 'Обучение', onPressed: () {})),
-              ],
-            ),
-          ),
-          const SizedBox(width: 14),
-          Icon(LucideIcons.brain, size: 58, color: AppColors.aqua.withValues(alpha: 0.8)),
-        ],
-      ),
-    );
-  }
-}
-
-class StatsSection extends StatelessWidget {
-  final DashboardStatsModel? dashboardStats;
-  final AdmissionStatsModel? admissionStats;
-  final UserModel? user;
-  final List<LeagueLeaderboardModel> leaderboard;
-
-  const StatsSection({
-    super.key,
-    this.dashboardStats,
-    this.admissionStats,
-    this.user,
-    this.leaderboard = const [],
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final dailyCompleted = dashboardStats?.dailyProgress.completed ?? 0;
-    final dailyGoal = dashboardStats?.dailyProgress.goal ?? 5; 
-    final tests = dashboardStats?.dailyProgress.completed ?? 0;
-    final xp = user?.xp ?? 0;
-    final elo = user?.eloRating ?? 1000;
-    final accuracy = 75; // Calculate from scores if needed
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (admissionStats != null) ...[
-          MobileAdmissionGaugeCard(stats: admissionStats!),
-          const SizedBox(height: 24),
-        ],
-
-        // Daily Goals Section
-        const Text('ЦЕЛИ НА СЕГОДНЯ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppColors.navy, letterSpacing: 0.5)),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 10))],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('$dailyCompleted/$dailyGoal тестов пройдено', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF1E293B))),
-                  Text('${((dailyCompleted / dailyGoal) * 100).toStringAsFixed(0)}%', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppColors.aqua)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: TweenAnimationBuilder<double>(
-                  tween: Tween<double>(begin: 0.0, end: dailyGoal > 0 ? (dailyCompleted / dailyGoal) : 0.0),
-                  duration: const Duration(milliseconds: 1200),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, value, _) => LinearProgressIndicator(
-                    value: value,
-                    minHeight: 6,
-                    backgroundColor: const Color(0xFFF1F5F9),
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.aqua),
-                  ),
-                ),
-              )
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // 4 Stat Cards Grid
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.4,
-          children: [
-            _buildMinimalStatCard('Тесты', '$tests', Icons.quiz_outlined, AppColors.aqua),
-            _buildMinimalStatCard('Опыт', '$xp', Icons.bolt_outlined, AppColors.aqua),
-            _buildMinimalStatCard('Рейтинг', '$elo', Icons.workspace_premium_outlined, AppColors.gold),
-            _buildMinimalStatCard('Точность', '$accuracy%', Icons.gps_fixed_outlined, const Color(0xFF1E293B)),
-          ],
-        ),
-
-        const SizedBox(height: 24),
-
-        // Leaderboard Section (Бронзовая лига)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(user?.currentLeagueName?.toUpperCase() ?? 'БРОНЗОВАЯ ЛИГА', 
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppColors.navy, letterSpacing: 0.5)),
-            Text('Смотреть', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.navy.withValues(alpha: 0.6))),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 10))],
-          ),
-          child: Column(
-            children: leaderboard.isEmpty 
-              ? [const Padding(padding: EdgeInsets.all(20), child: Text('Загрузка...', style: TextStyle(fontSize: 12, color: Colors.black26)))]
-              : leaderboard.map((item) => _buildLeaderboardRow(
-                  item.rank, 
-                  item.name, 
-                  item.xp, 
-                  item.isMe,
-                  isFirst: leaderboard.indexOf(item) == 0,
-                  isLast: leaderboard.indexOf(item) == leaderboard.length - 1,
-                )).toList(),
-          ),
-        ),
-        const SizedBox(height: 32),
-      ],
-    );
-  }
-
-  Widget _buildMinimalStatCard(String title, String value, IconData icon, Color iconColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 10))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: iconColor, size: 20),
-              Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(title, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.w800, letterSpacing: 0.5)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLeaderboardRow(int rank, String name, String xp, bool isMe, {bool isFirst = false, bool isLast = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isMe ? AppColors.gold.withValues(alpha: 0.1) : Colors.transparent,
-        borderRadius: BorderRadius.vertical(
-           top: isFirst ? const Radius.circular(20) : Radius.zero,
-           bottom: isLast ? const Radius.circular(20) : Radius.zero,
-        ),
-      ),
-      child: Row(
-        children: [
-          SizedBox(width: 20, child: Text(rank.toString(), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: isMe ? AppColors.gold : AppColors.navy), textAlign: TextAlign.center)),
-          const SizedBox(width: 12),
-          CircleAvatar(radius: 14, backgroundColor: isMe ? AppColors.gold.withValues(alpha: 0.4) : const Color(0xFFE2E8F0)),
-          const SizedBox(width: 12),
-          Expanded(child: Text(name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.navy.withValues(alpha: 0.9)))),
-          Text(xp, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: isMe ? AppColors.gold : AppColors.navy.withValues(alpha: 0.5))),
-        ],
-      ),
-    );
-  }
-}
-
-class MobileAdmissionGaugeCard extends StatelessWidget {
-  final AdmissionStatsModel stats;
-
-  const MobileAdmissionGaugeCard({super.key, required this.stats});
-
-  @override
-  Widget build(BuildContext context) {
-    final probability = stats.admissionProbability;
-    
-    Color statusColor = AppColors.gold; 
-    if (probability > 85) statusColor = AppColors.aqua; 
-    if (probability < 40) statusColor = Colors.redAccent;     
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top row: Title + Gauge
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  onRefresh: _refresh,
+                  edgeOffset: topInset,
+                  child: ListView(
+                    padding: EdgeInsets.fromLTRB(16, topInset + 8, 16, bottomInset),
                     children: [
-                      const Text(
-                        'ГОТОВНОСТЬ К',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF64748B),
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'ПОСТУПЛЕНИЮ',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF1E293B),
-                          letterSpacing: -0.2,
-                        ),
-                      ),
+                      _welcomeCard(),
+                      const SizedBox(height: 12),
+                      _statsCard(),
+                      const SizedBox(height: 12),
+                      _admissionCard(),
+                      const SizedBox(height: 12),
+                      _leaderboardCard(),
                     ],
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 66,
-                height: 66,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Thick background ring
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFF1F5F9), width: 6),
-                      ),
-                    ),
-                    // Foreground animated progress indicator
-                    SizedBox(
-                      width: 66,
-                      height: 66,
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween<double>(begin: 0.0, end: probability / 100),
-                        duration: const Duration(milliseconds: 1500),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, _) => CircularProgressIndicator(
-                          value: value,
-                          strokeWidth: 6,
-                          backgroundColor: Colors.transparent,
-                          valueColor: AlwaysStoppedAnimation<Color>(statusColor),
-                          strokeCap: StrokeCap.round,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '${probability.toStringAsFixed(0)}%',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        color: statusColor,
-                      ),
-                    ),
-                  ],
+                ProfilePage(
+                  user: _user,
+                  skills: _skills,
+                  onRefresh: _refresh,
+                  topInset: topInset,
+                  bottomInset: bottomInset,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 24),
-          
-          // Info Rows
-          _buildInfoRow(Icons.school, 'ВЫБРАННЫЙ УНИВЕРСИТЕТ', stats.targetUniversity ?? stats.universityName),
-          const SizedBox(height: 16),
-          _buildInfoRow(Icons.architecture, 'СПЕЦИАЛЬНОСТЬ', stats.targetMajorName ?? stats.specialtyName),
-          
-          const SizedBox(height: 20),
-          const Divider(color: Color(0xFFF1F5F9), thickness: 1, height: 1),
-          const SizedBox(height: 20),
-          
-          // Score Matrix Section
-          const Text('ПРОХОДНЫЕ БАЛЛЫ', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildScoreBox('2024', stats.targetPassingScore2024?.toString() ?? '—', const Color(0xFFF8FAFC), const Color(0xFF1E293B)),
-              const SizedBox(width: 8),
-              _buildScoreBox('2025', stats.targetPassingScore2025?.toString() ?? '—', const Color(0xFFF8FAFC), const Color(0xFF1E293B)),
-              const SizedBox(width: 8),
-              _buildScoreBox('ЦЕЛЬ', stats.targetPassingScore.toString(), AppColors.gold.withValues(alpha: 0.12), AppColors.gold, isTarget: true),
-            ],
+          if (_isMenuOpen)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => setState(() => _isMenuOpen = false),
+                child: Container(color: Colors.black.withValues(alpha: 0.35)),
+              ),
+            ),
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 400),
+            top: _isMenuOpen ? 0 : -MediaQuery.of(context).size.height * 0.55,
+            left: 0,
+            right: 0,
+            child: _topMenu(),
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: JuyoStickyHeader(
+              streak: _user?.streak ?? 0,
+              points: _user?.xp ?? 0,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+  Widget _welcomeCard() => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+        child: Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Привет, ${_user?.fullName.split(' ').first ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 8),
+              Text('$_motivation', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: AppColors.slate)),
+            ]),
           ),
-          child: Icon(icon, color: const Color(0xFF64748B), size: 16),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label.toUpperCase(), style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
-              const SizedBox(height: 2),
-              Text(value, style: const TextStyle(color: Color(0xFF1E293B), fontSize: 13, fontWeight: FontWeight.w800), maxLines: 2, overflow: TextOverflow.ellipsis),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+          const Icon(LucideIcons.brain, color: AppColors.aqua),
+        ]),
+      );
 
-  Widget _buildScoreBox(String year, String score, Color bgColor, Color textColor, {bool isTarget = false}) {
-    return Expanded(
-      child: Container(
-        height: 70,
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isTarget ? AppColors.gold : const Color(0xFFF1F5F9), width: isTarget ? 1.5 : 1.0),
-          boxShadow: isTarget ? [BoxShadow(color: AppColors.gold.withValues(alpha: 0.2), blurRadius: 10)] : null,
-        ),
+  Widget _statsCard() => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+        child: Row(children: [
+          _miniStat('Тесты', '${_dashboardStats?.dailyProgress.completed ?? 0}'),
+          _miniStat('XP', '${_user?.xp ?? 0}'),
+          _miniStat('Рейтинг', '${_user?.eloRating ?? 0}'),
+        ]),
+      );
+
+  Widget _admissionCard() => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Готовность к поступлению', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+          const SizedBox(height: 8),
+          Text(_admissionStats?.targetUniversity ?? _admissionStats?.universityName ?? '—', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
+          const SizedBox(height: 6),
+          Text(_admissionStats?.targetMajorName ?? _admissionStats?.specialtyName ?? '—', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: AppColors.slate)),
+        ]),
+      );
+
+  Widget _leaderboardCard() => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(year.toUpperCase(), style: TextStyle(color: isTarget ? AppColors.gold : const Color(0xFF94A3B8), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-            const SizedBox(height: 4),
-            Text(score, style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.w900)),
-          ],
+          children: _leaderboard.isEmpty
+              ? [const Text('Нет данных', style: TextStyle(fontSize: 12, color: AppColors.slate))]
+              : _leaderboard.take(6).map((e) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(children: [
+                      SizedBox(width: 24, child: Text('${e.rank}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800))),
+                      Expanded(child: Text(e.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11))),
+                      Text(e.xp, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                    ]),
+                  )).toList(),
         ),
-      ),
-    );
-  }
+      );
+
+  Widget _miniStat(String title, String value) => Expanded(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          decoration: BoxDecoration(color: AppColors.milkyCard, borderRadius: BorderRadius.circular(12)),
+          child: Column(children: [
+            Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 2),
+            Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, color: AppColors.slate)),
+          ]),
+        ),
+      );
+
+  Widget _topMenu() => Container(
+        height: MediaQuery.of(context).size.height * 0.5,
+        decoration: BoxDecoration(
+          color: const Color(0xFF343F51).withValues(alpha: 0.98),
+          borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(28), bottomRight: Radius.circular(28)),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            child: Column(children: [
+              const Text('JUYO MENU', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 8),
+              _menuItem(LucideIcons.listTodo, 'Красный список'),
+              _menuItem(LucideIcons.trophy, 'Рейтинг лиги'),
+              _menuItem(LucideIcons.building2, 'Рейтинг школ'),
+              const Spacer(),
+              SizedBox(
+                height: 44,
+                child: JuyoButton(
+                  text: 'Выйти',
+                  isDanger: true,
+                  onPressed: () {
+                    context.read<AuthBloc>().add(const AuthLoggedOut());
+                    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
+                  },
+                ),
+              ),
+            ]),
+          ),
+        ),
+      );
+
+  Widget _menuItem(IconData icon, String title) => ListTile(
+        dense: true,
+        visualDensity: const VisualDensity(vertical: -2),
+        leading: Icon(icon, size: 16, color: Colors.white70),
+        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+        onTap: () {},
+      );
 }
 
 class JuyoBottomDock extends StatelessWidget {
@@ -761,97 +261,42 @@ class JuyoBottomDock extends StatelessWidget {
   final Function(int) onTap;
   final bool isMenuOpen;
   final VoidCallback onToggleMenu;
-
-  const JuyoBottomDock({
-    super.key,
-    required this.currentIndex,
-    required this.onTap,
-    required this.isMenuOpen,
-    required this.onToggleMenu,
-  });
-
-  static const Color _navBg = Color(0xFF2C3545);
+  const JuyoBottomDock({super.key, required this.currentIndex, required this.onTap, required this.isMenuOpen, required this.onToggleMenu});
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final double slotWidth = constraints.maxWidth / 5; // 5 Items now
-
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: Container(
-              height: 66,
-              decoration: BoxDecoration(
-                color: _navBg,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 20, offset: const Offset(0, 4)),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  // Indicators etc...
-                  Row(
-                    children: [
-                      _buildItem(LucideIcons.layoutDashboard, 'ПАРАМ', 0, slotWidth),
-                      _buildItem(LucideIcons.swords, 'ДУЭЛЬ', 1, slotWidth),
-                      _buildCenterMenu(slotWidth),
-                      _buildItem(LucideIcons.brain, 'ТЕСТЫ', 2, slotWidth),
-                      _buildItem(LucideIcons.user, 'ПРОФИЛЬ', 3, slotWidth),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildCenterMenu(double width) {
-    return SizedBox(
-      width: width,
-      child: GestureDetector(
-        onTap: onToggleMenu,
+    final slot = (MediaQuery.of(context).size.width - 32) / 5;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isMenuOpen ? AppColors.gold : Colors.white.withValues(alpha: 0.05),
-            boxShadow: isMenuOpen ? [BoxShadow(color: AppColors.gold.withValues(alpha: 0.3), blurRadius: 10)] : null,
-          ),
-          child: Icon(
-            isMenuOpen ? LucideIcons.x : LucideIcons.layoutGrid,
-            color: isMenuOpen ? Colors.black : Colors.white60,
-            size: 24,
-          ),
+          height: 66,
+          decoration: BoxDecoration(color: const Color(0xFF2C3545), borderRadius: BorderRadius.circular(28)),
+          child: Row(children: [
+            _item(slot, LucideIcons.layoutDashboard, 'ПАРАМ', 0),
+            _item(slot, LucideIcons.swords, 'ДУЭЛЬ', 1),
+            SizedBox(width: slot, child: GestureDetector(onTap: onToggleMenu, child: Icon(isMenuOpen ? LucideIcons.x : LucideIcons.layoutGrid, color: AppColors.gold, size: 22))),
+            _item(slot, LucideIcons.brain, 'ТЕСТЫ', 2),
+            _item(slot, LucideIcons.user, 'ПРОФИЛЬ', 3),
+          ]),
         ),
       ),
     );
   }
 
-  Widget _buildItem(IconData icon, String label, int index, double width) {
-    final bool active = currentIndex == index && !isMenuOpen;
+  Widget _item(double width, IconData icon, String label, int index) {
+    final active = currentIndex == index && !isMenuOpen;
     return SizedBox(
       width: width,
       child: GestureDetector(
         onTap: () => onTap(index),
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: active ? AppColors.gold : const Color(0xFFAEB8C8), size: 20),
-            const SizedBox(height: 2),
-            Text(label, style: TextStyle(color: active ? AppColors.gold : const Color(0xFFAEB8C8), fontSize: 8, fontWeight: active ? FontWeight.w900 : FontWeight.w500)),
-          ],
-        ),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(icon, size: 18, color: active ? AppColors.gold : const Color(0xFFAEB8C8)),
+          const SizedBox(height: 2),
+          Text(label, style: TextStyle(fontSize: 8, color: active ? AppColors.gold : const Color(0xFFAEB8C8))),
+        ]),
       ),
     );
   }
 }
-
-// SidebarDrawer class has been removed. TopMenuOverlay is now used for navigation.

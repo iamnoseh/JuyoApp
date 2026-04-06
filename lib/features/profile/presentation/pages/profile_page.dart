@@ -18,12 +18,16 @@ class ProfilePage extends StatelessWidget {
   final UserModel? user;
   final List<SkillProgressModel>? skills;
   final VoidCallback onRefresh;
+  final double topInset;
+  final double bottomInset;
 
   const ProfilePage({
     super.key,
     required this.user,
     this.skills,
     required this.onRefresh,
+    this.topInset = 120,
+    this.bottomInset = 100,
   });
 
   @override
@@ -42,6 +46,8 @@ class ProfilePage extends StatelessWidget {
       child: _ProfileView(
         skills: skills ?? const [],
         onRefresh: onRefresh,
+        topInset: topInset,
+        bottomInset: bottomInset,
       ),
     );
   }
@@ -50,10 +56,14 @@ class ProfilePage extends StatelessWidget {
 class _ProfileView extends StatelessWidget {
   final List<SkillProgressModel> skills;
   final VoidCallback onRefresh;
+  final double topInset;
+  final double bottomInset;
 
   const _ProfileView({
     required this.skills,
     required this.onRefresh,
+    required this.topInset,
+    required this.bottomInset,
   });
 
   @override
@@ -92,9 +102,9 @@ class _ProfileView extends StatelessWidget {
                 },
                 backgroundColor: AppColors.aqua,
                 color: Colors.white,
-                edgeOffset: 120,
+                edgeOffset: topInset,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 120, 16, 100),
+                  padding: EdgeInsets.fromLTRB(16, topInset, 16, bottomInset),
                   children: [
                     if (isLoading && profile == null)
                       const Padding(
