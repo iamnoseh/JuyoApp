@@ -27,6 +27,7 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   static const _dockHeight = 66.0;
   static const _topHeight = 92.0;
+  static const _cardRadius = 28.0;
 
   int _selectedIndex = 0;
   bool _isMenuOpen = false;
@@ -122,13 +123,13 @@ class _DashboardPageState extends State<DashboardPage> {
                     padding: EdgeInsets.fromLTRB(16, topInset + 8, 16, bottomInset),
                     children: [
                       _welcomeCard(),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       _admissionCard(),
-                      const SizedBox(height: 12),
-                      _subjectsCard(),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       _dailyGoalsCard(),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
+                      _statsGrid(),
+                      const SizedBox(height: 16),
                       _leaderboardCard(),
                     ],
                   ),
