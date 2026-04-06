@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:juyo/core/services/reference_service.dart';
 import 'package:juyo/core/theme/app_theme.dart';
 import 'package:juyo/core/widgets/juyo_components.dart';
 import 'package:juyo/features/profile/data/models/update_profile_request_model.dart';
@@ -12,6 +11,10 @@ import 'package:juyo/features/profile/domain/entities/profile.dart';
 import 'package:juyo/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:juyo/features/profile/presentation/bloc/profile_event.dart';
 import 'package:juyo/features/profile/presentation/bloc/profile_state.dart';
+import 'package:juyo/features/reference/domain/entities/reference_entities.dart';
+import 'package:juyo/features/reference/presentation/bloc/reference_bloc.dart';
+import 'package:juyo/features/reference/presentation/bloc/reference_event.dart';
+import 'package:juyo/features/reference/presentation/bloc/reference_state.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class ProfileEditPage extends StatefulWidget {
@@ -51,9 +54,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   int? _targetMajorId;
   DateTime? _dob;
 
-  List<SchoolOption> _schools = [];
-  List<UniversityOption> _universities = [];
-  List<MajorOption> _majors = [];
+  List<SchoolEntity> _schools = [];
+  List<UniversityEntity> _universities = [];
+  List<MajorEntity> _majors = [];
   bool _loadingRefs = true;
   final ImagePicker _picker = ImagePicker();
   File? _avatarFile;
@@ -71,7 +74,12 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     _targetUniversityId = widget.profile.targetUniversityId;
     _targetMajorId = widget.profile.targetMajorId;
     _dob = _tryParseDate(widget.profile.dateOfBirth);
-    _loadReferences();
+
+    context.read<ReferenceBloc>().add(
+          ReferenceLoadRequested(
+            selectedUniversityId: _targetUniversityId,
+          ),
+        );
   }
 
   @override
@@ -86,51 +94,18 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     return DateTime.tryParse(iso);
   }
 
-  Future<void> _loadReferences() async {
-    try {
-      final results = await Future.wait([
-        ReferenceService.fetchSchools(),
-        ReferenceService.fetchUniversities(),
-      ]);
-      final schools = results[0] as List<SchoolOption>;
-      final universities = results[1] as List<UniversityOption>;
-      List<MajorOption> majors = [];
-      if (_targetUniversityId != null) {
-        majors = await ReferenceService.fetchMajors(_targetUniversityId!);
-      }
-      if (!mounted) return;
-      setState(() {
-        _schools = schools;
-        _universities = universities;
-        _majors = majors;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Не удалось загрузить школы/университеты')),
-      );
-    } finally {
-      if (mounted) setState(() => _loadingRefs = false);
-    }
-  }
-
   Future<void> _onUniversityChanged(int? universityId) async {
     setState(() {
       _targetUniversityId = universityId;
       _targetMajorId = null;
       _majors = [];
     });
-    if (universityId == null) return;
-    try {
-      final majors = await ReferenceService.fetchMajors(universityId);
-      if (!mounted) return;
-      setState(() => _majors = majors);
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Не удалось загрузить специальности')),
-      );
+
+    if (universityId == null) {
+      return;
     }
+
+    context.read<ReferenceBloc>().add(ReferenceMajorsRequested(universityId));
   }
 
   Future<void> _pickDob() async {
@@ -205,20 +180,51 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ProfileBloc, ProfileState>(
-      listenWhen: (previous, current) =>
-          current is ProfileUpdateSuccess || current is ProfileFailure,
-      listener: (context, state) {
-        if (state is ProfileUpdateSuccess) {
-          Navigator.of(context).pop(true);
-        }
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ProfileBloc, ProfileState>(
+          listenWhen: (previous, current) =>
+              current is ProfileUpdateSuccess || current is ProfileFailure,
+          listener: (context, state) {
+            if (state is ProfileUpdateSuccess) {
+              Navigator.of(context).pop(true);
+            }
 
-        if (state is ProfileFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
-        }
-      },
+            if (state is ProfileFailure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
+            }
+          },
+        ),
+        BlocListener<ReferenceBloc, ReferenceState>(
+          listener: (context, state) {
+            if (state is ReferenceLoading) {
+              setState(() {
+                _loadingRefs = true;
+              });
+            }
+
+            if (state is ReferenceLoaded) {
+              setState(() {
+                _schools = state.schools;
+                _universities = state.universities;
+                _majors = state.majors;
+                _loadingRefs = false;
+              });
+            }
+
+            if (state is ReferenceFailure) {
+              setState(() {
+                _loadingRefs = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
+            }
+          },
+        ),
+      ],
       child: BlocBuilder<ProfileBloc, ProfileState>(
         builder: (context, state) {
           final isSaving = state is ProfileSaving;
@@ -351,7 +357,10 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           Icon(LucideIcons.info, size: 18, color: AppColors.aqua),
           SizedBox(width: 10),
           Expanded(
-            child: Text('Изменения сохраняются в вашем аккаунте.', style: TextStyle(color: AppColors.slate, fontSize: 12, fontWeight: FontWeight.w700)),
+            child: Text(
+              'Изменения сохраняются в вашем аккаунте.',
+              style: TextStyle(color: AppColors.slate, fontSize: 12, fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -450,9 +459,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 iconEnabledColor: AppColors.slate,
                 items: options
                     .map(
-                      (value) => DropdownMenuItem<int>(
-                        value: value,
-                        child: Text(itemLabel?.call(value) ?? value.toString(), style: const TextStyle(color: AppColors.navy), overflow: TextOverflow.ellipsis),
+                      (item) => DropdownMenuItem<int>(
+                        value: item,
+                        child: Text(itemLabel?.call(item) ?? item.toString(), style: const TextStyle(color: AppColors.navy), overflow: TextOverflow.ellipsis),
                       ),
                     )
                     .toList(),
@@ -493,9 +502,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 iconEnabledColor: AppColors.slate,
                 items: options
                     .map(
-                      (value) => DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value, style: const TextStyle(color: AppColors.navy), overflow: TextOverflow.ellipsis),
+                      (item) => DropdownMenuItem<String>(
+                        value: item,
+                        child: Text(item, style: const TextStyle(color: AppColors.navy), overflow: TextOverflow.ellipsis),
                       ),
                     )
                     .toList(),

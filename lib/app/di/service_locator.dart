@@ -20,6 +20,13 @@ import 'package:juyo/features/profile/domain/repositories/profile_repository.dar
 import 'package:juyo/features/profile/domain/usecases/get_profile_use_case.dart';
 import 'package:juyo/features/profile/domain/usecases/update_profile_use_case.dart';
 import 'package:juyo/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:juyo/features/reference/data/datasources/reference_remote_data_source.dart';
+import 'package:juyo/features/reference/data/repositories/reference_repository_impl.dart';
+import 'package:juyo/features/reference/domain/repositories/reference_repository.dart';
+import 'package:juyo/features/reference/domain/usecases/get_majors_use_case.dart';
+import 'package:juyo/features/reference/domain/usecases/get_schools_use_case.dart';
+import 'package:juyo/features/reference/domain/usecases/get_universities_use_case.dart';
+import 'package:juyo/features/reference/presentation/bloc/reference_bloc.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -135,6 +142,48 @@ Future<void> setupServiceLocator() async {
       () => ProfileBloc(
         getProfileUseCase: getIt<GetProfileUseCase>(),
         updateProfileUseCase: getIt<UpdateProfileUseCase>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<ReferenceRemoteDataSource>()) {
+    getIt.registerLazySingleton<ReferenceRemoteDataSource>(
+      () => ReferenceRemoteDataSource(getIt<Dio>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ReferenceRepository>()) {
+    getIt.registerLazySingleton<ReferenceRepository>(
+      () => ReferenceRepositoryImpl(
+        remoteDataSource: getIt<ReferenceRemoteDataSource>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<GetSchoolsUseCase>()) {
+    getIt.registerLazySingleton<GetSchoolsUseCase>(
+      () => GetSchoolsUseCase(getIt<ReferenceRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<GetUniversitiesUseCase>()) {
+    getIt.registerLazySingleton<GetUniversitiesUseCase>(
+      () => GetUniversitiesUseCase(getIt<ReferenceRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<GetMajorsUseCase>()) {
+    getIt.registerLazySingleton<GetMajorsUseCase>(
+      () => GetMajorsUseCase(getIt<ReferenceRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ReferenceBloc>()) {
+    getIt.registerFactory<ReferenceBloc>(
+      () => ReferenceBloc(
+        getSchoolsUseCase: getIt<GetSchoolsUseCase>(),
+        getUniversitiesUseCase: getIt<GetUniversitiesUseCase>(),
+        getMajorsUseCase: getIt<GetMajorsUseCase>(),
       ),
     );
   }

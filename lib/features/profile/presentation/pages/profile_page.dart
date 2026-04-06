@@ -11,6 +11,8 @@ import 'package:juyo/features/profile/presentation/bloc/profile_event.dart';
 import 'package:juyo/features/profile/presentation/bloc/profile_state.dart';
 import 'package:juyo/features/profile/presentation/mappers/profile_seed_mapper.dart';
 import 'package:juyo/features/profile/presentation/pages/profile_edit_page.dart';
+import 'package:juyo/features/reference/presentation/bloc/reference_bloc.dart';
+import 'package:juyo/features/reference/presentation/bloc/reference_event.dart';
 
 class ProfilePage extends StatelessWidget {
   final UserModel? user;
@@ -150,8 +152,18 @@ class _ProfileView extends StatelessWidget {
                     final bloc = context.read<ProfileBloc>();
                     final updated = await Navigator.of(context).push<bool>(
                       MaterialPageRoute(
-                        builder: (_) => BlocProvider.value(
-                          value: bloc,
+                        builder: (_) => MultiBlocProvider(
+                          providers: [
+                            BlocProvider.value(value: bloc),
+                            BlocProvider(
+                              create: (_) => getIt<ReferenceBloc>()
+                                ..add(
+                                  ReferenceLoadRequested(
+                                    selectedUniversityId: profile.targetUniversityId,
+                                  ),
+                                ),
+                            ),
+                          ],
                           child: ProfileEditPage(profile: profile),
                         ),
                       ),
