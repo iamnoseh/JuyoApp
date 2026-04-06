@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:juyo/app/di/service_locator.dart';
 import 'package:juyo/core/models/user_model.dart';
-import 'package:juyo/core/widgets/juyo_components.dart';
 import 'package:juyo/core/theme/app_theme.dart';
+import 'package:juyo/core/widgets/juyo_components.dart';
+import 'package:juyo/features/profile/domain/entities/profile.dart';
+import 'package:juyo/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:juyo/features/profile/presentation/bloc/profile_event.dart';
+import 'package:juyo/features/profile/presentation/bloc/profile_state.dart';
+import 'package:juyo/features/profile/presentation/mappers/profile_seed_mapper.dart';
 import 'package:juyo/features/profile/presentation/pages/profile_edit_page.dart';
 
-class ProfilePage extends StatefulWidget {
+class ProfilePage extends StatelessWidget {
   final UserModel? user;
   final List<SkillProgressModel>? skills;
   final VoidCallback onRefresh;
@@ -18,73 +25,141 @@ class ProfilePage extends StatefulWidget {
   });
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
-}
-
-class _ProfilePageState extends State<ProfilePage> {
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          // Scrollable Content
-          RefreshIndicator(
-            onRefresh: () async => widget.onRefresh(),
-            backgroundColor: AppColors.aqua,
-            color: Colors.white,
-            edgeOffset: 120,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 120, 16, 100),
-              children: [
-                _buildIdentityCard(),
-                const SizedBox(height: 12),
-                _buildQuickActions(context),
-                const SizedBox(height: 20),
-                _buildStatsRow(),
-                const SizedBox(height: 16),
-                _buildAdmissionGoalCard(),
-                const SizedBox(height: 24),
-                _buildSectionHeader('Навыки и прогресс', LucideIcons.activity),
-                const SizedBox(height: 12),
-                _buildSkillsList(),
-                const SizedBox(height: 24),
-                _buildSectionHeader('Последняя активность', LucideIcons.history),
-                const SizedBox(height: 12),
-                _buildRecentActivity(),
-              ],
-            ),
-          ),
-
-          // Shared Sticky Header
-          Positioned(
-            top: 0, left: 0, right: 0,
-            child: JuyoStickyHeader(
-              streak: widget.user?.streak ?? 0,
-              points: widget.user?.points ?? 0,
-            ),
-          ),
-        ],
+    return BlocProvider(
+      create: (_) {
+        final bloc = getIt<ProfileBloc>();
+        if (user != null) {
+          bloc.add(ProfileSeeded(ProfileSeedMapper.fromUserModel(user!)));
+          bloc.add(const ProfileRefreshRequested());
+        } else {
+          bloc.add(const ProfileLoadRequested());
+        }
+        return bloc;
+      },
+      child: _ProfileView(
+        skills: skills ?? const [],
+        onRefresh: onRefresh,
       ),
     );
   }
+}
 
-  Widget _buildQuickActions(BuildContext context) {
+class _ProfileView extends StatelessWidget {
+  final List<SkillProgressModel> skills;
+  final VoidCallback onRefresh;
+
+  const _ProfileView({
+    required this.skills,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<ProfileBloc, ProfileState>(
+      listenWhen: (previous, current) => current is ProfileFailure,
+      listener: (context, state) {
+        if (state is ProfileFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.red,
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        final profile = switch (state) {
+          ProfileLoaded(:final profile) => profile,
+          ProfileSaving(:final profile?) => profile,
+          ProfileUpdateSuccess(:final profile) => profile,
+          ProfileFailure(profile: final profile?) => profile,
+          _ => null,
+        };
+
+        final isLoading = state is ProfileInitial || state is ProfileLoading;
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: Stack(
+            children: [
+              RefreshIndicator(
+                onRefresh: () async {
+                  context.read<ProfileBloc>().add(const ProfileRefreshRequested());
+                  onRefresh();
+                },
+                backgroundColor: AppColors.aqua,
+                color: Colors.white,
+                edgeOffset: 120,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 120, 16, 100),
+                  children: [
+                    if (isLoading && profile == null)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 80),
+                        child: Center(
+                          child: CircularProgressIndicator(color: AppColors.aqua),
+                        ),
+                      )
+                    else ...[
+                      _buildIdentityCard(profile),
+                      const SizedBox(height: 12),
+                      _buildQuickActions(context, profile),
+                      const SizedBox(height: 20),
+                      _buildStatsRow(profile),
+                      const SizedBox(height: 16),
+                      _buildAdmissionGoalCard(profile),
+                      const SizedBox(height: 24),
+                      _buildSectionHeader('НАВЫКИ И ПРОГРЕСС', LucideIcons.activity),
+                      const SizedBox(height: 12),
+                      _buildSkillsList(skills),
+                      const SizedBox(height: 24),
+                      _buildSectionHeader('ПОСЛЕДНЯЯ АКТИВНОСТЬ', LucideIcons.history),
+                      const SizedBox(height: 12),
+                      _buildRecentActivity(profile),
+                    ],
+                  ],
+                ),
+              ),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: JuyoStickyHeader(
+                  streak: profile?.streak ?? 0,
+                  points: profile?.points ?? 0,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context, Profile? profile) {
     return Row(
       children: [
         Expanded(
           child: JuyoButton(
             text: 'РЕДАКТИРОВАТЬ',
             isSecondary: true,
-            onPressed: widget.user == null
+            onPressed: profile == null
                 ? null
                 : () async {
-                    await Navigator.of(context).push(
+                    final bloc = context.read<ProfileBloc>();
+                    final updated = await Navigator.of(context).push<bool>(
                       MaterialPageRoute(
-                        builder: (_) => ProfileEditPage(user: widget.user!),
+                        builder: (_) => BlocProvider.value(
+                          value: bloc,
+                          child: ProfileEditPage(profile: profile),
+                        ),
                       ),
                     );
-                    widget.onRefresh();
+
+                    if (updated == true) {
+                      onRefresh();
+                    }
                   },
           ),
         ),
@@ -92,26 +167,22 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildIdentityCard() {
-    final user = widget.user;
+  Widget _buildIdentityCard(Profile? profile) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),
         border: Border.all(color: const Color(0xFFE3E9F2)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.11), blurRadius: 22, offset: const Offset(0, 10)),
-        ],
       ),
       child: Column(
         children: [
-          // Avatar with Premium Ring
           Stack(
             alignment: Alignment.center,
             children: [
               Container(
-                width: 100, height: 100,
+                width: 100,
+                height: 100,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(colors: [AppColors.aqua, AppColors.gold]),
@@ -123,17 +194,17 @@ class _ProfilePageState extends State<ProfilePage> {
                     color: AppColors.background,
                   ),
                   child: ClipOval(
-                    child: user?.profilePictureUrl != null && user!.profilePictureUrl!.isNotEmpty
+                    child: profile?.avatarUrl != null && profile!.avatarUrl!.isNotEmpty
                         ? Image.network(
-                            user.profilePictureUrl!,
+                            profile.avatarUrl!,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _buildInitials(user.fullName),
+                            errorBuilder: (_, __, ___) => _buildInitials(profile.fullName),
                           )
-                        : _buildInitials(user?.fullName ?? ''),
+                        : _buildInitials(profile?.fullName ?? ''),
                   ),
                 ),
               ),
-              if (user?.isPremium ?? false)
+              if (profile?.isPremium ?? false)
                 Positioned(
                   bottom: 0,
                   right: 0,
@@ -150,7 +221,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           const SizedBox(height: 16),
           Text(
-            user?.fullName ?? 'Загрузка...',
+            profile?.fullName ?? 'Загрузка...',
             textAlign: TextAlign.center,
             style: const TextStyle(color: AppColors.navy, fontSize: 22, fontWeight: FontWeight.w900),
           ),
@@ -161,7 +232,7 @@ class _ProfilePageState extends State<ProfilePage> {
               const Icon(LucideIcons.mapPin, size: 14, color: AppColors.aqua),
               const SizedBox(width: 4),
               Text(
-                user?.province ?? 'Душанбе',
+                profile?.province ?? 'Душанбе',
                 style: const TextStyle(color: AppColors.slate, fontSize: 13, fontWeight: FontWeight.w700),
               ),
             ],
@@ -169,23 +240,20 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(height: 20),
           const Divider(color: Colors.black12),
           const SizedBox(height: 16),
-          _buildInfoRow(LucideIcons.school, user?.schoolName ?? 'Школа не выбрана'),
+          _buildInfoRow(LucideIcons.school, profile?.schoolName ?? 'Школа не выбрана'),
           const SizedBox(height: 12),
-          _buildInfoRow(LucideIcons.graduationCap, user?.grade != null ? 'Класс: ${user!.grade}' : 'Класс не выбран'),
+          _buildInfoRow(LucideIcons.graduationCap, profile?.grade != null ? 'Класс: ${profile!.grade}' : 'Класс не выбран'),
           const SizedBox(height: 14),
-          _buildClusterCard(),
+          _buildClusterCard(profile),
           const SizedBox(height: 14),
           const Divider(color: Colors.black12),
           const SizedBox(height: 10),
-          _buildMetaRow(
-            LucideIcons.calendarDays,
-            'Присоединился: ${_formatDate(widget.user?.registrationDate)}',
-          ),
-          if (widget.user?.isPremium == true && (widget.user?.premiumExpiresAt?.isNotEmpty ?? false)) ...[
+          _buildMetaRow(LucideIcons.calendarDays, 'Присоединился: ${_formatDate(profile?.registrationDate)}'),
+          if (profile?.isPremium == true && (profile?.premiumExpiresAt?.isNotEmpty ?? false)) ...[
             const SizedBox(height: 8),
             _buildMetaRow(
               LucideIcons.crown,
-              'Premium до: ${_formatDate(widget.user?.premiumExpiresAt)}',
+              'Premium до: ${_formatDate(profile?.premiumExpiresAt)}',
               color: AppColors.gold,
             ),
           ],
@@ -194,8 +262,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildClusterCard() {
-    final clusterText = widget.user?.clusterName ?? 'Не выбран';
+  Widget _buildClusterCard(Profile? profile) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -217,11 +284,14 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           const SizedBox(width: 10),
           Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Text('Ваш кластер', style: TextStyle(color: AppColors.slate, fontSize: 11, fontWeight: FontWeight.w700)),
               const SizedBox(height: 2),
-              Text(clusterText, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.navy, fontSize: 13, fontWeight: FontWeight.w800)),
+              Text(
+                profile?.clusterName ?? 'Не выбран',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.navy, fontSize: 13, fontWeight: FontWeight.w800),
+              ),
             ],
           ),
         ],
@@ -239,14 +309,13 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildAdmissionGoalCard() {
-    final user = widget.user;
-    final university = user?.targetUniversity ?? 'Университет не выбран';
-    final major = user?.targetMajorName ?? 'Специальность не выбрана';
-    final score = user?.targetPassingScore?.toString() ?? '0';
-    final score2024 = user?.targetPassingScore2024?.toString() ?? '—';
-    final score2025 = user?.targetPassingScore2025?.toString() ?? '—';
-    final probability = 0.0;
+  Widget _buildAdmissionGoalCard(Profile? profile) {
+    final university = profile?.targetUniversity ?? 'Университет не выбран';
+    final major = profile?.targetMajorName ?? 'Специальность не выбрана';
+    final score = profile?.targetPassingScore?.toString() ?? '0';
+    final score2024 = profile?.targetPassingScore2024?.toString() ?? '—';
+    final score2025 = profile?.targetPassingScore2025?.toString() ?? '—';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -254,80 +323,11 @@ class _ProfilePageState extends State<ProfilePage> {
         color: AppColors.milkyCard,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFE3E9F2)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 22, offset: const Offset(0, 10)),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ГОТОВНОСТЬ К',
-                        style: TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'ПОСТУПЛЕНИЮ',
-                        style: TextStyle(
-                          color: Color(0xFF1E293B),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: 74,
-                height: 74,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFE2E8F0), width: 7),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 74,
-                      height: 74,
-                      child: CircularProgressIndicator(
-                        value: probability,
-                        strokeWidth: 7,
-                        backgroundColor: Colors.transparent,
-                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.red),
-                        strokeCap: StrokeCap.round,
-                      ),
-                    ),
-                    const Text(
-                      '0%',
-                      style: TextStyle(
-                        color: AppColors.red,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          const Text('ГОТОВНОСТЬ К ПОСТУПЛЕНИЮ', style: TextStyle(color: AppColors.navy, fontSize: 18, fontWeight: FontWeight.w900)),
           const SizedBox(height: 18),
           _goalLine(LucideIcons.graduationCap, 'ВЫБРАННЫЙ УНИВЕРСИТЕТ', university),
           const SizedBox(height: 12),
@@ -335,15 +335,7 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(height: 18),
           const Divider(color: Color(0xFFE2E8F0), height: 1),
           const SizedBox(height: 16),
-          const Text(
-            'ПРОХОДНЫЕ БАЛЛЫ',
-            style: TextStyle(
-              color: Color(0xFF94A3B8),
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.8,
-            ),
-          ),
+          const Text('ПРОХОДНЫЕ БАЛЛЫ', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -384,22 +376,9 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Color(0xFF94A3B8),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
-                  ),
-                ),
+                Text(label, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 9, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 2),
-                Text(
-                  value,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Color(0xFF1E293B), fontSize: 14, fontWeight: FontWeight.w900),
-                ),
+                Text(value, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF1E293B), fontSize: 14, fontWeight: FontWeight.w900)),
               ],
             ),
           ),
@@ -420,25 +399,9 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              year,
-              style: TextStyle(
-                color: isTarget ? AppColors.gold : const Color(0xFF94A3B8),
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.5,
-              ),
-            ),
+            Text(year, style: TextStyle(color: isTarget ? AppColors.gold : const Color(0xFF94A3B8), fontSize: 10, fontWeight: FontWeight.w900)),
             const SizedBox(height: 3),
-            Text(
-              value,
-              style: TextStyle(
-                color: isTarget ? AppColors.gold : const Color(0xFF1E293B),
-                fontSize: 28,
-                height: 0.95,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
+            Text(value, style: TextStyle(color: isTarget ? AppColors.gold : const Color(0xFF1E293B), fontSize: 28, height: 0.95, fontWeight: FontWeight.w900)),
           ],
         ),
       ),
@@ -449,11 +412,9 @@ class _ProfilePageState extends State<ProfilePage> {
     if (iso == null || iso.isEmpty) return '—';
     final dt = DateTime.tryParse(iso);
     if (dt == null) return iso;
-    const months = [
-      'янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'
-    ];
+    const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
-    }
+  }
 
   Widget _buildInfoRow(IconData icon, String text) {
     return Row(
@@ -461,23 +422,19 @@ class _ProfilePageState extends State<ProfilePage> {
       children: [
         Icon(icon, size: 18, color: AppColors.slate),
         const SizedBox(width: 12),
-        Text(
-          text,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.slate, fontSize: 14, fontWeight: FontWeight.w600),
-        ),
+        Flexible(child: Text(text, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.slate, fontSize: 14, fontWeight: FontWeight.w600))),
       ],
     );
   }
 
-  Widget _buildStatsRow() {
+  Widget _buildStatsRow(Profile? profile) {
     return Row(
       children: [
-        _buildStatItem('Лига', widget.user?.currentLeagueName ?? 'Бронзовая', LucideIcons.trophy, Colors.amber),
+        _buildStatItem('Лига', profile?.currentLeagueName ?? 'Бронзовая', LucideIcons.trophy, Colors.amber),
         const SizedBox(width: 12),
-        _buildStatItem('XP', '${widget.user?.xp ?? 0}', LucideIcons.zap, AppColors.aqua),
+        _buildStatItem('XP', '${profile?.xp ?? 0}', LucideIcons.zap, AppColors.aqua),
         const SizedBox(width: 12),
-        _buildStatItem('Рейтинг', '№ ${widget.user?.globalRank ?? 0}', LucideIcons.globe, Colors.greenAccent),
+        _buildStatItem('Рейтинг', '№ ${profile?.globalRank ?? 0}', LucideIcons.globe, Colors.greenAccent),
       ],
     );
   }
@@ -490,21 +447,14 @@ class _ProfilePageState extends State<ProfilePage> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: const Color(0xFFE2E8F0)),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 18, offset: const Offset(0, 8)),
-          ],
         ),
         child: Column(
           children: [
             Icon(icon, size: 20, color: color),
             const SizedBox(height: 8),
-            Text(label, style: const TextStyle(color: AppColors.slate, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+            Text(label, style: const TextStyle(color: AppColors.slate, fontSize: 10, fontWeight: FontWeight.w800)),
             const SizedBox(height: 4),
-            Text(
-              value,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.navy, fontSize: 13, fontWeight: FontWeight.w900),
-            ),
+            Text(value, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.navy, fontSize: 13, fontWeight: FontWeight.w900)),
           ],
         ),
       ),
@@ -513,16 +463,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildInitials(String fullName) {
     if (fullName.isEmpty) return const SizedBox();
-    final parts = fullName.split(' ');
-    String initial = parts[0][0].toUpperCase();
+    final parts = fullName.split(' ').where((part) => part.isNotEmpty).toList();
+    var initial = parts.first[0].toUpperCase();
     if (parts.length > 1) {
       initial += ' ${parts[1][0].toUpperCase()}';
     }
     return Center(
-      child: Text(
-        initial,
-        style: const TextStyle(color: AppColors.navy, fontSize: 28, fontWeight: FontWeight.w900),
-      ),
+      child: Text(initial, style: const TextStyle(color: AppColors.navy, fontSize: 28, fontWeight: FontWeight.w900)),
     );
   }
 
@@ -531,35 +478,29 @@ class _ProfilePageState extends State<ProfilePage> {
       children: [
         Icon(icon, size: 20, color: AppColors.aqua),
         const SizedBox(width: 10),
-        Text(
-          title.toUpperCase(),
-          style: const TextStyle(color: AppColors.navy, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.2),
-        ),
+        Text(title, style: const TextStyle(color: AppColors.navy, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
       ],
     );
   }
 
-  Widget _buildSkillsList() {
-    final skills = widget.skills ?? [];
-    if (skills.isEmpty) {
+  Widget _buildSkillsList(List<SkillProgressModel> items) {
+    if (items.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: AppColors.milkyCard,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: const Color(0xFFE3E9F2)),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 18, offset: const Offset(0, 8)),
-          ],
         ),
         child: const Center(
           child: Text('Нет данных о навыках. Пройдите тесты!', style: TextStyle(color: AppColors.slate, fontSize: 13)),
         ),
       );
     }
+
     return Column(
-      children: skills.map((skill) {
-        final double percent = skill.proficiencyPercent.toDouble();
+      children: items.map((skill) {
+        final percent = skill.proficiencyPercent.toDouble();
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
@@ -567,9 +508,6 @@ class _ProfilePageState extends State<ProfilePage> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: const Color(0xFFE3E9F2)),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 18, offset: const Offset(0, 8)),
-            ],
           ),
           child: Column(
             children: [
@@ -597,8 +535,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildRecentActivity() {
-    final tests = widget.user?.lastTestResults ?? [];
+  Widget _buildRecentActivity(Profile? profile) {
+    final tests = profile?.lastTestResults ?? const <ProfileTestResult>[];
     if (tests.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(20),
@@ -606,9 +544,6 @@ class _ProfilePageState extends State<ProfilePage> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: const Color(0xFFE3E9F2)),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 18, offset: const Offset(0, 8)),
-          ],
         ),
         child: const Center(
           child: Text(
@@ -620,14 +555,12 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
 
-    return Column(
-      children: tests.map((test) => _buildActivityRow(test)).toList(),
-    );
+    return Column(children: tests.map(_buildActivityRow).toList());
   }
 
-  Widget _buildActivityRow(TestResultModel test) {
-    String modeName = test.mode == 3 ? 'Дуэль' : test.mode == 2 ? 'Экзамен' : 'Тест';
-    final bool success = test.totalScore > 0;
+  Widget _buildActivityRow(ProfileTestResult test) {
+    final modeName = test.mode == 3 ? 'Дуэль' : test.mode == 2 ? 'Экзамен' : 'Тест';
+    final success = test.totalScore > 0;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -635,9 +568,6 @@ class _ProfilePageState extends State<ProfilePage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE3E9F2)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 18, offset: const Offset(0, 8)),
-        ],
       ),
       child: Row(
         children: [
@@ -660,18 +590,8 @@ class _ProfilePageState extends State<ProfilePage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '${test.totalScore} баллов',
-                style: TextStyle(color: success ? AppColors.gold : AppColors.red, fontWeight: FontWeight.w900, fontSize: 13),
-              ),
-              Text(
-                success ? 'ЗАВЕРШЕНО' : 'НЕУДАЧНО',
-                style: TextStyle(
-                  color: success ? AppColors.slate : AppColors.red,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+              Text('${test.totalScore} баллов', style: TextStyle(color: success ? AppColors.gold : AppColors.red, fontWeight: FontWeight.w900, fontSize: 13)),
+              Text(success ? 'ЗАВЕРШЕНО' : 'НЕУДАЧНО', style: TextStyle(color: success ? AppColors.slate : AppColors.red, fontSize: 9, fontWeight: FontWeight.w800)),
             ],
           ),
         ],

@@ -10,6 +10,12 @@ import 'package:juyo/features/auth/domain/usecases/login_use_case.dart';
 import 'package:juyo/features/auth/domain/usecases/logout_use_case.dart';
 import 'package:juyo/features/auth/domain/usecases/restore_session_use_case.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:juyo/features/profile/data/datasources/profile_remote_data_source.dart';
+import 'package:juyo/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:juyo/features/profile/domain/repositories/profile_repository.dart';
+import 'package:juyo/features/profile/domain/usecases/get_profile_use_case.dart';
+import 'package:juyo/features/profile/domain/usecases/update_profile_use_case.dart';
+import 'package:juyo/features/profile/presentation/bloc/profile_bloc.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -70,6 +76,41 @@ Future<void> setupServiceLocator() async {
         loginUseCase: getIt<LoginUseCase>(),
         restoreSessionUseCase: getIt<RestoreSessionUseCase>(),
         logoutUseCase: getIt<LogoutUseCase>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<ProfileRemoteDataSource>()) {
+    getIt.registerLazySingleton<ProfileRemoteDataSource>(
+      () => ProfileRemoteDataSource(getIt<Dio>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ProfileRepository>()) {
+    getIt.registerLazySingleton<ProfileRepository>(
+      () => ProfileRepositoryImpl(
+        remoteDataSource: getIt<ProfileRemoteDataSource>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<GetProfileUseCase>()) {
+    getIt.registerLazySingleton<GetProfileUseCase>(
+      () => GetProfileUseCase(getIt<ProfileRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<UpdateProfileUseCase>()) {
+    getIt.registerLazySingleton<UpdateProfileUseCase>(
+      () => UpdateProfileUseCase(getIt<ProfileRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ProfileBloc>()) {
+    getIt.registerFactory<ProfileBloc>(
+      () => ProfileBloc(
+        getProfileUseCase: getIt<GetProfileUseCase>(),
+        updateProfileUseCase: getIt<UpdateProfileUseCase>(),
       ),
     );
   }

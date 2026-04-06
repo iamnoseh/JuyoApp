@@ -1,17 +1,23 @@
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:juyo/core/models/user_model.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:juyo/core/services/reference_service.dart';
-import 'package:juyo/core/services/user_service.dart';
 import 'package:juyo/core/theme/app_theme.dart';
 import 'package:juyo/core/widgets/juyo_components.dart';
+import 'package:juyo/features/profile/data/models/update_profile_request_model.dart';
+import 'package:juyo/features/profile/domain/entities/profile.dart';
+import 'package:juyo/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:juyo/features/profile/presentation/bloc/profile_event.dart';
+import 'package:juyo/features/profile/presentation/bloc/profile_state.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:image_picker/image_picker.dart';
 
 class ProfileEditPage extends StatefulWidget {
-  final UserModel user;
+  final Profile profile;
 
-  const ProfileEditPage({super.key, required this.user});
+  const ProfileEditPage({super.key, required this.profile});
 
   @override
   State<ProfileEditPage> createState() => _ProfileEditPageState();
@@ -25,6 +31,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     'Хатлонская область',
     'РРП',
   ];
+
   static const List<_ClusterItem> _clusters = [
     _ClusterItem(1, 'Естественные и технические науки'),
     _ClusterItem(2, 'Экономика и география'),
@@ -48,24 +55,22 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   List<UniversityOption> _universities = [];
   List<MajorOption> _majors = [];
   bool _loadingRefs = true;
-  bool _saving = false;
   final ImagePicker _picker = ImagePicker();
   File? _avatarFile;
 
   @override
   void initState() {
     super.initState();
-    final parts = widget.user.fullName.split(' ').where((p) => p.trim().isNotEmpty).toList();
-    _firstName = TextEditingController(text: parts.isNotEmpty ? parts.first : '');
-    _lastName = TextEditingController(text: parts.length > 1 ? parts.sublist(1).join(' ') : '');
-    _province = widget.user.province;
-    _gender = widget.user.gender;
-    _schoolId = widget.user.schoolId;
-    _grade = widget.user.grade;
-    _clusterId = widget.user.clusterId;
-    _targetUniversityId = widget.user.targetUniversityId;
-    _targetMajorId = widget.user.targetMajorId;
-    _dob = _tryParseDate(widget.user.dateOfBirth);
+    _firstName = TextEditingController(text: widget.profile.firstName);
+    _lastName = TextEditingController(text: widget.profile.lastName);
+    _province = widget.profile.province;
+    _gender = widget.profile.gender;
+    _schoolId = widget.profile.schoolId;
+    _grade = widget.profile.grade;
+    _clusterId = widget.profile.clusterId;
+    _targetUniversityId = widget.profile.targetUniversityId;
+    _targetMajorId = widget.profile.targetMajorId;
+    _dob = _tryParseDate(widget.profile.dateOfBirth);
     _loadReferences();
   }
 
@@ -79,22 +84,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   DateTime? _tryParseDate(String? iso) {
     if (iso == null || iso.trim().isEmpty) return null;
     return DateTime.tryParse(iso);
-  }
-
-  Future<void> _pickDob() async {
-    final now = DateTime.now();
-    final initial = _dob ?? DateTime(now.year - 16, 1, 1);
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime(1950, 1, 1),
-      lastDate: now,
-      helpText: 'Дата рождения',
-    );
-    if (!mounted) return;
-    if (picked != null) {
-      setState(() => _dob = picked);
-    }
   }
 
   Future<void> _loadReferences() async {
@@ -144,225 +133,20 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     }
   }
 
-  Future<void> _save() async {
-    setState(() => _saving = true);
-    final avatarPart = _avatarFile != null
-        ? await UserService.buildAvatarPart(
-            _avatarFile!.path,
-            _avatarFile!.path.split(Platform.pathSeparator).last,
-          )
-        : null;
-    final ok = await UserService.updateProfile(
-      firstName: _firstName.text.trim().isEmpty ? null : _firstName.text.trim(),
-      lastName: _lastName.text.trim().isEmpty ? null : _lastName.text.trim(),
-      gender: _gender,
-      province: _province,
-      schoolId: _schoolId,
-      grade: _grade,
-      clusterId: _clusterId,
-      targetUniversityId: _targetUniversityId,
-      targetMajorId: _targetMajorId,
-      dateOfBirth: _dob,
-      avatar: avatarPart,
+  Future<void> _pickDob() async {
+    final now = DateTime.now();
+    final initial = _dob ?? DateTime(now.year - 16, 1, 1);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1950, 1, 1),
+      lastDate: now,
+      helpText: 'Дата рождения',
     );
     if (!mounted) return;
-    setState(() => _saving = false);
-
-    if (ok) {
-      Navigator.of(context).pop(true);
-      return;
+    if (picked != null) {
+      setState(() => _dob = picked);
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Не удалось сохранить профиль. Попробуйте ещё раз.')),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final avatarUrl = widget.user.profilePictureUrl;
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF2C3545),
-        foregroundColor: Colors.white,
-        title: const Text('Редактировать профиль'),
-      ),
-      body: _loadingRefs
-          ? const Center(child: CircularProgressIndicator(color: AppColors.aqua))
-          : ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.milkyCard,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 16, offset: const Offset(0, 8)),
-              ],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    const Icon(LucideIcons.info, size: 18, color: AppColors.aqua),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Изменения сохраняются в вашем аккаунте.',
-                        style: const TextStyle(color: AppColors.slate, fontSize: 12, fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildAvatarSection(avatarUrl),
-          const SizedBox(height: 16),
-          JuyoInput(label: 'Имя', hint: 'Введите имя', icon: LucideIcons.user, controller: _firstName),
-          const SizedBox(height: 12),
-          JuyoInput(label: 'Фамилия', hint: 'Введите фамилию', icon: LucideIcons.userCheck, controller: _lastName),
-          const SizedBox(height: 12),
-          _buildDropdownString(
-            label: 'Область',
-            icon: LucideIcons.mapPin,
-            value: _province,
-            options: _provinces,
-            onChanged: (v) {
-              setState(() {
-                _province = v;
-                _schoolId = null;
-              });
-            },
-          ),
-          const SizedBox(height: 12),
-          _buildDropdownInt(
-            label: 'Пол',
-            icon: LucideIcons.user,
-            value: _gender,
-            options: const [0, 1],
-            itemLabel: (v) => v == 0 ? 'Мужской' : 'Женский',
-            onChanged: (v) => setState(() => _gender = v),
-          ),
-          const SizedBox(height: 12),
-          _buildDropdownInt(
-            label: 'Школа',
-            icon: LucideIcons.school,
-            value: _schoolId,
-            options: _schools
-                .where((s) => _province == null || _province!.isEmpty || s.province == _province)
-                .map((s) => s.id)
-                .toList(),
-            itemLabel: (id) => _schools.firstWhere((s) => s.id == id).name,
-            onChanged: (v) => setState(() => _schoolId = v),
-          ),
-          const SizedBox(height: 12),
-          _buildDropdownInt(
-            label: 'Класс',
-            icon: LucideIcons.graduationCap,
-            value: _grade,
-            options: List.generate(11, (i) => i + 1),
-            onChanged: (v) => setState(() => _grade = v),
-          ),
-          const SizedBox(height: 12),
-          _buildDropdownInt(
-            label: 'Кластер',
-            icon: LucideIcons.sparkles,
-            value: _clusterId,
-            options: const [1, 2, 3, 4, 5],
-            itemLabel: (v) => _clusters.firstWhere((c) => c.id == v).name,
-            onChanged: widget.user.clusterId != null ? null : (v) => setState(() => _clusterId = v),
-          ),
-          if (widget.user.clusterId != null) ...[
-            const SizedBox(height: 6),
-            const Text('Кластер нельзя изменить после выбора', style: TextStyle(color: Colors.white38, fontSize: 12)),
-          ],
-          const SizedBox(height: 12),
-          _buildDropdownInt(
-            label: 'Университет мечты',
-            icon: LucideIcons.building2,
-            value: _targetUniversityId,
-            options: _universities.map((u) => u.id).toList(),
-            itemLabel: (id) => _universities.firstWhere((u) => u.id == id).name,
-            onChanged: _onUniversityChanged,
-          ),
-          const SizedBox(height: 12),
-          _buildDropdownInt(
-            label: 'Будущая профессия',
-            icon: LucideIcons.target,
-            value: _targetMajorId,
-            options: _majors.map((m) => m.id).toList(),
-            itemLabel: (id) => _majors.firstWhere((m) => m.id == id).name,
-            onChanged: _targetUniversityId == null ? null : (v) => setState(() => _targetMajorId = v),
-          ),
-          const SizedBox(height: 12),
-          _buildDobTile(),
-          const SizedBox(height: 18),
-          JuyoButton(
-            text: 'СОХРАНИТЬ',
-            isLoading: _saving,
-            onPressed: _saving ? null : _save,
-          ),
-          const SizedBox(height: 10),
-          JuyoButton(
-            text: 'ОТМЕНА',
-            isSecondary: true,
-            onPressed: _saving ? null : () => Navigator.of(context).pop(false),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAvatarSection(String? avatarUrl) {
-    final ImageProvider? provider = _avatarFile != null
-        ? FileImage(_avatarFile!)
-        : (avatarUrl != null && avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.milkyCard,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 16, offset: const Offset(0, 8)),
-        ],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 32,
-            backgroundColor: Colors.white12,
-            backgroundImage: provider,
-            child: (_avatarFile == null && (avatarUrl == null || avatarUrl.isEmpty))
-                ? const Icon(LucideIcons.user, color: Colors.white54)
-                : null,
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Фото профиля', style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 4),
-                Text(
-                  'JPG/PNG/WebP, максимум 10MB',
-                  style: const TextStyle(color: AppColors.slate, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-          TextButton.icon(
-            onPressed: _pickAvatar,
-            icon: const Icon(LucideIcons.camera, size: 16),
-            label: const Text('Изменить'),
-          )
-        ],
-      ),
-    );
   }
 
   Future<void> _pickAvatar() async {
@@ -380,6 +164,242 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     setState(() => _avatarFile = file);
   }
 
+  Future<MultipartFile?> _buildAvatarPart() async {
+    if (_avatarFile == null) return null;
+
+    final fileName = _avatarFile!.path.split(Platform.pathSeparator).last;
+    final lower = fileName.toLowerCase();
+    var subtype = 'jpeg';
+    if (lower.endsWith('.png')) subtype = 'png';
+    if (lower.endsWith('.webp')) subtype = 'webp';
+
+    return MultipartFile.fromFile(
+      _avatarFile!.path,
+      filename: fileName,
+      contentType: MediaType('image', subtype),
+    );
+  }
+
+  Future<void> _save() async {
+    final avatar = await _buildAvatarPart();
+    if (!mounted) return;
+
+    context.read<ProfileBloc>().add(
+          ProfileUpdateRequested(
+            UpdateProfileRequestModel(
+              firstName: _firstName.text.trim().isEmpty ? null : _firstName.text.trim(),
+              lastName: _lastName.text.trim().isEmpty ? null : _lastName.text.trim(),
+              gender: _gender,
+              province: _province,
+              schoolId: _schoolId,
+              grade: _grade,
+              clusterId: _clusterId,
+              targetUniversityId: _targetUniversityId,
+              targetMajorId: _targetMajorId,
+              dateOfBirth: _dob,
+              avatar: avatar,
+            ),
+          ),
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<ProfileBloc, ProfileState>(
+      listenWhen: (previous, current) =>
+          current is ProfileUpdateSuccess || current is ProfileFailure,
+      listener: (context, state) {
+        if (state is ProfileUpdateSuccess) {
+          Navigator.of(context).pop(true);
+        }
+
+        if (state is ProfileFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+        }
+      },
+      child: BlocBuilder<ProfileBloc, ProfileState>(
+        builder: (context, state) {
+          final isSaving = state is ProfileSaving;
+          final avatarUrl = widget.profile.avatarUrl;
+
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: AppBar(
+              backgroundColor: const Color(0xFF2C3545),
+              foregroundColor: Colors.white,
+              title: const Text('Редактировать профиль'),
+            ),
+            body: _loadingRefs
+                ? const Center(child: CircularProgressIndicator(color: AppColors.aqua))
+                : ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      _buildInfoBanner(),
+                      const SizedBox(height: 16),
+                      _buildAvatarSection(avatarUrl),
+                      const SizedBox(height: 16),
+                      JuyoInput(label: 'Имя', hint: 'Введите имя', icon: LucideIcons.user, controller: _firstName),
+                      const SizedBox(height: 12),
+                      JuyoInput(label: 'Фамилия', hint: 'Введите фамилию', icon: LucideIcons.userCheck, controller: _lastName),
+                      const SizedBox(height: 12),
+                      _buildDropdownString(
+                        label: 'Область',
+                        icon: LucideIcons.mapPin,
+                        value: _province,
+                        options: _provinces,
+                        onChanged: (value) {
+                          setState(() {
+                            _province = value;
+                            _schoolId = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDropdownInt(
+                        label: 'Пол',
+                        icon: LucideIcons.user,
+                        value: _gender,
+                        options: const [0, 1],
+                        itemLabel: (value) => value == 0 ? 'Мужской' : 'Женский',
+                        onChanged: (value) => setState(() => _gender = value),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDropdownInt(
+                        label: 'Школа',
+                        icon: LucideIcons.school,
+                        value: _schoolId,
+                        options: _schools
+                            .where((school) => _province == null || _province!.isEmpty || school.province == _province)
+                            .map((school) => school.id)
+                            .toList(),
+                        itemLabel: (id) => _schools.firstWhere((school) => school.id == id).name,
+                        onChanged: (value) => setState(() => _schoolId = value),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDropdownInt(
+                        label: 'Класс',
+                        icon: LucideIcons.graduationCap,
+                        value: _grade,
+                        options: List.generate(11, (index) => index + 1),
+                        onChanged: (value) => setState(() => _grade = value),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDropdownInt(
+                        label: 'Кластер',
+                        icon: LucideIcons.sparkles,
+                        value: _clusterId,
+                        options: const [1, 2, 3, 4, 5],
+                        itemLabel: (value) => _clusters.firstWhere((cluster) => cluster.id == value).name,
+                        onChanged: widget.profile.clusterId != null ? null : (value) => setState(() => _clusterId = value),
+                      ),
+                      if (widget.profile.clusterId != null) ...[
+                        const SizedBox(height: 6),
+                        const Text('Кластер нельзя изменить после выбора', style: TextStyle(color: Colors.white38, fontSize: 12)),
+                      ],
+                      const SizedBox(height: 12),
+                      _buildDropdownInt(
+                        label: 'Университет мечты',
+                        icon: LucideIcons.building2,
+                        value: _targetUniversityId,
+                        options: _universities.map((university) => university.id).toList(),
+                        itemLabel: (id) => _universities.firstWhere((university) => university.id == id).name,
+                        onChanged: _onUniversityChanged,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDropdownInt(
+                        label: 'Будущая профессия',
+                        icon: LucideIcons.target,
+                        value: _targetMajorId,
+                        options: _majors.map((major) => major.id).toList(),
+                        itemLabel: (id) => _majors.firstWhere((major) => major.id == id).name,
+                        onChanged: _targetUniversityId == null ? null : (value) => setState(() => _targetMajorId = value),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDobTile(),
+                      const SizedBox(height: 18),
+                      JuyoButton(
+                        text: 'СОХРАНИТЬ',
+                        isLoading: isSaving,
+                        onPressed: isSaving ? null : _save,
+                      ),
+                      const SizedBox(height: 10),
+                      JuyoButton(
+                        text: 'ОТМЕНА',
+                        isSecondary: true,
+                        onPressed: isSaving ? null : () => Navigator.of(context).pop(false),
+                      ),
+                    ],
+                  ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildInfoBanner() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.milkyCard,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: const Row(
+        children: [
+          Icon(LucideIcons.info, size: 18, color: AppColors.aqua),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text('Изменения сохраняются в вашем аккаунте.', style: TextStyle(color: AppColors.slate, fontSize: 12, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatarSection(String? avatarUrl) {
+    final ImageProvider? provider = _avatarFile != null
+        ? FileImage(_avatarFile!)
+        : (avatarUrl != null && avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.milkyCard,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 32,
+            backgroundColor: Colors.white12,
+            backgroundImage: provider,
+            child: (_avatarFile == null && (avatarUrl == null || avatarUrl.isEmpty))
+                ? const Icon(LucideIcons.user, color: Colors.white54)
+                : null,
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Фото профиля', style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w800)),
+                SizedBox(height: 4),
+                Text('JPG/PNG/WebP, максимум 10MB', style: TextStyle(color: AppColors.slate, fontSize: 12)),
+              ],
+            ),
+          ),
+          TextButton.icon(
+            onPressed: _pickAvatar,
+            icon: const Icon(LucideIcons.camera, size: 16),
+            label: const Text('Изменить'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDobTile() {
     final text = _dob == null
         ? 'Не выбрано'
@@ -390,9 +410,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       decoration: BoxDecoration(
         color: AppColors.milkyCard,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
       ),
       child: ListTile(
         contentPadding: EdgeInsets.zero,
@@ -419,9 +436,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       decoration: BoxDecoration(
         color: AppColors.milkyCard,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
       ),
       child: Row(
         children: [
@@ -435,10 +449,12 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 dropdownColor: Colors.white,
                 iconEnabledColor: AppColors.slate,
                 items: options
-                    .map((v) => DropdownMenuItem<int>(
-                          value: v,
-                          child: Text(itemLabel?.call(v) ?? v.toString(), style: const TextStyle(color: AppColors.navy), overflow: TextOverflow.ellipsis),
-                        ))
+                    .map(
+                      (value) => DropdownMenuItem<int>(
+                        value: value,
+                        child: Text(itemLabel?.call(value) ?? value.toString(), style: const TextStyle(color: AppColors.navy), overflow: TextOverflow.ellipsis),
+                      ),
+                    )
                     .toList(),
                 onChanged: onChanged,
               ),
@@ -463,9 +479,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       decoration: BoxDecoration(
         color: AppColors.milkyCard,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
       ),
       child: Row(
         children: [
@@ -479,10 +492,12 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 dropdownColor: Colors.white,
                 iconEnabledColor: AppColors.slate,
                 items: options
-                    .map((v) => DropdownMenuItem<String>(
-                          value: v,
-                          child: Text(v, style: const TextStyle(color: AppColors.navy), overflow: TextOverflow.ellipsis),
-                        ))
+                    .map(
+                      (value) => DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value, style: const TextStyle(color: AppColors.navy), overflow: TextOverflow.ellipsis),
+                      ),
+                    )
                     .toList(),
                 onChanged: onChanged,
               ),
@@ -498,6 +513,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 class _ClusterItem {
   final int id;
   final String name;
+
   const _ClusterItem(this.id, this.name);
 }
-
