@@ -30,8 +30,8 @@ class AuroraBackground extends StatelessWidget {
             filter: ImageFilter.blur(sigmaX: 130, sigmaY: 130),
             child: Container(
               color: isDark 
-                ? AppColors.navy.withOpacity(0.55) 
-                : AppColors.lightBg.withOpacity(0.4),
+                ? AppColors.navy.withValues(alpha: 0.55) 
+                : AppColors.lightBg.withValues(alpha: 0.4),
             ),
           ),
         ),
@@ -105,11 +105,11 @@ class _AuroraElementPainter extends CustomPainter {
     final double intensity = isDark ? 0.18 : 0.08;
     
     final paintAqua = Paint()
-      ..color = AppColors.aqua.withOpacity(intensity)
+      ..color = AppColors.aqua.withValues(alpha: intensity)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50);
 
     final paintGold = Paint()
-      ..color = AppColors.gold.withOpacity(intensity)
+      ..color = AppColors.gold.withValues(alpha: intensity)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 60);
 
     // Aqua - Bottom Left

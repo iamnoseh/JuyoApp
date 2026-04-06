@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:juyo/core/theme/app_theme.dart';
 
 class JuyoInput extends StatelessWidget {
@@ -44,7 +45,7 @@ class JuyoInput extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -58,7 +59,7 @@ class JuyoInput extends StatelessWidget {
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
-                color: (isDark ? Colors.white : Colors.black).withOpacity(0.2),
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2),
                 fontSize: 14,
               ),
               prefixIcon: icon != null 
@@ -100,7 +101,7 @@ class JuyoButton extends StatelessWidget {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     Color bgColor = isSecondary 
-        ? (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08))
+        ? (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08))
         : AppColors.gold;
     
     Color fgColor = isSecondary 
@@ -108,7 +109,7 @@ class JuyoButton extends StatelessWidget {
         : Colors.black;
 
     if (isDanger) {
-      bgColor = Colors.red.withOpacity(0.15);
+      bgColor = Colors.red.withValues(alpha: 0.15);
       fgColor = Colors.redAccent;
     }
 
@@ -120,7 +121,7 @@ class JuyoButton extends StatelessWidget {
         color: bgColor,
         boxShadow: [
           BoxShadow(
-            color: bgColor.withOpacity(0.3),
+            color: bgColor.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),
@@ -146,6 +147,106 @@ class JuyoButton extends StatelessWidget {
                 text,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 0.1),
               ),
+      ),
+    );
+  }
+}
+class JuyoStickyHeader extends StatelessWidget {
+  final int streak;
+  final int points;
+
+  const JuyoStickyHeader({
+    super.key,
+    required this.streak,
+    required this.points,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C3545),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(36),
+          bottomRight: Radius.circular(36),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              JuyoBadge(
+                icon: LucideIcons.flame,
+                text: '$streak',
+                color: Colors.orangeAccent,
+              ),
+              const Text(
+                'JUYO',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 4.0,
+                ),
+              ),
+              JuyoBadge(
+                icon: LucideIcons.coins,
+                text: '$points',
+                color: AppColors.gold,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class JuyoBadge extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  const JuyoBadge({
+    super.key,
+    required this.icon,
+    required this.text,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 11,
+            ),
+          ),
+        ],
       ),
     );
   }

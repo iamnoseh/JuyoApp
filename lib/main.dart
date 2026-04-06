@@ -23,7 +23,7 @@ class JuyoApp extends StatelessWidget {
       title: 'Juyo',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system, 
+      themeMode: ThemeMode.light,
       home: AuthService.isAuthenticated 
         ? const DashboardPage() 
         : const LoginPage(),

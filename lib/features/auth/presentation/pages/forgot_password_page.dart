@@ -36,12 +36,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       });
 
       if (response.statusCode == 200) {
+        if (!mounted) return;
         setState(() => step = 2);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Код отправлен!'), backgroundColor: Colors.green),
         );
       }
     } on DioException catch (e) {
+      if (!mounted) return;
       String errorMessage = 'Ошибка при отправке кода';
       if (e.response?.data != null && e.response?.data['message'] != null) {
         errorMessage = e.response?.data['message'];

@@ -54,6 +54,7 @@ class _RegisterPageState extends State<RegisterPage> {
       });
 
       if (response.statusCode == 200) {
+        if (!mounted) return;
         // Success
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Регистрация прошла успешно! Теперь вы можете войти.'), backgroundColor: Colors.green),
@@ -61,6 +62,7 @@ class _RegisterPageState extends State<RegisterPage> {
         Navigator.pop(context); // Go back to Login
       }
     } on DioException catch (e) {
+      if (!mounted) return;
       String errorMessage = 'Ошибка при регистрации';
       if (e.response?.data != null && e.response?.data['message'] != null) {
         errorMessage = e.response?.data['message'];

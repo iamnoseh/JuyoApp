@@ -9,7 +9,9 @@ import 'package:juyo/core/models/user_model.dart';
 import 'package:juyo/core/services/user_service.dart';
 import 'package:juyo/features/home/data/models/dashboard_stats_model.dart';
 import 'package:juyo/features/home/data/models/admission_stats_model.dart';
+import 'package:juyo/features/home/data/models/league_leaderboard_model.dart';
 import 'package:juyo/features/home/data/datasources/dashboard_service.dart';
+import 'package:juyo/features/profile/presentation/pages/profile_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -27,6 +29,8 @@ class _DashboardPageState extends State<DashboardPage> {
   String _motivation = 'Загрузка мудрости...';
   DashboardStatsModel? _dashboardStats;
   AdmissionStatsModel? _admissionStats;
+  List<LeagueLeaderboardModel> _leaderboard = [];
+  List<SkillProgressModel> _skills = [];
   bool _isMenuOpen = false;
 
   @override
@@ -48,18 +52,32 @@ class _DashboardPageState extends State<DashboardPage> {
         DashboardService.fetchMotivation(),
         DashboardService.fetchStudentStats(),
         DashboardService.fetchAdmissionStats(),
+        DashboardService.fetchSkillsProgress(),
       ]);
+
+      UserModel? user = results[0] as UserModel?;
+      print('DEBUG: Dashboard Fetch Profile: \${user?.fullName}');
+      print('DEBUG: Dashboard Fetch Skills Count: \${(results[4] as List).length}');
+      
+      List<LeagueLeaderboardModel> leaderboard = [];
+      
+      if (user != null) {
+        leaderboard = await DashboardService.fetchLeagueLeaderboard(user.id);
+      }
 
       if (mounted) {
         setState(() {
-          _user = results[0] as UserModel?;
+          _user = user;
           _motivation = results[1] as String;
           _dashboardStats = results[2] as DashboardStatsModel?;
           _admissionStats = results[3] as AdmissionStatsModel?;
-          _isLoading = false;
+          _skills = results[4] as List<SkillProgressModel>;
+          _leaderboard = leaderboard;
         });
       }
     } catch (e) {
+      // Log error internally if needed
+    } finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -81,7 +99,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
+      extendBody: true,
       bottomNavigationBar: Container(
         padding: EdgeInsets.fromLTRB(
           16, 0, 16,
@@ -99,33 +118,48 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       body: Stack(
         children: [
-          // 1. Scrollable Body
+          // 1. Conditional Viewport (Dashboard or Profile)
           Positioned.fill(
-            child: RefreshIndicator(
-              onRefresh: _fetchData,
-              backgroundColor: AppColors.navy,
-              color: AppColors.aqua,
-              displacement: 110,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                padding: const EdgeInsets.only(top: 130, bottom: 40),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      _isLoading ? _buildJuyoLoading() : WelcomeCard(
-                        firstName: _user?.fullName.split(' ').first ?? 'Пользователь',
-                        motivation: _motivation,
+            child: IndexedStack(
+              index: (_selectedIndex == 0 || _selectedIndex == 3) ? (_selectedIndex == 0 ? 0 : 1) : 0,
+              children: [
+                // INDEX 0: Dashboard View
+                RefreshIndicator(
+                  onRefresh: _fetchData,
+                  backgroundColor: AppColors.background,
+                  color: AppColors.aqua,
+                  edgeOffset: 110,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    padding: const EdgeInsets.only(top: 130, bottom: 40),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          _isLoading ? _buildJuyoLoading() : WelcomeCard(
+                            firstName: _user?.fullName.split(' ').first ?? 'Пользователь',
+                            motivation: _motivation,
+                          ),
+                          const SizedBox(height: 18),
+                          StatsSection(
+                            dashboardStats: _dashboardStats,
+                            admissionStats: _admissionStats,
+                            user: _user,
+                            leaderboard: _leaderboard,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 18),
-                      StatsSection(
-                        dashboardStats: _dashboardStats,
-                        admissionStats: _admissionStats,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+                
+                // INDEX 1 (mapped from _selectedIndex == 3): Profile View
+                ProfilePage(
+                  user: _user,
+                  skills: _skills,
+                  onRefresh: _fetchData,
+                ),
+              ],
             ),
           ),
 
@@ -136,12 +170,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 onTap: _toggleMenu,
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                  child: Container(color: Colors.black.withOpacity(0.4)),
+                  child: Container(color: Colors.black.withValues(alpha: 0.4)),
                 ),
               ),
             ),
 
-          // 3. Animated Top Menu
+          // 3. Top Menu Overlay
           AnimatedPositioned(
             duration: const Duration(milliseconds: 600),
             curve: Curves.fastOutSlowIn,
@@ -151,48 +185,12 @@ class _DashboardPageState extends State<DashboardPage> {
             child: _buildTopMenuOverlay(context),
           ),
 
-          // 4. Sticky Header (Branding only)
+          // 4. Shared JuyoStickyHeader
           Positioned(
             top: 0, left: 0, right: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF2C3545),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(36),
-                  bottomRight: Radius.circular(36),
-                ),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 15, offset: const Offset(0, 5)),
-                ],
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Opacity(opacity: 0, child: Icon(LucideIcons.menu)), // Hidden spacer
-                      const Text(
-                        'JUYO',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 4.0,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          _buildTopBadge(LucideIcons.coins, '2,450', AppColors.gold),
-                          const SizedBox(width: 8),
-                          _buildTopBadge(LucideIcons.flame, '12', Colors.orange),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            child: JuyoStickyHeader(
+              streak: _user?.streak ?? 0,
+              points: _user?.points ?? 0,
             ),
           ),
         ],
@@ -207,19 +205,27 @@ class _DashboardPageState extends State<DashboardPage> {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: juyoNavy.withOpacity(0.98),
+        color: juyoNavy.withValues(alpha: 0.98),
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(44),
           bottomRight: Radius.circular(44),
         ),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 30, offset: const Offset(0, 20)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 30, offset: const Offset(0, 20)),
         ],
       ),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: SafeArea(
-          child: Column(
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(44),
+          bottomRight: Radius.circular(44),
+        ),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: _isMenuOpen ? 20 : 0, 
+            sigmaY: _isMenuOpen ? 20 : 0
+          ),
+          child: SafeArea(
+            child: Column(
             children: [
               // Branding & Profile Section
               Padding(
@@ -236,15 +242,18 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       child: Container(
                         width: 84, height: 84,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: juyoNavy,
-                          image: DecorationImage(image: NetworkImage('https://i.pravatar.cc/150?u=alisher'), fit: BoxFit.cover),
+                          image: DecorationImage(
+                            image: NetworkImage(_user?.profilePictureUrl ?? 'https://i.pravatar.cc/150?u=alisher'), 
+                            fit: BoxFit.cover
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Text('АЛИШЕР НАЗАРОВ', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                    Text(_user?.fullName.toUpperCase() ?? 'ПОЛЬЗОВАТЕЛЬ', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
                   ],
                 ),
               ),
@@ -273,15 +282,23 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: JuyoButton(
                   text: 'ВЫЙТИ',
                   isDanger: true,
-                  onPressed: () {},
+                  onPressed: () async {
+                    await AuthService.logout();
+                    if (!mounted) return;
+                    Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginPage()),
+                        (route) => false);
+                  },
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTopMenuItem(IconData icon, String title, {bool isLocked = false, bool isPremium = false}) {
     return ListTile(
@@ -324,24 +341,6 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
-
-  Widget _buildTopBadge(IconData icon, String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11)),
-        ],
-      ),
-    );
-  }
 }
 
 class WelcomeCard extends StatelessWidget {
@@ -362,7 +361,7 @@ class WelcomeCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 25, offset: const Offset(0, 12)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 25, offset: const Offset(0, 12)),
         ],
       ),
       child: Row(
@@ -380,7 +379,7 @@ class WelcomeCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          Icon(LucideIcons.brain, size: 58, color: AppColors.aqua.withOpacity(0.8)),
+          Icon(LucideIcons.brain, size: 58, color: AppColors.aqua.withValues(alpha: 0.8)),
         ],
       ),
     );
@@ -390,21 +389,25 @@ class WelcomeCard extends StatelessWidget {
 class StatsSection extends StatelessWidget {
   final DashboardStatsModel? dashboardStats;
   final AdmissionStatsModel? admissionStats;
+  final UserModel? user;
+  final List<LeagueLeaderboardModel> leaderboard;
 
   const StatsSection({
     super.key,
     this.dashboardStats,
     this.admissionStats,
+    this.user,
+    this.leaderboard = const [],
   });
 
   @override
   Widget build(BuildContext context) {
-    final dailyCompleted = dashboardStats?.dailyProgress.completed ?? 3;
+    final dailyCompleted = dashboardStats?.dailyProgress.completed ?? 0;
     final dailyGoal = dashboardStats?.dailyProgress.goal ?? 5; 
-    final tests = dashboardStats?.dailyProgress.completed ?? 12;
-    final duels = 28;
-    final wins = 15;
-    final accuracy = 92;
+    final tests = dashboardStats?.dailyProgress.completed ?? 0;
+    final xp = user?.xp ?? 0;
+    final elo = user?.eloRating ?? 1000;
+    final accuracy = 75; // Calculate from scores if needed
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -422,8 +425,8 @@ class StatsSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.black.withOpacity(0.04)),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 10))],
+            border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 10))],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -465,8 +468,8 @@ class StatsSection extends StatelessWidget {
           childAspectRatio: 1.4,
           children: [
             _buildMinimalStatCard('Тесты', '$tests', Icons.quiz_outlined, AppColors.aqua),
-            _buildMinimalStatCard('Дуэли', '$duels', Icons.sports_kabaddi_outlined, AppColors.aqua),
-            _buildMinimalStatCard('Победы', '$wins', Icons.workspace_premium_outlined, AppColors.gold),
+            _buildMinimalStatCard('Опыт', '$xp', Icons.bolt_outlined, AppColors.aqua),
+            _buildMinimalStatCard('Рейтинг', '$elo', Icons.workspace_premium_outlined, AppColors.gold),
             _buildMinimalStatCard('Точность', '$accuracy%', Icons.gps_fixed_outlined, const Color(0xFF1E293B)),
           ],
         ),
@@ -477,8 +480,9 @@ class StatsSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('БРОНЗОВАЯ ЛИГА', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppColors.navy, letterSpacing: 0.5)),
-            Text('Смотреть', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.navy.withOpacity(0.6))),
+            Text(user?.currentLeagueName?.toUpperCase() ?? 'БРОНЗОВАЯ ЛИГА', 
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppColors.navy, letterSpacing: 0.5)),
+            Text('Смотреть', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.navy.withValues(alpha: 0.6))),
           ],
         ),
         const SizedBox(height: 12),
@@ -486,15 +490,20 @@ class StatsSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.black.withOpacity(0.04)),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 10))],
+            border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 10))],
           ),
           child: Column(
-            children: [
-              _buildLeaderboardRow(4, 'Ivanov Petr', '1,240 XP', false, isFirst: true),
-              _buildLeaderboardRow(5, 'Safarov Behruz', '1,150 XP', true),
-              _buildLeaderboardRow(6, 'Kozlova Anna', '1,080 XP', false, isLast: true),
-            ],
+            children: leaderboard.isEmpty 
+              ? [const Padding(padding: EdgeInsets.all(20), child: Text('Загрузка...', style: TextStyle(fontSize: 12, color: Colors.black26)))]
+              : leaderboard.map((item) => _buildLeaderboardRow(
+                  item.rank, 
+                  item.name, 
+                  item.xp, 
+                  item.isMe,
+                  isFirst: leaderboard.indexOf(item) == 0,
+                  isLast: leaderboard.indexOf(item) == leaderboard.length - 1,
+                )).toList(),
           ),
         ),
         const SizedBox(height: 32),
@@ -508,8 +517,8 @@ class StatsSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.04)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 10))],
+        border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -533,7 +542,7 @@ class StatsSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isMe ? AppColors.gold.withOpacity(0.1) : Colors.transparent,
+        color: isMe ? AppColors.gold.withValues(alpha: 0.1) : Colors.transparent,
         borderRadius: BorderRadius.vertical(
            top: isFirst ? const Radius.circular(20) : Radius.zero,
            bottom: isLast ? const Radius.circular(20) : Radius.zero,
@@ -543,10 +552,10 @@ class StatsSection extends StatelessWidget {
         children: [
           SizedBox(width: 20, child: Text(rank.toString(), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: isMe ? AppColors.gold : AppColors.navy), textAlign: TextAlign.center)),
           const SizedBox(width: 12),
-          CircleAvatar(radius: 14, backgroundColor: isMe ? AppColors.gold.withOpacity(0.4) : const Color(0xFFE2E8F0)),
+          CircleAvatar(radius: 14, backgroundColor: isMe ? AppColors.gold.withValues(alpha: 0.4) : const Color(0xFFE2E8F0)),
           const SizedBox(width: 12),
-          Expanded(child: Text(name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.navy.withOpacity(0.9)))),
-          Text(xp, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: isMe ? AppColors.gold : AppColors.navy.withOpacity(0.5))),
+          Expanded(child: Text(name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.navy.withValues(alpha: 0.9)))),
+          Text(xp, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: isMe ? AppColors.gold : AppColors.navy.withValues(alpha: 0.5))),
         ],
       ),
     );
@@ -572,10 +581,10 @@ class MobileAdmissionGaugeCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black.withOpacity(0.04)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -681,7 +690,7 @@ class MobileAdmissionGaugeCard extends StatelessWidget {
               const SizedBox(width: 8),
               _buildScoreBox('2025', stats.targetPassingScore2025?.toString() ?? '—', const Color(0xFFF8FAFC), const Color(0xFF1E293B)),
               const SizedBox(width: 8),
-              _buildScoreBox('ЦЕЛЬ', stats.targetPassingScore.toString(), AppColors.gold.withOpacity(0.12), AppColors.gold, isTarget: true),
+              _buildScoreBox('ЦЕЛЬ', stats.targetPassingScore.toString(), AppColors.gold.withValues(alpha: 0.12), AppColors.gold, isTarget: true),
             ],
           ),
         ],
@@ -726,7 +735,7 @@ class MobileAdmissionGaugeCard extends StatelessWidget {
           color: bgColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: isTarget ? AppColors.gold : const Color(0xFFF1F5F9), width: isTarget ? 1.5 : 1.0),
-          boxShadow: isTarget ? [BoxShadow(color: AppColors.gold.withOpacity(0.2), blurRadius: 10)] : null,
+          boxShadow: isTarget ? [BoxShadow(color: AppColors.gold.withValues(alpha: 0.2), blurRadius: 10)] : null,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -763,7 +772,6 @@ class JuyoBottomDock extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final double slotWidth = constraints.maxWidth / 5; // 5 Items now
-        const double dropWidth = 58;
 
         return ClipRRect(
           borderRadius: BorderRadius.circular(28),
@@ -775,7 +783,7 @@ class JuyoBottomDock extends StatelessWidget {
                 color: _navBg,
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 20, offset: const Offset(0, 4)),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 20, offset: const Offset(0, 4)),
                 ],
               ),
               child: Stack(
@@ -808,8 +816,8 @@ class JuyoBottomDock extends StatelessWidget {
           margin: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isMenuOpen ? AppColors.gold : Colors.white.withOpacity(0.05),
-            boxShadow: isMenuOpen ? [BoxShadow(color: AppColors.gold.withOpacity(0.3), blurRadius: 10)] : null,
+            color: isMenuOpen ? AppColors.gold : Colors.white.withValues(alpha: 0.05),
+            boxShadow: isMenuOpen ? [BoxShadow(color: AppColors.gold.withValues(alpha: 0.3), blurRadius: 10)] : null,
           ),
           child: Icon(
             isMenuOpen ? LucideIcons.x : LucideIcons.layoutGrid,

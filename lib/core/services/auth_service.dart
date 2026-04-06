@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import 'package:juyo/core/network/api_client.dart';
@@ -36,5 +37,19 @@ class AuthService {
 
   static Future<void> logout() async {
     await _prefs?.remove(_tokenKey);
+  }
+
+  static Map<String, dynamic>? decodeTokenPayload(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+
+      final payload = parts[1];
+      String normalized = base64.normalize(payload);
+      final String decoded = utf8.decode(base64.decode(normalized));
+      return json.decode(decoded);
+    } catch (e) {
+      return null;
+    }
   }
 }

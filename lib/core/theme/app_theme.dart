@@ -8,7 +8,9 @@ class AppColors {
   static const Color navy = Color(0xFF0F172A);      // Deep Navy for curves/accents
   
   // Neutral Palette
-  static const Color lightBg = Color(0xFFF8FAFC);   // Soft Light Base
+  static const Color lightBg = Color(0xFFFFFFFF);
+  static const Color background = Color(0xFFFFFFFF);
+  static const Color milkyCard = Color(0xFFFCFCFD);
   static const Color slate = Color(0xFF64748B);
   static const Color darkSlate = Color(0xFF1E293B);
   static const Color red = Color(0xFFF43F5E);
@@ -24,11 +26,11 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
-      scaffoldBackgroundColor: isDark ? AppColors.navy : AppColors.lightBg,
+      scaffoldBackgroundColor: AppColors.lightBg,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.aqua,
         brightness: brightness,
-        surface: isDark ? AppColors.darkSlate : Colors.white,
+        surface: AppColors.milkyCard,
       ).copyWith(
         primary: AppColors.gold,
         secondary: AppColors.aqua,

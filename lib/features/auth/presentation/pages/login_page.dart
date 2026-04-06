@@ -5,6 +5,7 @@ import 'package:juyo/core/widgets/juyo_components.dart';
 import 'package:juyo/features/auth/presentation/widgets/auth_layout.dart';
 import 'package:juyo/core/theme/app_theme.dart';
 import 'package:juyo/core/services/auth_service.dart';
+import 'package:juyo/core/services/user_service.dart';
 import 'package:juyo/features/home/presentation/pages/dashboard_page.dart';
 import 'register_page.dart';
 import 'forgot_password_page.dart';
@@ -38,16 +39,42 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (success) {
-        // Success
+        final token = AuthService.token;
+        final payload = token != null ? AuthService.decodeTokenPayload(token) : null;
+        
+        // Extract role from token (often as 'role' or a full schema URL)
+        dynamic roleInToken = payload?['role'] ?? payload?['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+        
+        // Final sanity check - permit Student (0) or Admin (1) for testing, or just Student (0)
+        bool isStudent = roleInToken == 0 || roleInToken == 'Student' || roleInToken == 'student';
+        
+        // If token check happens, we can also try fetching profile as a verified source
+        final user = await UserService.fetchProfile();
+        if (user != null) {
+          isStudent = user.role.toLowerCase() == 'student';
+        }
+        
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Вход выполнен успешно!'), backgroundColor: Colors.green),
-          );
-          
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const DashboardPage()),
-          );
+          if (isStudent) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Вход выполнен успешно!'), backgroundColor: Colors.green),
+            );
+            
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const DashboardPage()),
+            );
+          } else {
+            // Not a student or error fetching profile
+            await AuthService.logout();
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Доступ разрешен только для аккаунтов студентов'), 
+                backgroundColor: AppColors.red
+              ),
+            );
+          }
         }
       } else {
         if (mounted) {
