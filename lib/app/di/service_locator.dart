@@ -10,6 +10,7 @@ import 'package:juyo/features/auth/domain/usecases/login_use_case.dart';
 import 'package:juyo/features/auth/domain/usecases/logout_use_case.dart';
 import 'package:juyo/features/auth/domain/usecases/restore_session_use_case.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:juyo/features/home/data/datasources/dashboard_remote_data_source.dart';
 import 'package:juyo/features/home/data/repositories/dashboard_repository_impl.dart';
 import 'package:juyo/features/home/domain/repositories/dashboard_repository.dart';
 import 'package:juyo/features/home/domain/usecases/get_dashboard_data_use_case.dart';
@@ -91,9 +92,17 @@ Future<void> setupServiceLocator() async {
     );
   }
 
+  if (!getIt.isRegistered<DashboardRemoteDataSource>()) {
+    getIt.registerLazySingleton<DashboardRemoteDataSource>(
+      () => DashboardRemoteDataSource(getIt<Dio>()),
+    );
+  }
+
   if (!getIt.isRegistered<DashboardRepository>()) {
     getIt.registerLazySingleton<DashboardRepository>(
-      DashboardRepositoryImpl.new,
+      () => DashboardRepositoryImpl(
+        remoteDataSource: getIt<DashboardRemoteDataSource>(),
+      ),
     );
   }
 
