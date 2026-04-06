@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:juyo/app/di/service_locator.dart';
 import 'package:juyo/app/router/app_routes.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:juyo/features/auth/presentation/bloc/auth_event.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_state.dart';
 import 'package:juyo/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:juyo/features/auth/presentation/pages/login_page.dart';
@@ -51,6 +52,11 @@ class _AppLaunchPage extends StatelessWidget {
         }
 
         if (state is AuthenticatedState) {
+          if (!state.session.isStudent) {
+            context.read<AuthBloc>().add(const AuthLoggedOut());
+            return const LoginPage();
+          }
+
           return BlocProvider(
             create: (_) => getIt<DashboardBloc>()..add(const DashboardLoadRequested()),
             child: const DashboardPage(),

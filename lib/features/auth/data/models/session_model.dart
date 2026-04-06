@@ -11,13 +11,8 @@ class SessionModel extends AuthSession {
 
   factory SessionModel.fromToken(String token) {
     final payload = TokenUtils.decodePayload(token);
-    final role =
-        payload?['Role']?.toString() ??
-        payload?['role']?.toString() ??
-        payload?['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
-            ?.toString();
-
-    final userId = payload?['UserId']?.toString() ?? payload?['Id']?.toString();
+    final role = _extractRole(payload);
+    final userId = _extractUserId(payload);
 
     return SessionModel(
       token: token,
@@ -25,5 +20,78 @@ class SessionModel extends AuthSession {
       role: role,
       isAuthenticated: token.isNotEmpty,
     );
+  }
+
+  static String? _extractRole(Map<String, dynamic>? payload) {
+    if (payload == null) return null;
+
+    final roleKeys = <String>[
+      'Role',
+      'role',
+      'roles',
+      'Roles',
+      'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role',
+    ];
+
+    for (final key in roleKeys) {
+      final values = _toStringList(payload[key]);
+      if (values.isNotEmpty) {
+        return values.join(' ');
+      }
+    }
+
+    return null;
+  }
+
+  static String? _extractUserId(Map<String, dynamic>? payload) {
+    if (payload == null) return null;
+
+    final userIdKeys = <String>[
+      'UserId',
+      'userId',
+      'Id',
+      'id',
+      'sub',
+      'nameid',
+      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
+    ];
+
+    for (final key in userIdKeys) {
+      final value = payload[key]?.toString();
+      if (value != null && value.trim().isNotEmpty) {
+        return value;
+      }
+    }
+
+    return null;
+  }
+
+  static List<String> _toStringList(dynamic value) {
+    if (value == null) {
+      return const [];
+    }
+
+    if (value is String) {
+      final normalized = value
+          .replaceAll('[', ' ')
+          .replaceAll(']', ' ')
+          .replaceAll('"', ' ')
+          .trim();
+      return normalized
+          .split(RegExp(r'[\s,]+'))
+          .where((item) => item.isNotEmpty)
+          .toList(growable: false);
+    }
+
+    if (value is List) {
+      return value
+          .map((item) => item.toString().trim())
+          .where((item) => item.isNotEmpty)
+          .toList(growable: false);
+    }
+
+    final asString = value.toString().trim();
+    return asString.isEmpty ? const [] : [asString];
   }
 }

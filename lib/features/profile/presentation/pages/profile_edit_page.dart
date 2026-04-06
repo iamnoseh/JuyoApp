@@ -75,11 +75,14 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     _targetMajorId = widget.profile.targetMajorId;
     _dob = _tryParseDate(widget.profile.dateOfBirth);
 
-    context.read<ReferenceBloc>().add(
-          ReferenceLoadRequested(
-            selectedUniversityId: _targetUniversityId,
-          ),
-        );
+    final referenceBloc = context.read<ReferenceBloc>();
+    if (referenceBloc.state is ReferenceInitial) {
+      referenceBloc.add(
+        ReferenceLoadRequested(
+          selectedUniversityId: _targetUniversityId,
+        ),
+      );
+    }
   }
 
   @override
@@ -206,10 +209,20 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             }
 
             if (state is ReferenceLoaded) {
+              final validSchoolIds = state.schools
+                  .where((school) => _province == null || _province!.isEmpty || school.province == _province)
+                  .map((school) => school.id)
+                  .toSet();
+              final validUniversityIds = state.universities.map((item) => item.id).toSet();
+              final validMajorIds = state.majors.map((item) => item.id).toSet();
+
               setState(() {
                 _schools = state.schools;
                 _universities = state.universities;
                 _majors = state.majors;
+                _schoolId = validSchoolIds.contains(_schoolId) ? _schoolId : null;
+                _targetUniversityId = validUniversityIds.contains(_targetUniversityId) ? _targetUniversityId : null;
+                _targetMajorId = validMajorIds.contains(_targetMajorId) ? _targetMajorId : null;
                 _loadingRefs = false;
               });
             }
@@ -439,6 +452,8 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     String Function(int)? itemLabel,
     required ValueChanged<int?>? onChanged,
   }) {
+    final safeValue = options.contains(value) ? value : null;
+
     return Container(
       height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -453,7 +468,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           Expanded(
             child: DropdownButtonHideUnderline(
               child: DropdownButton<int>(
-                value: value,
+                value: safeValue,
                 hint: Text(label, style: TextStyle(color: AppColors.slate.withValues(alpha: 0.9), fontWeight: FontWeight.w700)),
                 dropdownColor: Colors.white,
                 iconEnabledColor: AppColors.slate,
@@ -482,6 +497,8 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     required List<String> options,
     required ValueChanged<String?> onChanged,
   }) {
+    final safeValue = options.contains(value) ? value : null;
+
     return Container(
       height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -496,7 +513,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           Expanded(
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
-                value: value,
+                value: safeValue,
                 hint: Text(label, style: TextStyle(color: AppColors.slate.withValues(alpha: 0.9), fontWeight: FontWeight.w700)),
                 dropdownColor: Colors.white,
                 iconEnabledColor: AppColors.slate,

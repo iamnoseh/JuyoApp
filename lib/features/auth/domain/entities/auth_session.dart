@@ -13,7 +13,23 @@ class AuthSession extends Equatable {
     required this.isAuthenticated,
   });
 
-  bool get isStudent => role?.toLowerCase() == 'student';
+  bool get isStudent {
+    final raw = role;
+    if (raw == null || raw.trim().isEmpty) {
+      return false;
+    }
+
+    final normalized = raw
+        .toLowerCase()
+        .replaceAll('[', ' ')
+        .replaceAll(']', ' ')
+        .replaceAll('"', ' ')
+        .replaceAll(',', ' ')
+        .trim();
+
+    final tokens = normalized.split(RegExp(r'\s+')).where((item) => item.isNotEmpty);
+    return tokens.contains('student');
+  }
 
   @override
   List<Object?> get props => [token, userId, role, isAuthenticated];

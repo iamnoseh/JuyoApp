@@ -39,10 +39,6 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      context.read<DashboardBloc>().add(const DashboardLoadRequested());
-    });
   }
 
   void _toggleMenu() {
