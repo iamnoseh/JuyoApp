@@ -10,6 +10,10 @@ import 'package:juyo/features/auth/domain/usecases/login_use_case.dart';
 import 'package:juyo/features/auth/domain/usecases/logout_use_case.dart';
 import 'package:juyo/features/auth/domain/usecases/restore_session_use_case.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:juyo/features/home/data/repositories/dashboard_repository_impl.dart';
+import 'package:juyo/features/home/domain/repositories/dashboard_repository.dart';
+import 'package:juyo/features/home/domain/usecases/get_dashboard_data_use_case.dart';
+import 'package:juyo/features/home/presentation/bloc/dashboard_bloc.dart';
 import 'package:juyo/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:juyo/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:juyo/features/profile/domain/repositories/profile_repository.dart';
@@ -76,6 +80,26 @@ Future<void> setupServiceLocator() async {
         loginUseCase: getIt<LoginUseCase>(),
         restoreSessionUseCase: getIt<RestoreSessionUseCase>(),
         logoutUseCase: getIt<LogoutUseCase>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<DashboardRepository>()) {
+    getIt.registerLazySingleton<DashboardRepository>(
+      DashboardRepositoryImpl.new,
+    );
+  }
+
+  if (!getIt.isRegistered<GetDashboardDataUseCase>()) {
+    getIt.registerLazySingleton<GetDashboardDataUseCase>(
+      () => GetDashboardDataUseCase(getIt<DashboardRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<DashboardBloc>()) {
+    getIt.registerFactory<DashboardBloc>(
+      () => DashboardBloc(
+        getDashboardDataUseCase: getIt<GetDashboardDataUseCase>(),
       ),
     );
   }

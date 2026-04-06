@@ -8,11 +8,12 @@ import 'package:juyo/core/widgets/juyo_components.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_event.dart';
 import 'package:juyo/core/models/user_model.dart';
-import 'package:juyo/core/services/user_service.dart';
 import 'package:juyo/features/home/data/models/dashboard_stats_model.dart';
 import 'package:juyo/features/home/data/models/admission_stats_model.dart';
 import 'package:juyo/features/home/data/models/league_leaderboard_model.dart';
-import 'package:juyo/features/home/data/datasources/dashboard_service.dart';
+import 'package:juyo/features/home/presentation/bloc/dashboard_event.dart';
+import 'package:juyo/features/home/presentation/bloc/dashboard_state.dart';
+import 'package:juyo/features/home/presentation/bloc/dashboard_bloc.dart';
 import 'package:juyo/features/profile/presentation/pages/profile_page.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -38,7 +39,10 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    _fetchData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<DashboardBloc>().add(const DashboardLoadRequested());
+    });
   }
 
   void _toggleMenu() {
@@ -48,48 +52,50 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _fetchData() async {
-    try {
-      final results = await Future.wait([
-        UserService.fetchProfile(),
-        DashboardService.fetchMotivation(),
-        DashboardService.fetchStudentStats(),
-        DashboardService.fetchAdmissionStats(),
-        DashboardService.fetchSkillsProgress(),
-      ]);
-
-      UserModel? user = results[0] as UserModel?;
-      print('DEBUG: Dashboard Fetch Profile: \${user?.fullName}');
-      print('DEBUG: Dashboard Fetch Skills Count: \${(results[4] as List).length}');
-      
-      List<LeagueLeaderboardModel> leaderboard = [];
-      
-      if (user != null) {
-        leaderboard = await DashboardService.fetchLeagueLeaderboard(user.id);
-      }
-
-      if (mounted) {
-        setState(() {
-          _user = user;
-          _motivation = results[1] as String;
-          _dashboardStats = results[2] as DashboardStatsModel?;
-          _admissionStats = results[3] as AdmissionStatsModel?;
-          _skills = results[4] as List<SkillProgressModel>;
-          _leaderboard = leaderboard;
-        });
-      }
-    } catch (e) {
-      // Log error internally if needed
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    context.read<DashboardBloc>().add(const DashboardRefreshRequested());
   }
 
   @override
   Widget build(BuildContext context) {
+    return BlocListener<DashboardBloc, DashboardState>(
+      listener: (context, state) {
+        if (state is DashboardLoading) {
+          if (!_isLoading) {
+            setState(() {
+              _isLoading = true;
+            });
+          }
+        }
+
+        if (state is DashboardLoaded) {
+          setState(() {
+            _user = state.data.user;
+            _motivation = state.data.motivation;
+            _dashboardStats = state.data.dashboardStats;
+            _admissionStats = state.data.admissionStats;
+            _skills = state.data.skills;
+            _leaderboard = state.data.leaderboard;
+            _isLoading = false;
+          });
+        }
+
+        if (state is DashboardFailure) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.red,
+            ),
+          );
+        }
+      },
+      child: _buildBody(context),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: Colors.white,
