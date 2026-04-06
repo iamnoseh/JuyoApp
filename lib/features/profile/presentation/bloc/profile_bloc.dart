@@ -1,7 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:juyo/core/error/result.dart';
-import 'package:juyo/features/profile/data/models/update_profile_request_model.dart';
-import 'package:juyo/features/profile/domain/entities/profile.dart';
 import 'package:juyo/features/profile/domain/usecases/get_profile_use_case.dart';
 import 'package:juyo/features/profile/domain/usecases/update_profile_use_case.dart';
 import 'package:juyo/features/profile/presentation/bloc/profile_event.dart';

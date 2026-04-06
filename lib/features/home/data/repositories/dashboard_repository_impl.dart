@@ -18,12 +18,17 @@ class DashboardRepositoryImpl implements DashboardRepository {
   @override
   Future<Result<DashboardData>> getDashboardData() async {
     final user = await _safeCall<UserModel?>(() => remoteDataSource.getProfile());
-    final motivation = await _safeCall<String>(
+    final motivation = await _safeCall<DashboardMotivation>(
       () => remoteDataSource.getMotivation(),
-      fallback: 'Знание - это единственное сокровище, которое растет, когда им делятся.',
+      fallback: const DashboardMotivation(
+        content: 'Знание растет, когда ты учишься каждый день.',
+        author: '',
+      ),
     );
-    final dashboardStats = await _safeCall<DashboardStatsModel?>(() => remoteDataSource.getStudentStats());
-    final admissionStats = await _safeCall<AdmissionStatsModel?>(() => remoteDataSource.getAdmissionStats());
+    final dashboardStats =
+        await _safeCall<DashboardStatsModel?>(() => remoteDataSource.getStudentStats());
+    final admissionStats =
+        await _safeCall<AdmissionStatsModel?>(() => remoteDataSource.getAdmissionStats());
     final skills = await _safeCall<List<SkillProgressModel>>(
       () => remoteDataSource.getSkillsProgress(),
       fallback: const <SkillProgressModel>[],

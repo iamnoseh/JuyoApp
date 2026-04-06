@@ -3,6 +3,7 @@ import 'package:juyo/core/models/user_model.dart';
 import 'package:juyo/features/home/data/models/admission_stats_model.dart';
 import 'package:juyo/features/home/data/models/dashboard_stats_model.dart';
 import 'package:juyo/features/home/data/models/league_leaderboard_model.dart';
+import 'package:juyo/features/home/domain/entities/dashboard_data.dart';
 
 class DashboardRemoteDataSource {
   final Dio dio;
@@ -16,21 +17,44 @@ class DashboardRemoteDataSource {
     return UserModel.fromJson(data);
   }
 
-  Future<String> getMotivation() async {
+  Future<DashboardMotivation> getMotivation() async {
+    try {
+      final quoteResponse = await dio.get('/Motivation/random');
+      final quoteBody = quoteResponse.data;
+      if (quoteBody is Map) {
+        final source = Map<String, dynamic>.from(quoteBody);
+        final content =
+            (source['content'] ?? source['Content'] ?? '').toString().trim();
+        final author =
+            (source['author'] ?? source['Author'] ?? '').toString().trim();
+
+        if (content.isNotEmpty) {
+          return DashboardMotivation(
+            content: content,
+            author: author,
+          );
+        }
+      }
+    } catch (_) {}
+
     final response = await dio.get('/Dashboard/motivation');
     final body = response.data;
     if (body is String) {
-      return body;
+      return DashboardMotivation(content: body.trim(), author: '');
     }
 
-    if (body is Map<String, dynamic>) {
-      final wrapped = body['data'];
+    if (body is Map) {
+      final source = Map<String, dynamic>.from(body);
+      final wrapped = source['data'];
       if (wrapped is String && wrapped.trim().isNotEmpty) {
-        return wrapped;
+        return DashboardMotivation(content: wrapped.trim(), author: '');
       }
     }
 
-    return 'Знание — это единственное сокровище, которое растёт, когда им делятся.';
+    return const DashboardMotivation(
+      content: 'Знание растет, когда ты учишься каждый день.',
+      author: '',
+    );
   }
 
   Future<DashboardStatsModel?> getStudentStats() async {
@@ -59,11 +83,16 @@ class DashboardRemoteDataSource {
     final data = _extractList(response.data);
     return data
         .whereType<Map>()
-        .map((item) => SkillProgressModel.fromJson(Map<String, dynamic>.from(item)))
+        .map(
+          (item) =>
+              SkillProgressModel.fromJson(Map<String, dynamic>.from(item)),
+        )
         .toList();
   }
 
-  Future<List<LeagueLeaderboardModel>> getLeagueLeaderboard(String currentUserId) async {
+  Future<List<LeagueLeaderboardModel>> getLeagueLeaderboard(
+    String currentUserId,
+  ) async {
     final response = await dio.get('/League/leaderboard');
     final data = _extractList(response.data);
     return data

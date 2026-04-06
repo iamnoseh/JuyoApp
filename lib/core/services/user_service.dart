@@ -7,24 +7,17 @@ class UserService {
   static Future<UserModel?> fetchProfile() async {
     try {
       final response = await ApiClient.dio.get('/User/profile');
-      print('DEBUG: Profile Raw Response: ${response.data}');
       
       if (response.statusCode == 200 && response.data != null) {
         final dynamic rawData = response.data['data'] ?? response.data;
         if (rawData is! Map) {
-          print('DEBUG: Profile Parse ERROR: data is not a map -> ${rawData.runtimeType}');
           return null;
         }
-        final data = Map<String, dynamic>.from(rawData as Map);
-        print('DEBUG: Profile Data Object: $data');
+        final data = Map<String, dynamic>.from(rawData);
         return UserModel.fromJson(data);
       }
       return null;
     } catch (e) {
-      print('DEBUG: Profile Fetch ERROR: $e');
-      if (e is DioException) {
-         print('DEBUG: Profile Response Error Body: ${e.response?.data}');
-      }
       return null;
     }
   }
@@ -67,9 +60,6 @@ class UserService {
 
       return response.statusCode == 200;
     } catch (e) {
-      if (e is DioException) {
-        print('DEBUG: Update Profile Error: ${e.response?.data}');
-      }
       return false;
     }
   }

@@ -3,9 +3,19 @@ import 'package:juyo/features/home/data/models/admission_stats_model.dart';
 import 'package:juyo/features/home/data/models/dashboard_stats_model.dart';
 import 'package:juyo/features/home/data/models/league_leaderboard_model.dart';
 
+class DashboardMotivation {
+  final String content;
+  final String author;
+
+  const DashboardMotivation({
+    required this.content,
+    required this.author,
+  });
+}
+
 class DashboardData {
   final UserModel? user;
-  final String motivation;
+  final DashboardMotivation motivation;
   final DashboardStatsModel? dashboardStats;
   final AdmissionStatsModel? admissionStats;
   final List<LeagueLeaderboardModel> leaderboard;

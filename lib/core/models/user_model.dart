@@ -10,7 +10,7 @@ class UserModel {
   final int points;
   final String? currentLeagueName;
   final bool isPremium;
-  
+
   final String? province;
   final int? gender;
   final int? schoolId;
@@ -70,14 +70,13 @@ class UserModel {
     final firstName = _asString(json['firstName'] ?? json['FirstName']);
     final lastName = _asString(json['lastName'] ?? json['LastName']);
     String computedName = '$firstName $lastName'.trim();
-    print('DEBUG: UserModel Parsing Name: $computedName');
 
     if (computedName.isEmpty) {
-       computedName = _asString(json['userName'] ?? json['username'] ?? json['email']);
+      computedName =
+          _asString(json['userName'] ?? json['username'] ?? json['email']);
     }
 
-    dynamic rawRole = json['role'] ?? json['Role'];
-    print('DEBUG: UserModel Raw Role: $rawRole');
+    final dynamic rawRole = json['role'] ?? json['Role'];
     String roleString = 'Student';
     if (rawRole is int) {
       roleString = rawRole == 1 ? 'Admin' : 'Student';
@@ -85,8 +84,7 @@ class UserModel {
       roleString = rawRole;
     }
 
-    dynamic rawPremium = json['isPremium'] ?? json['IsPremium'] ?? false;
-    print('DEBUG: UserModel Raw Premium: $rawPremium');
+    final dynamic rawPremium = json['isPremium'] ?? json['IsPremium'] ?? false;
     bool isPremium = false;
     if (rawPremium is bool) {
       isPremium = rawPremium;
@@ -96,25 +94,28 @@ class UserModel {
 
     final List<dynamic>? testResultsJson =
         (json['lastTestResults'] ?? json['LastTestResults']) as List<dynamic>?;
-    print('DEBUG: UserModel Raw TestResults Count: ${testResultsJson?.length}');
     final List<TestResultModel> testResults = testResultsJson != null
-      ? testResultsJson
-          .whereType<Map>()
-          .map((t) => TestResultModel.fromJson(Map<String, dynamic>.from(t)))
-          .toList()
-      : [];
+        ? testResultsJson
+            .whereType<Map>()
+            .map((t) => TestResultModel.fromJson(Map<String, dynamic>.from(t)))
+            .toList()
+        : [];
 
     return UserModel(
       id: _asString(json['id']),
       fullName: computedName.isNotEmpty ? computedName : 'Пользователь',
       phoneNumber: _asString(json['phoneNumber']),
-      profilePictureUrl: json['profilePictureUrl'] ?? json['avatarUrl'] ?? json['AvatarUrl'] ?? json['Avatar'],
+      profilePictureUrl: json['profilePictureUrl'] ??
+          json['avatarUrl'] ??
+          json['AvatarUrl'] ??
+          json['Avatar'],
       role: roleString,
       xp: _asInt(json['xp'] ?? json['XP'], defaultValue: 0),
       eloRating: _asInt(json['eloRating'] ?? json['EloRating'], defaultValue: 1000),
       streak: _asInt(json['streak'] ?? json['Streak'], defaultValue: 0),
       points: _asInt(json['points'] ?? json['Points'], defaultValue: 0),
-      currentLeagueName: _asNullableString(json['currentLeagueName'] ?? json['CurrentLeagueName']),
+      currentLeagueName:
+          _asNullableString(json['currentLeagueName'] ?? json['CurrentLeagueName']),
       isPremium: isPremium,
       province: _asNullableString(json['province'] ?? json['Province']),
       gender: _asNullableInt(json['gender'] ?? json['Gender']),
@@ -123,18 +124,29 @@ class UserModel {
       grade: _asNullableInt(json['grade'] ?? json['Grade']),
       clusterName: _asNullableString(json['clusterName'] ?? json['ClusterName']),
       clusterId: _asNullableInt(json['clusterId'] ?? json['ClusterId']),
-      targetUniversity: _asNullableString(json['targetUniversity'] ?? json['TargetUniversity']),
-      targetUniversityId: _asNullableInt(json['targetUniversityId'] ?? json['TargetUniversityId']),
-      targetMajorName: _asNullableString(json['targetMajorName'] ?? json['TargetMajorName']),
-      targetMajorId: _asNullableInt(json['targetMajorId'] ?? json['TargetMajorId']),
-      targetPassingScore: _asNullableInt(json['targetPassingScore'] ?? json['TargetPassingScore']),
-      targetPassingScore2024: _asNullableInt(json['targetPassingScore2024'] ?? json['TargetPassingScore2024']),
-      targetPassingScore2025: _asNullableInt(json['targetPassingScore2025'] ?? json['TargetPassingScore2025']),
+      targetUniversity:
+          _asNullableString(json['targetUniversity'] ?? json['TargetUniversity']),
+      targetUniversityId:
+          _asNullableInt(json['targetUniversityId'] ?? json['TargetUniversityId']),
+      targetMajorName:
+          _asNullableString(json['targetMajorName'] ?? json['TargetMajorName']),
+      targetMajorId:
+          _asNullableInt(json['targetMajorId'] ?? json['TargetMajorId']),
+      targetPassingScore:
+          _asNullableInt(json['targetPassingScore'] ?? json['TargetPassingScore']),
+      targetPassingScore2024: _asNullableInt(
+        json['targetPassingScore2024'] ?? json['TargetPassingScore2024'],
+      ),
+      targetPassingScore2025: _asNullableInt(
+        json['targetPassingScore2025'] ?? json['TargetPassingScore2025'],
+      ),
       dateOfBirth: _asNullableString(json['dateOfBirth'] ?? json['DateOfBirth']),
       globalRank: _asInt(json['globalRank'] ?? json['GlobalRank'], defaultValue: 0),
-      registrationDate: _asNullableString(json['registrationDate'] ?? json['RegistrationDate']),
+      registrationDate:
+          _asNullableString(json['registrationDate'] ?? json['RegistrationDate']),
       age: _asInt(json['age'] ?? json['Age'], defaultValue: 0),
-      premiumExpiresAt: _asNullableString(json['premiumExpiresAt'] ?? json['PremiumExpiresAt']),
+      premiumExpiresAt:
+          _asNullableString(json['premiumExpiresAt'] ?? json['PremiumExpiresAt']),
       lastTestResults: testResults,
     );
   }
@@ -205,7 +217,8 @@ class SkillProgressModel {
     return SkillProgressModel(
       subjectId: UserModel._asInt(json['subjectId'], defaultValue: 0),
       subjectName: UserModel._asString(json['subjectName']),
-      proficiencyPercent: UserModel._asInt(json['proficiencyPercent'], defaultValue: 0),
+      proficiencyPercent:
+          UserModel._asInt(json['proficiencyPercent'], defaultValue: 0),
       correctAnswers: UserModel._asInt(json['correctAnswers'], defaultValue: 0),
       totalQuestions: UserModel._asInt(json['totalQuestions'], defaultValue: 0),
     );
