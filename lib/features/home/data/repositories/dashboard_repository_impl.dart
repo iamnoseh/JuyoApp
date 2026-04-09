@@ -30,6 +30,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
         await _safeCall<DashboardStatsModel?>(() => remoteDataSource.getStudentStats());
     final testActivity = await _safeCall<TestActivityModel?>(
       () => remoteDataSource.getTestActivity(),
+      fallback: null,
+      useFallback: true,
     );
     final admissionStats =
         await _safeCall<AdmissionStatsModel?>(() => remoteDataSource.getAdmissionStats());
@@ -71,12 +73,19 @@ class DashboardRepositoryImpl implements DashboardRepository {
     );
   }
 
-  Future<T> _safeCall<T>(Future<T> Function() request, {T? fallback}) async {
+  Future<T> _safeCall<T>(
+    Future<T> Function() request, {
+    T? fallback,
+    bool useFallback = false,
+  }) async {
     try {
       return await request();
     } catch (_) {
       if (fallback != null) {
         return fallback;
+      }
+      if (useFallback && null is T) {
+        return null as T;
       }
       rethrow;
     }

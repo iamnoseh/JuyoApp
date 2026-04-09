@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:juyo/app/router/app_routes.dart';
 import 'package:juyo/app/di/service_locator.dart';
 import 'package:juyo/core/l10n/locale_controller.dart';
+import 'package:juyo/core/network/api_client.dart';
 import 'package:juyo/core/theme/app_theme.dart';
 import 'package:juyo/core/theme/theme_mode_controller.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
@@ -856,48 +857,112 @@ class AppHeaderActions extends StatelessWidget {
   }
 }
 
-class AppTopStatsBar extends StatelessWidget {
-  final int totalXp;
-  final int streak;
+class AppTopStatsBar extends StatefulWidget {
+  final int? totalXp;
+  final int? streak;
 
   const AppTopStatsBar({
     super.key,
-    this.totalXp = 2140,
-    this.streak = 12,
+    this.totalXp,
+    this.streak,
   });
 
   @override
+  State<AppTopStatsBar> createState() => _AppTopStatsBarState();
+}
+
+class _AppTopStatsBarState extends State<AppTopStatsBar> {
+  late Future<_TopStatsSnapshot> _statsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _statsFuture = _loadStats();
+  }
+
+  @override
+  void didUpdateWidget(covariant AppTopStatsBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.totalXp != widget.totalXp || oldWidget.streak != widget.streak) {
+      _statsFuture = _loadStats();
+    }
+  }
+
+  Future<_TopStatsSnapshot> _loadStats() async {
+    if (widget.totalXp != null || widget.streak != null) {
+      return _TopStatsSnapshot(
+        xp: widget.totalXp ?? 0,
+        streak: widget.streak ?? 0,
+      );
+    }
+
+    try {
+      final response = await ApiClient.dio.get('/User/profile');
+      final body = response.data;
+      final data = body is Map ? (body['data'] ?? body) : body;
+
+      if (data is Map) {
+        final xpRaw = data['xp'] ?? data['XP'] ?? 0;
+        final streakRaw = data['streak'] ?? data['Streak'] ?? 0;
+        return _TopStatsSnapshot(
+          xp: int.tryParse(xpRaw.toString()) ?? 0,
+          streak: int.tryParse(streakRaw.toString()) ?? 0,
+        );
+      }
+    } catch (_) {}
+
+    return const _TopStatsSnapshot(xp: 0, streak: 0);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const AppLanguageButton(compact: true),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Center(
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.center,
-              children: [
-                _TopStatPill(
-                  icon: Icons.bolt_rounded,
-                  label: '$totalXp XP',
-                  color: AppColors.gold,
+    return FutureBuilder<_TopStatsSnapshot>(
+      future: _statsFuture,
+      builder: (context, snapshot) {
+        final stats = snapshot.data ?? const _TopStatsSnapshot(xp: 0, streak: 0);
+
+        return Row(
+          children: [
+            const AppLanguageButton(compact: true),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Center(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    _TopStatPill(
+                      icon: Icons.bolt_rounded,
+                      label: '${stats.xp} XP',
+                      color: AppColors.gold,
+                    ),
+                    _TopStatPill(
+                      icon: Icons.local_fire_department_rounded,
+                      label: '${stats.streak}',
+                      color: AppColors.emerald,
+                    ),
+                  ],
                 ),
-                _TopStatPill(
-                  icon: Icons.local_fire_department_rounded,
-                  label: '$streak',
-                  color: AppColors.emerald,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        const AppThemeModeButton(compact: true),
-      ],
+            const SizedBox(width: 12),
+            const AppThemeModeButton(compact: true),
+          ],
+        );
+      },
     );
   }
+}
+
+class _TopStatsSnapshot {
+  final int xp;
+  final int streak;
+
+  const _TopStatsSnapshot({
+    required this.xp,
+    required this.streak,
+  });
 }
 
 class _TopStatPill extends StatelessWidget {

@@ -259,37 +259,34 @@ class _ActivityCard extends StatelessWidget {
             color: AppColors.aqua,
           ),
           const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
+          Row(
             children: [
-              SizedBox(
-                width: 140,
-                child: _MetricBox(
+              Expanded(
+                child: _ActivityMetricBox(
                   label: _tr(context, 'Тестов', 'Tests'),
                   value: '$total',
                   color: AppColors.aqua,
                 ),
               ),
-              SizedBox(
-                width: 140,
-                child: _MetricBox(
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ActivityMetricBox(
                   label: _tr(context, 'Дуэлей', 'Duels'),
                   value: '$totalDuels',
                   color: AppColors.gold,
                 ),
               ),
-              SizedBox(
-                width: 140,
-                child: _MetricBox(
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ActivityMetricBox(
                   label: _tr(context, 'Побед', 'Wins'),
                   value: '$totalDuelWins',
                   color: AppColors.emerald,
                 ),
               ),
-              SizedBox(
-                width: 140,
-                child: _MetricBox(
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ActivityMetricBox(
                   label: _tr(context, 'Точность', 'Accuracy'),
                   value: '$accuracy%',
                   color: AppColors.aqua,
@@ -869,6 +866,51 @@ class _MetricBox extends StatelessWidget {
   }
 }
 
+class _ActivityMetricBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _ActivityMetricBox({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: color,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _BarItem extends StatelessWidget {
   final TestActivityDayModel item;
   final int maxValue;
@@ -883,11 +925,6 @@ class _BarItem extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Text(
-            '${item.totalAnswers}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
-          ),
-          const SizedBox(height: 6),
           Container(
             height: height,
             decoration: BoxDecoration(

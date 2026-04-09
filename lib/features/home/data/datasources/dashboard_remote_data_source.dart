@@ -66,10 +66,17 @@ class DashboardRemoteDataSource {
   }
 
   Future<TestActivityModel?> getTestActivity({int days = 30}) async {
-    final response = await dio.get('/User/test-activity?days=$days');
-    final data = _extractMap(response.data);
-    if (data == null) return null;
-    return TestActivityModel.fromJson(data);
+    try {
+      final response = await dio.get('/User/test-activity?days=$days');
+      final data = _extractMap(response.data);
+      if (data == null) return null;
+      return TestActivityModel.fromJson(data);
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 404) {
+        return null;
+      }
+      rethrow;
+    }
   }
 
   Future<AdmissionStatsModel?> getAdmissionStats() async {
