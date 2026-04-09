@@ -103,7 +103,7 @@ class UserModel {
 
     return UserModel(
       id: _asString(json['id']),
-      fullName: computedName.isNotEmpty ? computedName : 'Пользователь',
+      fullName: computedName.isNotEmpty ? computedName : 'User',
       phoneNumber: _asString(json['phoneNumber']),
       profilePictureUrl: json['profilePictureUrl'] ??
           json['avatarUrl'] ??

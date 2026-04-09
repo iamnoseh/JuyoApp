@@ -24,7 +24,7 @@ class LeagueLeaderboardModel {
 
     return LeagueLeaderboardModel(
       rank: json['rank'] ?? json['Rank'] ?? 0,
-      name: fullName.isNotEmpty ? fullName : 'Пользователь',
+      name: fullName.isNotEmpty ? fullName : 'User',
       xp:
           '${json['xp'] ?? json['XP'] ?? json['points'] ?? json['Points'] ?? 0} XP',
       isMe: id == currentUserId,
