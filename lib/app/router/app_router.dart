@@ -109,14 +109,12 @@ class AppRouter {
           GoRoute(
             path: AppRoutes.profile,
             builder: (context, state) => const ProfileRoutePage(),
-            routes: [
-              GoRoute(
-                path: 'edit',
-                builder: (context, state) => const ProfileEditRoutePage(),
-              ),
-            ],
           ),
         ],
+      ),
+      GoRoute(
+        path: AppRoutes.profileEdit,
+        builder: (context, state) => const ProfileEditRoutePage(),
       ),
       GoRoute(
         path: AppRoutes.practice,
