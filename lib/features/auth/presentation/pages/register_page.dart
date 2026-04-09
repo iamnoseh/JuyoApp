@@ -1,15 +1,9 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:juyo/app/di/service_locator.dart';
 import 'package:juyo/app/router/app_routes.dart';
 import 'package:juyo/core/l10n/l10n.dart';
-import 'package:juyo/core/network/api_client.dart';
-import 'package:juyo/core/storage/secure_storage_service.dart';
 import 'package:juyo/core/widgets/app_ui.dart';
-import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:juyo/features/auth/presentation/bloc/auth_event.dart';
 import 'package:juyo/features/auth/presentation/widgets/auth_layout.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -62,31 +56,13 @@ class _RegisterPageState extends State<RegisterPage> {
 
     setState(() => _loading = true);
     try {
-      final response = await ApiClient.dio.post('/Auth/register', data: {
-        'firstName': _firstNameController.text.trim(),
-        'lastName': _lastNameController.text.trim(),
-        'phoneNumber': _phoneController.text.trim(),
-        'referralCode': _referralController.text.trim().isEmpty
-            ? null
-            : _referralController.text.trim(),
-        'password': _passwordController.text,
-        'confirmPassword': _confirmPasswordController.text,
-      });
-
-      final raw = response.data is Map ? response.data['data'] ?? response.data : null;
-      final token = raw is Map ? raw['token']?.toString() ?? '' : '';
-      if (token.isNotEmpty) {
-        await getIt<SecureStorageService>().saveToken(token);
-        getIt<AuthBloc>().add(const AuthAppStarted());
-      }
+      await Future<void>.delayed(const Duration(milliseconds: 300));
       if (!mounted) return;
-      context.go(AppRoutes.dashboard);
-    } on DioException catch (error) {
-      if (!mounted) return;
-      final message = error.response?.data is Map
-          ? (error.response?.data['message']?.toString() ?? l10n.errorTitle)
-          : (error.message ?? l10n.errorTitle);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Registration demo is ready. API connection comes later.'),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -133,7 +109,7 @@ class _RegisterPageState extends State<RegisterPage> {
           const SizedBox(height: 16),
           AppTextField(
             label: l10n.authPasswordLabel,
-            hint: '••••••••',
+            hint: 'password',
             prefixIcon: LucideIcons.lock,
             controller: _passwordController,
             obscureText: true,
@@ -141,7 +117,7 @@ class _RegisterPageState extends State<RegisterPage> {
           const SizedBox(height: 16),
           AppTextField(
             label: l10n.authConfirmPasswordLabel,
-            hint: '••••••••',
+            hint: 'password',
             prefixIcon: LucideIcons.checkCircle,
             controller: _confirmPasswordController,
             obscureText: true,
@@ -151,6 +127,11 @@ class _RegisterPageState extends State<RegisterPage> {
             label: l10n.authSignUp,
             onPressed: _loading ? null : _submit,
             isLoading: _loading,
+          ),
+          const SizedBox(height: 12),
+          AppSecondaryButton(
+            label: l10n.authBackToLogin,
+            onPressed: () => context.go(AppRoutes.login),
           ),
         ],
       ),

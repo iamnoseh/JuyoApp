@@ -1,10 +1,8 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:juyo/app/router/app_routes.dart';
 import 'package:juyo/core/l10n/l10n.dart';
-import 'package:juyo/core/network/api_client.dart';
 import 'package:juyo/core/widgets/app_ui.dart';
 import 'package:juyo/features/auth/presentation/widgets/auth_layout.dart';
 
@@ -18,7 +16,6 @@ class ForgotPasswordPage extends StatefulWidget {
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   int _step = 1;
   bool _loading = false;
-  String? _resetToken;
 
   final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
@@ -42,15 +39,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       );
       return;
     }
+
     setState(() => _loading = true);
     try {
-      await ApiClient.dio.post('/Auth/send-otp', data: {
-        'username': _phoneController.text.trim(),
-      });
+      await Future<void>.delayed(const Duration(milliseconds: 250));
       if (!mounted) return;
       setState(() => _step = 2);
-    } on DioException catch (error) {
-      _showError(error);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -64,18 +58,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       );
       return;
     }
+
     setState(() => _loading = true);
     try {
-      final response = await ApiClient.dio.post('/Auth/verify-otp', data: {
-        'username': _phoneController.text.trim(),
-        'otpCode': _otpController.text.trim(),
-      });
-      final raw = response.data is Map ? response.data['data'] ?? response.data : null;
-      _resetToken = raw is Map ? raw['resetToken']?.toString() : null;
+      await Future<void>.delayed(const Duration(milliseconds: 250));
       if (!mounted) return;
       setState(() => _step = 3);
-    } on DioException catch (error) {
-      _showError(error);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -89,31 +77,20 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       );
       return;
     }
+
     setState(() => _loading = true);
     try {
-      await ApiClient.dio.post('/Auth/reset-password', data: {
-        'phoneNumber': _phoneController.text.trim(),
-        'resetToken': _resetToken,
-        'newPassword': _newPasswordController.text,
-        'confirmPassword': _confirmPasswordController.text,
-      });
+      await Future<void>.delayed(const Duration(milliseconds: 250));
       if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password reset demo is ready. Backend wiring comes later.'),
+        ),
+      );
       context.go(AppRoutes.login);
-    } on DioException catch (error) {
-      _showError(error);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  void _showError(DioException error) {
-    if (!mounted) return;
-    final message = error.response?.data is Map
-        ? (error.response?.data['message']?.toString() ?? context.l10n.errorTitle)
-        : (error.message ?? context.l10n.errorTitle);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
   }
 
   @override
@@ -174,7 +151,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           if (_step == 3) ...[
             AppTextField(
               label: l10n.authPasswordLabel,
-              hint: '••••••••',
+              hint: 'password',
               prefixIcon: LucideIcons.lock,
               controller: _newPasswordController,
               obscureText: true,
@@ -182,7 +159,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             const SizedBox(height: 16),
             AppTextField(
               label: l10n.authConfirmPasswordLabel,
-              hint: '••••••••',
+              hint: 'password',
               prefixIcon: LucideIcons.checkCircle,
               controller: _confirmPasswordController,
               obscureText: true,

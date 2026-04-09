@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:juyo/app/di/service_locator.dart';
+import 'package:juyo/core/theme/theme_mode_controller.dart';
 import 'package:juyo/core/widgets/app_ui.dart';
 import 'package:juyo/core/widgets/aurora_background.dart';
 
@@ -19,6 +21,10 @@ class AuthLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = getIt<ThemeModeController>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = Theme.of(context).colorScheme.onSurface;
+
     return Scaffold(
       body: AuroraBackground(
         child: SafeArea(
@@ -27,11 +33,25 @@ class AuthLayout extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (canPop)
-                  IconButton(
-                    onPressed: () => context.pop(),
-                    icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                  ),
+                Row(
+                  children: [
+                    if (canPop)
+                      IconButton(
+                        onPressed: () => context.pop(),
+                        icon: Icon(Icons.arrow_back_rounded, color: iconColor),
+                      )
+                    else
+                      const SizedBox(width: 48),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: themeController.toggle,
+                      icon: Icon(
+                        isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                        color: iconColor,
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 Center(
                   child: Text(
