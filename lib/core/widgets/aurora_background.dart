@@ -1,138 +1,122 @@
-import 'package:flutter/material.dart';
 import 'dart:ui';
+
+import 'package:flutter/material.dart';
 import 'package:juyo/core/theme/app_theme.dart';
 
 class AuroraBackground extends StatelessWidget {
   final Widget child;
+  final bool showMesh;
 
-  const AuroraBackground({super.key, required this.child});
+  const AuroraBackground({
+    super.key,
+    required this.child,
+    this.showMesh = true,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return Stack(
+      fit: StackFit.expand,
       children: [
-        // Refined Deep Navy Base
-        Positioned.fill(
-          child: Container(
-            color: isDark ? AppColors.navy : AppColors.lightBg,
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppColors.base,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [AppColors.base, AppColors.surface],
+            ),
           ),
         ),
-        
-        // Futuristic Aurora Blobs (Gold & Aqua)
-        Positioned.fill(
-          child: AuroraPainter(isDark: isDark),
-        ),
-        
+        if (showMesh) const _AuroraLayer(),
         Positioned.fill(
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 130, sigmaY: 130),
-            child: Container(
-              color: isDark 
-                ? AppColors.navy.withValues(alpha: 0.55) 
-                : AppColors.lightBg.withValues(alpha: 0.4),
+            filter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.base.withValues(alpha: 0.14),
+              ),
             ),
           ),
         ),
-
-        // Noise Texture Overly
-        Positioned.fill(
-          child: Opacity(
-            opacity: isDark ? 0.04 : 0.015,
-            child: Image.network(
-              'https://www.transparenttextures.com/patterns/noise.png',
-              repeat: ImageRepeat.repeat,
-              fit: BoxFit.none,
-            ),
-          ),
-        ),
-
-        // Content
-        Positioned.fill(child: child),
+        child,
       ],
     );
   }
 }
 
-class AuroraPainter extends StatefulWidget {
-  final bool isDark;
-  const AuroraPainter({super.key, required this.isDark});
-
-  @override
-  State<AuroraPainter> createState() => _AuroraPainterState();
-}
-
-class _AuroraPainterState extends State<AuroraPainter> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 25),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+class _AuroraLayer extends StatelessWidget {
+  const _AuroraLayer();
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return CustomPaint(
-          painter: _AuroraElementPainter(_controller.value, widget.isDark),
-        );
-      },
+    return CustomPaint(
+      painter: _AuroraPainter(),
+      child: const SizedBox.expand(),
     );
   }
 }
 
-class _AuroraElementPainter extends CustomPainter {
-  final double progress;
-  final bool isDark;
-
-  _AuroraElementPainter(this.progress, this.isDark);
-
+class _AuroraPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final double intensity = isDark ? 0.18 : 0.08;
-    
-    final paintAqua = Paint()
-      ..color = AppColors.aqua.withValues(alpha: intensity)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50);
+    final aquaPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          AppColors.aqua.withValues(alpha: 0.24),
+          AppColors.aqua.withValues(alpha: 0.0),
+        ],
+      ).createShader(
+        Rect.fromCircle(
+          center: Offset(size.width * 0.18, size.height * 0.14),
+          radius: size.width * 0.48,
+        ),
+      );
 
-    final paintGold = Paint()
-      ..color = AppColors.gold.withValues(alpha: intensity)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 60);
+    final goldPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          AppColors.gold.withValues(alpha: 0.18),
+          AppColors.gold.withValues(alpha: 0.0),
+        ],
+      ).createShader(
+        Rect.fromCircle(
+          center: Offset(size.width * 0.86, size.height * 0.22),
+          radius: size.width * 0.42,
+        ),
+      );
 
-    // Aqua - Bottom Left
-    canvas.drawCircle(
-      Offset(
-        size.width * 0.1 + (progress * 60),
-        size.height * 0.85 - (progress * 35),
-      ),
-      size.width * 0.8,
-      paintAqua,
-    );
+    final emeraldPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          AppColors.emerald.withValues(alpha: 0.12),
+          AppColors.emerald.withValues(alpha: 0.0),
+        ],
+      ).createShader(
+        Rect.fromCircle(
+          center: Offset(size.width * 0.5, size.height * 0.9),
+          radius: size.width * 0.52,
+        ),
+      );
 
-    // Gold - Top Right
-    canvas.drawCircle(
-      Offset(
-        size.width * 0.9 - (progress * 45),
-        size.height * 0.15 + (progress * 55),
-      ),
-      size.width * 0.7,
-      paintGold,
-    );
+    canvas.drawRect(Offset.zero & size, aquaPaint);
+    canvas.drawRect(Offset.zero & size, goldPaint);
+    canvas.drawRect(Offset.zero & size, emeraldPaint);
+
+    final meshPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.025)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    const spacing = 36.0;
+    for (double dx = -size.height; dx < size.width + size.height; dx += spacing) {
+      canvas.drawLine(
+        Offset(dx, 0),
+        Offset(dx - size.height, size.height),
+        meshPaint,
+      );
+    }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

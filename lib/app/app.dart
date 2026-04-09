@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:juyo/app/di/service_locator.dart';
 import 'package:juyo/app/router/app_router.dart';
-import 'package:juyo/app/router/app_routes.dart';
 import 'package:juyo/core/theme/app_theme.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_event.dart';
+import 'package:juyo/l10n/app_localizations.dart';
 
 class JuyoApp extends StatelessWidget {
   const JuyoApp({super.key});
@@ -14,18 +14,29 @@ class JuyoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthBloc>(
-          create: (_) => getIt<AuthBloc>()..add(const AuthAppStarted()),
+        BlocProvider<AuthBloc>.value(
+          value: getIt<AuthBloc>()..add(const AuthAppStarted()),
         ),
       ],
-      child: MaterialApp(
+      child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         title: 'Juyo',
         theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
         themeMode: ThemeMode.light,
-        onGenerateRoute: AppRouter.onGenerateRoute,
-        initialRoute: AppRoutes.splash,
+        routerConfig: AppRouter.router,
+        localeResolutionCallback: (locale, supportedLocales) {
+          if (locale == null) {
+            return const Locale('tg');
+          }
+          for (final supportedLocale in supportedLocales) {
+            if (supportedLocale.languageCode == locale.languageCode) {
+              return supportedLocale;
+            }
+          }
+          return const Locale('tg');
+        },
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
       ),
     );
   }

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:juyo/app/router/app_routes.dart';
+import 'package:juyo/core/l10n/l10n.dart';
 import 'package:juyo/core/theme/app_theme.dart';
 import 'package:juyo/core/widgets/juyo_components.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_event.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_state.dart';
-import 'package:juyo/features/auth/presentation/pages/forgot_password_page.dart';
-import 'package:juyo/features/auth/presentation/pages/register_page.dart';
 import 'package:juyo/features/auth/presentation/widgets/auth_layout.dart';
 
 class LoginPage extends StatefulWidget {
@@ -19,145 +19,93 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _usernameController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() {
-    if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
+  void _submit() {
+    final l10n = context.l10n;
+    if (_phoneController.text.trim().isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Пожалуйста, заполните все поля'),
-          backgroundColor: AppColors.red,
-        ),
+        SnackBar(content: Text(l10n.authInvalidFields)),
       );
       return;
     }
 
     context.read<AuthBloc>().add(
-      AuthLoginRequested(
-        username: _usernameController.text.trim(),
-        password: _passwordController.text,
-      ),
-    );
+          AuthLoginRequested(
+            username: _phoneController.text.trim(),
+            password: _passwordController.text,
+          ),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
 
     return BlocConsumer<AuthBloc, AuthState>(
-      listenWhen: (previous, current) =>
-          current is AuthFailureState || current is AuthenticatedState,
       listener: (context, state) {
         if (state is AuthFailureState) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.red,
-            ),
+            SnackBar(content: Text(state.message)),
           );
         }
 
-        if (state is AuthenticatedState) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Вход выполнен успешно!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRoutes.dashboard,
-            (route) => false,
-          );
+        if (state is AuthenticatedState && mounted) {
+          context.go(AppRoutes.dashboard);
         }
       },
       builder: (context, state) {
         final isLoading = state is AuthLoginInProgress;
 
         return AuthLayout(
-          title: 'Вход',
+          title: l10n.authLoginTitle,
+          subtitle: l10n.authLoginSubtitle,
           child: Column(
             children: [
-              JuyoInput(
-                label: 'Номер телефона',
-                hint: '+992 987 12 34 56',
-                icon: LucideIcons.user,
-                controller: _usernameController,
-                keyboardType: TextInputType.text,
-              ),
-              const SizedBox(height: 24),
-              JuyoInput(
-                label: 'Пароль',
-                hint: '••••••••',
-                icon: LucideIcons.lock,
-                controller: _passwordController,
-                isPassword: true,
+              AppTextField(
+                label: l10n.authPhoneLabel,
+                hint: l10n.authPhoneHint,
+                prefixIcon: LucideIcons.phone,
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 16),
+              AppTextField(
+                label: l10n.authPasswordLabel,
+                hint: '••••••••',
+                prefixIcon: LucideIcons.lock,
+                controller: _passwordController,
+                obscureText: true,
+              ),
+              const SizedBox(height: 12),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ForgotPasswordPage(),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'Забыли пароль?',
-                    style: TextStyle(
-                      color: AppColors.aqua,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  onPressed: () => context.push(AppRoutes.forgotPassword),
+                  child: Text(
+                    l10n.authForgotPassword,
+                    style: const TextStyle(color: AppColors.aqua),
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
-              JuyoButton(
-                text: 'Войти',
+              const SizedBox(height: 8),
+              AppPrimaryButton(
+                label: l10n.authSignIn,
+                onPressed: isLoading ? null : _submit,
                 isLoading: isLoading,
-                onPressed: isLoading ? null : _handleLogin,
               ),
-              const SizedBox(height: 32),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Нет аккаунта?',
-                    style: TextStyle(
-                      color: isDark ? Colors.white60 : Colors.black54,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const RegisterPage(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Регистрация',
-                      style: TextStyle(
-                        color: AppColors.aqua,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 12),
+              AppSecondaryButton(
+                label: l10n.authSignUp,
+                onPressed: () => context.push(AppRoutes.register),
               ),
             ],
           ),

@@ -1,9 +1,22 @@
 abstract final class AppRoutes {
   static const splash = '/';
+  static const landing = '/landing';
   static const login = '/login';
   static const register = '/register';
   static const forgotPassword = '/forgot-password';
   static const dashboard = '/dashboard';
+  static const duel = '/duel';
+  static const tests = '/tests';
+  static const league = '/league';
   static const profile = '/profile';
   static const profileEdit = '/profile/edit';
+  static const premium = '/premium';
+  static const referral = '/referral';
+  static const redList = '/red-list';
+  static const schoolLeaderboard = '/school-leaderboard';
+  static const practice = '/practice';
+  static const exam = '/exam';
+  static const testRunner = '/test/runner';
+  static const testResult = '/test/result';
+  static const duelInvite = '/duel/invite';
 }

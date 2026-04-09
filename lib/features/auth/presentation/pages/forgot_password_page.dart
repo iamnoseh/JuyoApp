@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dio/dio.dart';
-import 'package:juyo/core/widgets/juyo_components.dart';
-import 'package:juyo/features/auth/presentation/widgets/auth_layout.dart';
-import 'package:juyo/core/theme/app_theme.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:juyo/app/router/app_routes.dart';
+import 'package:juyo/core/l10n/l10n.dart';
 import 'package:juyo/core/network/api_client.dart';
+import 'package:juyo/core/widgets/app_ui.dart';
+import 'package:juyo/features/auth/presentation/widgets/auth_layout.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -14,126 +16,189 @@ class ForgotPasswordPage extends StatefulWidget {
 }
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
-  int step = 1;
+  int _step = 1;
+  bool _loading = false;
+  String? _resetToken;
+
   final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _isLoading = false;
 
-  Future<void> _handleSendOtp() async {
-    if (_phoneController.text.isEmpty) {
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _otpController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendOtp() async {
+    final l10n = context.l10n;
+    if (_phoneController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Введите номер телефона'), backgroundColor: AppColors.red),
+        SnackBar(content: Text(l10n.authInvalidFields)),
       );
       return;
     }
-
-    setState(() => _isLoading = true);
+    setState(() => _loading = true);
     try {
-      final response = await ApiClient.dio.post('/Auth/send-otp', data: {
-        'phoneNumber': _phoneController.text,
+      await ApiClient.dio.post('/Auth/send-otp', data: {
+        'username': _phoneController.text.trim(),
       });
-
-      if (response.statusCode == 200) {
-        if (!mounted) return;
-        setState(() => step = 2);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Код отправлен!'), backgroundColor: Colors.green),
-        );
-      }
-    } on DioException catch (e) {
       if (!mounted) return;
-      String errorMessage = 'Ошибка при отправке кода';
-      if (e.response?.data != null && e.response?.data['message'] != null) {
-        errorMessage = e.response?.data['message'];
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage), backgroundColor: AppColors.red),
-      );
+      setState(() => _step = 2);
+    } on DioException catch (error) {
+      _showError(error);
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _verifyOtp() async {
+    final l10n = context.l10n;
+    if (_otpController.text.trim().length < 4) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.authInvalidFields)),
+      );
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final response = await ApiClient.dio.post('/Auth/verify-otp', data: {
+        'username': _phoneController.text.trim(),
+        'otpCode': _otpController.text.trim(),
+      });
+      final raw = response.data is Map ? response.data['data'] ?? response.data : null;
+      _resetToken = raw is Map ? raw['resetToken']?.toString() : null;
+      if (!mounted) return;
+      setState(() => _step = 3);
+    } on DioException catch (error) {
+      _showError(error);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _resetPassword() async {
+    final l10n = context.l10n;
+    if (_newPasswordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.authPasswordMismatch)),
+      );
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      await ApiClient.dio.post('/Auth/reset-password', data: {
+        'phoneNumber': _phoneController.text.trim(),
+        'resetToken': _resetToken,
+        'newPassword': _newPasswordController.text,
+        'confirmPassword': _confirmPasswordController.text,
+      });
+      if (!mounted) return;
+      context.go(AppRoutes.login);
+    } on DioException catch (error) {
+      _showError(error);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _showError(DioException error) {
+    if (!mounted) return;
+    final message = error.response?.data is Map
+        ? (error.response?.data['message']?.toString() ?? context.l10n.errorTitle)
+        : (error.message ?? context.l10n.errorTitle);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    String title = 'Забыли?';
-    if (step == 2) title = 'Код';
-    if (step == 3) title = 'Сброс';
+    final l10n = context.l10n;
+    final title = switch (_step) {
+      1 => l10n.authForgotTitle,
+      2 => l10n.authOtpLabel,
+      _ => l10n.authResetPassword,
+    };
+    final subtitle = switch (_step) {
+      1 => l10n.authStepPhone,
+      2 => l10n.authStepOtp,
+      _ => l10n.authStepReset,
+    };
 
     return AuthLayout(
       title: title,
+      subtitle: subtitle,
+      canPop: true,
       child: Column(
         children: [
-          if (step == 1) ...[
-            JuyoInput(
-              label: 'Номер телефона',
-              hint: '+992 000 00 00 00',
-              icon: LucideIcons.phone,
+          if (_step == 1) ...[
+            AppTextField(
+              label: l10n.authPhoneLabel,
+              hint: l10n.authPhoneHint,
+              prefixIcon: LucideIcons.phone,
               controller: _phoneController,
               keyboardType: TextInputType.phone,
             ),
-            const SizedBox(height: 32),
-            JuyoButton(
-              text: 'Получить код',
-              isLoading: _isLoading,
-              onPressed: _handleSendOtp,
+            const SizedBox(height: 20),
+            AppPrimaryButton(
+              label: l10n.authSendCode,
+              onPressed: _loading ? null : _sendOtp,
+              isLoading: _loading,
             ),
-          ] else if (step == 2) ...[
-            JuyoInput(
-              label: 'Код подтверждения',
-              hint: '0 0 0 0',
-              icon: LucideIcons.checkCircle,
+          ],
+          if (_step == 2) ...[
+            AppTextField(
+              label: l10n.authOtpLabel,
+              hint: l10n.authOtpHint,
+              prefixIcon: LucideIcons.keyRound,
               controller: _otpController,
               keyboardType: TextInputType.number,
             ),
-            const SizedBox(height: 32),
-            JuyoButton(
-              text: 'Подтвердить',
-              onPressed: () => setState(() => step = 3),
+            const SizedBox(height: 20),
+            AppPrimaryButton(
+              label: l10n.authVerifyCode,
+              onPressed: _loading ? null : _verifyOtp,
+              isLoading: _loading,
             ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: _handleSendOtp,
-              child: const Text(
-                'Отправить еще раз',
-                style: TextStyle(color: AppColors.aqua, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ] else if (step == 3) ...[
-            JuyoInput(
-              label: 'Новый пароль',
-              hint: '••••••••',
-              icon: LucideIcons.lock,
-              isPassword: true,
-              controller: _newPasswordController,
-            ),
-            const SizedBox(height: 16),
-            JuyoInput(
-              label: 'Подтвердите пароль',
-              hint: '••••••••',
-              icon: LucideIcons.checkCircle,
-              isPassword: true,
-              controller: _confirmPasswordController,
-            ),
-            const SizedBox(height: 32),
-            JuyoButton(
-              text: 'Сбросить пароль',
-              onPressed: () {
-                Navigator.pop(context);
-              },
+            const SizedBox(height: 12),
+            AppSecondaryButton(
+              label: l10n.authResendCode,
+              onPressed: _loading ? null : _sendOtp,
             ),
           ],
-          const SizedBox(height: 24),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Назад ко входу',
-              style: TextStyle(color: AppColors.slate, fontWeight: FontWeight.bold),
+          if (_step == 3) ...[
+            AppTextField(
+              label: l10n.authPasswordLabel,
+              hint: '••••••••',
+              prefixIcon: LucideIcons.lock,
+              controller: _newPasswordController,
+              obscureText: true,
             ),
+            const SizedBox(height: 16),
+            AppTextField(
+              label: l10n.authConfirmPasswordLabel,
+              hint: '••••••••',
+              prefixIcon: LucideIcons.checkCircle,
+              controller: _confirmPasswordController,
+              obscureText: true,
+            ),
+            const SizedBox(height: 20),
+            AppPrimaryButton(
+              label: l10n.authResetPassword,
+              onPressed: _loading ? null : _resetPassword,
+              isLoading: _loading,
+            ),
+          ],
+          const SizedBox(height: 12),
+          AppSecondaryButton(
+            label: l10n.authBackToLogin,
+            onPressed: () => context.go(AppRoutes.login),
           ),
-          const SizedBox(height: 40),
         ],
       ),
     );

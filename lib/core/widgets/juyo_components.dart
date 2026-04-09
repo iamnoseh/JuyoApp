@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:juyo/core/theme/app_theme.dart';
+import 'package:juyo/core/widgets/app_ui.dart';
+
+export 'package:juyo/core/widgets/app_ui.dart';
 
 class JuyoInput extends StatelessWidget {
   final String label;
@@ -22,68 +24,13 @@ class JuyoInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 6),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white70 : Colors.black87,
-            ),
-          ),
-        ),
-        Container(
-          height: 52,
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSlate : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: TextField(
-            controller: controller,
-            obscureText: isPassword,
-            keyboardType: keyboardType,
-            textAlignVertical: TextAlignVertical.center,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: TextStyle(
-                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2),
-                fontSize: 14,
-              ),
-              prefixIcon: icon != null
-                  ? Icon(icon, size: 18, color: AppColors.slate)
-                  : null,
-              prefixIconConstraints: const BoxConstraints(
-                minWidth: 42,
-                minHeight: 42,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.aqua, width: 2),
-              ),
-            ),
-          ),
-        ),
-      ],
+    return AppTextField(
+      label: label,
+      hint: hint,
+      prefixIcon: icon,
+      controller: controller,
+      keyboardType: keyboardType,
+      obscureText: isPassword,
     );
   }
 }
@@ -106,59 +53,46 @@ class JuyoButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
-    Color bgColor = isSecondary 
-        ? (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08))
-        : AppColors.gold;
-    
-    Color fgColor = isSecondary 
-        ? (isDark ? AppColors.aqua : Colors.black87) 
-        : Colors.black;
-
     if (isDanger) {
-      bgColor = Colors.red.withValues(alpha: 0.15);
-      fgColor = Colors.redAccent;
+      return SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          onPressed: isLoading ? null : onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.danger.withValues(alpha: 0.16),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            side: const BorderSide(color: AppColors.danger),
+          ),
+          child: isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(text),
+        ),
+      );
     }
 
-    return Container(
-      width: double.infinity,
-      height: 48,
-      decoration: (isSecondary || isDanger) ? null : BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: bgColor,
-        boxShadow: [
-          BoxShadow(
-            color: bgColor.withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: (isSecondary || isDanger) ? bgColor : Colors.transparent,
-          foregroundColor: fgColor,
-          shadowColor: Colors.transparent,
-          side: isDanger ? const BorderSide(color: Colors.redAccent, width: 1) : null,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 0,
-        ),
-        child: isLoading
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2.5, color: fgColor),
-              )
-            : Text(
-                text,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.1),
-              ),
-      ),
+    if (isSecondary) {
+      return AppSecondaryButton(label: text, onPressed: onPressed);
+    }
+
+    return AppPrimaryButton(
+      label: text,
+      onPressed: onPressed,
+      isLoading: isLoading,
     );
   }
 }
+
 class JuyoStickyHeader extends StatelessWidget {
   final int streak;
   final int points;
@@ -171,46 +105,36 @@ class JuyoStickyHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF2C3545),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(36),
-          bottomRight: Radius.circular(36),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: GlassCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              JuyoBadge(
-                icon: LucideIcons.zap,
-                text: '$points',
-                color: AppColors.gold,
-              ),
-              const Text(
-                'JUYO',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 5.0,
+              Expanded(
+                child: JuyoBadge(
+                  icon: Icons.local_fire_department_rounded,
+                  text: '$streak',
+                  color: AppColors.gold,
                 ),
               ),
-              JuyoBadge(
-                icon: LucideIcons.flame,
-                text: '$streak',
-                color: Colors.orangeAccent,
+              Text(
+                'JUYO',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      letterSpacing: 3,
+                    ),
+              ),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: JuyoBadge(
+                    icon: Icons.bolt_rounded,
+                    text: '$points',
+                    color: AppColors.aqua,
+                  ),
+                ),
               ),
             ],
           ),
@@ -235,11 +159,10 @@ class JuyoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -248,11 +171,10 @@ class JuyoBadge extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              fontSize: 10,
-            ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
           ),
         ],
       ),

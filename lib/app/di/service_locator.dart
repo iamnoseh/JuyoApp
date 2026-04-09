@@ -83,7 +83,7 @@ Future<void> setupServiceLocator() async {
   }
 
   if (!getIt.isRegistered<AuthBloc>()) {
-    getIt.registerFactory<AuthBloc>(
+    getIt.registerLazySingleton<AuthBloc>(
       () => AuthBloc(
         loginUseCase: getIt<LoginUseCase>(),
         restoreSessionUseCase: getIt<RestoreSessionUseCase>(),
