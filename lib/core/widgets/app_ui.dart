@@ -559,36 +559,55 @@ class _NavItem extends StatelessWidget {
 }
 
 class AppThemeModeButton extends StatelessWidget {
-  const AppThemeModeButton({super.key});
+  final bool compact;
+
+  const AppThemeModeButton({
+    super.key,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final controller = getIt<ThemeModeController>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final palette = context.appPalette;
+    final buttonSize = compact ? 36.0 : 40.0;
 
-    return IconButton(
-      onPressed: controller.toggle,
-      style: IconButton.styleFrom(
-        backgroundColor: palette.secondaryFill,
-        side: BorderSide(color: palette.border),
-      ),
-      icon: Icon(
-        isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-        color: Theme.of(context).colorScheme.onSurface,
+    return SizedBox(
+      width: buttonSize,
+      height: buttonSize,
+      child: IconButton(
+        onPressed: controller.toggle,
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(
+          backgroundColor: palette.secondaryFill,
+          side: BorderSide(color: palette.border),
+        ),
+        icon: Icon(
+          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+          size: compact ? 18 : 20,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
       ),
     );
   }
 }
 
 class AppLanguageButton extends StatelessWidget {
-  const AppLanguageButton({super.key});
+  final bool compact;
+
+  const AppLanguageButton({
+    super.key,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final controller = getIt<LocaleController>();
     final palette = context.appPalette;
     final currentCode = controller.locale.languageCode.toUpperCase();
+    final height = compact ? 36.0 : 40.0;
+    final horizontalPadding = compact ? 10.0 : 12.0;
 
     return PopupMenuButton<String>(
       tooltip: 'Language',
@@ -599,8 +618,8 @@ class AppLanguageButton extends StatelessWidget {
         PopupMenuItem<String>(value: 'en', child: Text('EN')),
       ],
       child: Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        height: height,
+        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
         decoration: BoxDecoration(
           color: palette.secondaryFill,
           borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -610,6 +629,7 @@ class AppLanguageButton extends StatelessWidget {
         child: Text(
           currentCode,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontSize: compact ? 11 : null,
                 fontWeight: FontWeight.w800,
               ),
         ),
@@ -619,16 +639,21 @@ class AppLanguageButton extends StatelessWidget {
 }
 
 class AppHeaderActions extends StatelessWidget {
-  const AppHeaderActions({super.key});
+  final bool compact;
+
+  const AppHeaderActions({
+    super.key,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppLanguageButton(),
-        SizedBox(width: 8),
-        AppThemeModeButton(),
+        AppLanguageButton(compact: compact),
+        SizedBox(width: compact ? 6 : 8),
+        AppThemeModeButton(compact: compact),
       ],
     );
   }
