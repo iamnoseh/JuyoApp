@@ -55,7 +55,7 @@ class AuthLayout extends StatelessWidget {
                 const SizedBox(height: 12),
                 Center(
                   child: Text(
-                    'IQRA',
+                    'JUYO',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           letterSpacing: 4,
                         ),

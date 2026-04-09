@@ -32,12 +32,7 @@ class _LoginPageState extends State<LoginPage> {
       );
       return;
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Login demo is ready. Dashboard demo comes next.'),
-      ),
-    );
+    context.go(AppRoutes.dashboard);
   }
 
   @override
