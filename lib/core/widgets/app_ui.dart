@@ -1,7 +1,7 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:juyo/app/di/service_locator.dart';
 import 'package:juyo/core/theme/app_theme.dart';
+import 'package:juyo/core/theme/theme_mode_controller.dart';
 
 enum AppShellTab { dashboard, duel, tests, league, profile }
 
@@ -21,37 +21,39 @@ class GlassCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.appPalette;
 
-    final content = ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-        child: Container(
-          decoration: BoxDecoration(
-            color: palette.glass,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: palette.cardStroke),
-            boxShadow: [
-              BoxShadow(
-                color: palette.shadow,
-                blurRadius: 28,
-                offset: const Offset(0, 14),
-              ),
-            ],
+    final content = Container(
+      decoration: BoxDecoration(
+        color: palette.glass,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: palette.cardStroke),
+        boxShadow: [
+          BoxShadow(
+            color: palette.shadow,
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
-          padding: padding,
-          child: child,
-        ),
+        ],
       ),
+      padding: padding,
+      child: child,
     );
 
     if (onTap == null) {
       return content;
     }
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      onTap: onTap,
-      child: content,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          child: content,
+        ),
+      ),
     );
   }
 }
@@ -83,9 +85,9 @@ class AppPrimaryButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.sm),
           boxShadow: [
             BoxShadow(
-              color: AppColors.gold.withValues(alpha: 0.28),
-              blurRadius: 18,
-              offset: const Offset(0, 10),
+              color: AppColors.gold.withValues(alpha: 0.22),
+              blurRadius: 14,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -115,10 +117,7 @@ class AppPrimaryButton extends StatelessWidget {
                       Icon(icon, size: 18),
                       const SizedBox(width: 8),
                     ],
-                    Text(
-                      label,
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
+                    Text(label, style: Theme.of(context).textTheme.labelLarge),
                   ],
                 ),
         ),
@@ -413,7 +412,7 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final body = SafeArea(
+    return SafeArea(
       child: Padding(
         padding: padding,
         child: Column(
@@ -426,17 +425,13 @@ class AppScaffold extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             if (scrollable)
-              Expanded(
-                child: SingleChildScrollView(child: child),
-              )
+              Expanded(child: SingleChildScrollView(child: child))
             else
               Expanded(child: child),
           ],
         ),
       ),
     );
-
-    return body;
   }
 }
 
@@ -453,63 +448,65 @@ class AppBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
-    final inactiveColor = Theme.of(context).textTheme.bodyMedium?.color ?? AppColors.textSecondary;
+    final inactiveColor =
+        Theme.of(context).textTheme.bodyMedium?.color ?? AppColors.textSecondary;
 
     return SafeArea(
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-            child: Container(
-              height: 72,
-              decoration: BoxDecoration(
-                color: palette.navSurface,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(color: palette.border),
+        child: Container(
+          height: 72,
+          decoration: BoxDecoration(
+            color: palette.navSurface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: palette.border),
+            boxShadow: [
+              BoxShadow(
+                color: palette.shadow,
+                blurRadius: 14,
+                offset: const Offset(0, 8),
               ),
-              child: Row(
-                children: [
-                  _NavItem(
-                    label: 'Home',
-                    icon: Icons.grid_view_rounded,
-                    active: activeTab == AppShellTab.dashboard,
-                    inactiveColor: inactiveColor,
-                    onTap: () => onTap(AppShellTab.dashboard),
-                  ),
-                  _NavItem(
-                    label: 'Duel',
-                    icon: Icons.flash_on_rounded,
-                    active: activeTab == AppShellTab.duel,
-                    inactiveColor: inactiveColor,
-                    onTap: () => onTap(AppShellTab.duel),
-                  ),
-                  _NavItem(
-                    label: 'Tests',
-                    icon: Icons.menu_book_rounded,
-                    active: activeTab == AppShellTab.tests,
-                    inactiveColor: inactiveColor,
-                    onTap: () => onTap(AppShellTab.tests),
-                  ),
-                  _NavItem(
-                    label: 'League',
-                    icon: Icons.emoji_events_rounded,
-                    active: activeTab == AppShellTab.league,
-                    inactiveColor: inactiveColor,
-                    onTap: () => onTap(AppShellTab.league),
-                  ),
-                  _NavItem(
-                    label: 'Profile',
-                    icon: Icons.person_rounded,
-                    active: activeTab == AppShellTab.profile,
-                    inactiveColor: inactiveColor,
-                    onTap: () => onTap(AppShellTab.profile),
-                  ),
-                ],
+            ],
+          ),
+          child: Row(
+            children: [
+              _NavItem(
+                label: 'Home',
+                icon: Icons.grid_view_rounded,
+                active: activeTab == AppShellTab.dashboard,
+                inactiveColor: inactiveColor,
+                onTap: () => onTap(AppShellTab.dashboard),
               ),
-            ),
+              _NavItem(
+                label: 'Duel',
+                icon: Icons.flash_on_rounded,
+                active: activeTab == AppShellTab.duel,
+                inactiveColor: inactiveColor,
+                onTap: () => onTap(AppShellTab.duel),
+              ),
+              _NavItem(
+                label: 'Tests',
+                icon: Icons.menu_book_rounded,
+                active: activeTab == AppShellTab.tests,
+                inactiveColor: inactiveColor,
+                onTap: () => onTap(AppShellTab.tests),
+              ),
+              _NavItem(
+                label: 'League',
+                icon: Icons.emoji_events_rounded,
+                active: activeTab == AppShellTab.league,
+                inactiveColor: inactiveColor,
+                onTap: () => onTap(AppShellTab.league),
+              ),
+              _NavItem(
+                label: 'Profile',
+                icon: Icons.person_rounded,
+                active: activeTab == AppShellTab.profile,
+                inactiveColor: inactiveColor,
+                onTap: () => onTap(AppShellTab.profile),
+              ),
+            ],
           ),
         ),
       ),
@@ -555,6 +552,29 @@ class _NavItem extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class AppThemeModeButton extends StatelessWidget {
+  const AppThemeModeButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = getIt<ThemeModeController>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.appPalette;
+
+    return IconButton(
+      onPressed: controller.toggle,
+      style: IconButton.styleFrom(
+        backgroundColor: palette.secondaryFill,
+        side: BorderSide(color: palette.border),
+      ),
+      icon: Icon(
+        isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+        color: Theme.of(context).colorScheme.onSurface,
       ),
     );
   }
