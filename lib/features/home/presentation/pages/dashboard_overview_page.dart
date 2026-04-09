@@ -12,6 +12,7 @@ import 'package:juyo/core/widgets/app_ui.dart';
 import 'package:juyo/features/home/data/models/admission_stats_model.dart';
 import 'package:juyo/features/home/data/models/dashboard_stats_model.dart';
 import 'package:juyo/features/home/data/models/league_leaderboard_model.dart';
+import 'package:juyo/features/home/data/models/test_activity_model.dart';
 import 'package:juyo/features/home/domain/entities/dashboard_data.dart';
 import 'package:juyo/features/home/presentation/bloc/dashboard_bloc.dart';
 import 'package:juyo/features/home/presentation/bloc/dashboard_event.dart';
@@ -112,23 +113,14 @@ class _DashboardSections extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = data.user;
     final stats = data.dashboardStats;
-    final subjectRows = data.skills.isNotEmpty
-        ? data.skills
-            .map(
-              (item) => _SubjectRowData(
-                item.subjectName,
-                item.proficiencyPercent.clamp(0, 100).toInt(),
-              ),
-            )
-            .toList()
-        : (stats?.subjectPerformance ?? const <SubjectPerformanceModel>[])
-            .map(
-              (item) => _SubjectRowData(
-                item.subject,
-                item.score.clamp(0, 100).toInt(),
-              ),
-            )
-            .toList();
+    final subjectRows = (stats?.subjectPerformance ?? const <SubjectPerformanceModel>[])
+        .map(
+          (item) => _SubjectRowData(
+            item.subject,
+            item.score.clamp(0, 100).toInt(),
+          ),
+        )
+        .toList();
     subjectRows.sort((a, b) => b.score.compareTo(a.score));
 
     return Column(
@@ -136,7 +128,7 @@ class _DashboardSections extends StatelessWidget {
       children: [
         _HeroCard(user: user, motivation: data.motivation),
         const SizedBox(height: 14),
-        _ActivityCard(stats: stats, user: user),
+        _ActivityCard(activity: data.testActivity),
         const SizedBox(height: 14),
         _LeagueCard(user: user, leaderboard: data.leaderboard),
         const SizedBox(height: 14),
@@ -160,6 +152,9 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fullName = (user?.fullName ?? '').trim().isEmpty
+        ? 'User'
+        : user!.fullName.trim();
     final quote = _cleanText(
       motivation.content,
       _tr(
@@ -174,38 +169,26 @@ class _HeroCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _tr(
-                        context,
-                        'С возвращением, ${_firstName(user?.fullName)}',
-                        'Welcome back, ${_firstName(user?.fullName)}',
-                      ),
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text('“$quote”', style: Theme.of(context).textTheme.bodyMedium),
-                    if (author.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        '— $author',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.copyWith(color: AppColors.gold),
-                      ),
-                    ],
-                  ],
+          Text(
+            _tr(context, 'С возвращением,', 'Welcome back,'),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.aqua,
+                  fontWeight: FontWeight.w700,
                 ),
-              ),
-              const SizedBox(width: 12),
-              _AvatarBadge(user: user),
-            ],
           ),
+          const SizedBox(height: 6),
+          Text(fullName, style: Theme.of(context).textTheme.headlineMedium),
+          const SizedBox(height: 10),
+          Text('"$quote"', style: Theme.of(context).textTheme.bodyMedium),
+          if (author.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              '- $author',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.gold),
+            ),
+          ],
           const SizedBox(height: 14),
           Wrap(
             spacing: 8,
@@ -249,21 +232,22 @@ class _HeroCard extends StatelessWidget {
 }
 
 class _ActivityCard extends StatelessWidget {
-  final DashboardStatsModel? stats;
-  final UserModel? user;
+  final TestActivityModel? activity;
 
-  const _ActivityCard({required this.stats, required this.user});
+  const _ActivityCard({required this.activity});
 
   @override
   Widget build(BuildContext context) {
-    final all = stats?.dailyActivity ?? const <DailyActivityModel>[];
+    final all = activity?.dailyStats ?? const <TestActivityDayModel>[];
     final bars = all.length > 7 ? all.sublist(all.length - 7) : all;
-    final total = all.fold<int>(0, (sum, item) => sum + item.testsCount);
+    final total = activity?.totalTests ?? 0;
+    final totalDuels = activity?.totalDuels ?? 0;
+    final totalDuelWins = activity?.totalDuelWins ?? 0;
+    final accuracy = activity?.overallCorrectPercentage ?? 0;
     final maxValue = math.max(
       1,
-      bars.fold<int>(0, (sum, item) => math.max(sum, item.testsCount)),
+      bars.fold<int>(0, (sum, item) => math.max(sum, item.totalAnswers)),
     );
-    final accuracy = _accuracy(stats);
 
     return GlassCard(
       child: Column(
@@ -275,29 +259,40 @@ class _ActivityCard extends StatelessWidget {
             color: AppColors.aqua,
           ),
           const SizedBox(height: 14),
-          Row(
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
             children: [
-              Expanded(
+              SizedBox(
+                width: 140,
                 child: _MetricBox(
                   label: _tr(context, 'Тестов', 'Tests'),
                   value: '$total',
                   color: AppColors.aqua,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
+              SizedBox(
+                width: 140,
                 child: _MetricBox(
-                  label: _tr(context, 'Точность', 'Accuracy'),
-                  value: '$accuracy%',
+                  label: _tr(context, 'Дуэлей', 'Duels'),
+                  value: '$totalDuels',
                   color: AppColors.gold,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
+              SizedBox(
+                width: 140,
                 child: _MetricBox(
-                  label: _tr(context, 'Красный список', 'Red List'),
-                  value: '${stats?.todoRedListCount ?? 0}',
+                  label: _tr(context, 'Побед', 'Wins'),
+                  value: '$totalDuelWins',
                   color: AppColors.emerald,
+                ),
+              ),
+              SizedBox(
+                width: 140,
+                child: _MetricBox(
+                  label: _tr(context, 'Точность', 'Accuracy'),
+                  value: '$accuracy%',
+                  color: AppColors.aqua,
                 ),
               ),
             ],
@@ -309,9 +304,14 @@ class _ActivityCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children:
                   (bars.isEmpty
-                          ? List<DailyActivityModel>.generate(
+                          ? List<TestActivityDayModel>.generate(
                               7,
-                              (_) => DailyActivityModel(date: '', testsCount: 0),
+                              (_) => const TestActivityDayModel(
+                                date: '',
+                                totalAnswers: 0,
+                                correctAnswers: 0,
+                                incorrectAnswers: 0,
+                              ),
                             )
                           : bars)
                       .map(
@@ -322,30 +322,18 @@ class _ActivityCard extends StatelessWidget {
                       .toList(),
             ),
           ),
-          if ((user?.lastTestResults.length ?? 0) > 0) ...[
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: user!.lastTestResults.take(3).map((item) {
-                final label =
-                    item.subjectName?.trim().isNotEmpty == true
-                    ? item.subjectName!
-                    : _tr(context, 'Общий тест', 'General test');
-                return _Pill(text: '$label • ${item.totalScore}');
-              }).toList(),
+          const SizedBox(height: 12),
+          Text(
+            _tr(
+              context,
+              'Последние 7 дней активности',
+              'Last 7 days of activity',
             ),
-          ],
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ],
       ),
     );
-  }
-
-  int _accuracy(DashboardStatsModel? stats) {
-    final items = stats?.subjectPerformance ?? const <SubjectPerformanceModel>[];
-    if (items.isEmpty) return 0;
-    final total = items.fold<int>(0, (sum, item) => sum + item.score);
-    return (total / items.length).round().clamp(0, 100);
   }
 }
 
@@ -431,7 +419,7 @@ class _LeagueCard extends StatelessWidget {
           else
             Column(
               children: leaderboard
-                  .take(4)
+                  .take(3)
                   .map(
                     (item) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
@@ -882,21 +870,21 @@ class _MetricBox extends StatelessWidget {
 }
 
 class _BarItem extends StatelessWidget {
-  final DailyActivityModel item;
+  final TestActivityDayModel item;
   final int maxValue;
 
   const _BarItem({required this.item, required this.maxValue});
 
   @override
   Widget build(BuildContext context) {
-    final height = 26 + (82 * ((item.testsCount / maxValue).clamp(0.0, 1.0)));
+    final height = 26 + (82 * ((item.totalAnswers / maxValue).clamp(0.0, 1.0)));
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           Text(
-            '${item.testsCount}',
+            '${item.totalAnswers}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
           ),
           const SizedBox(height: 6),
@@ -929,6 +917,7 @@ class _LeaderboardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final avatarUrl = _avatarUrl(item.avatarUrl);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -949,43 +938,161 @@ class _LeaderboardRow extends StatelessWidget {
                   ),
             ),
           ),
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: AppColors.aqua.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              _initials(item.name),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                padding: const EdgeInsets.all(1.5),
+                decoration: BoxDecoration(
+                  gradient: item.isPremium
+                      ? const LinearGradient(
+                          colors: [Color(0xFFFFD166), AppColors.gold],
+                        )
+                      : LinearGradient(
+                          colors: [
+                            AppColors.aqua.withValues(alpha: 0.24),
+                            AppColors.aqua.withValues(alpha: 0.08),
+                          ],
+                        ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: avatarUrl != null
+                      ? Image.network(
+                          avatarUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _miniAvatarFallback(context),
+                        )
+                      : _miniAvatarFallback(context),
+                ),
+              ),
+              if (item.isPremium)
+                Positioned(
+                  right: -4,
+                  top: -4,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: AppColors.gold,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        width: 1.5,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'P',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontSize: 7,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w900,
+                          ),
+                    ),
                   ),
-            ),
+                ),
+            ],
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              item.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                if ((item.schoolName ?? '').trim().isNotEmpty)
+                  Text(
+                    item.schoolName!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
+              ],
             ),
           ),
           const SizedBox(width: 10),
-          Text(
-            item.xp,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.aqua,
-                  fontWeight: FontWeight.w800,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                item.xp,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.aqua,
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(width: 8),
+              _TrendBadge(trend: item.trend),
+              if (item.isMe) ...[
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: AppColors.gold,
                 ),
+              ],
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _miniAvatarFallback(BuildContext context) {
+    return Container(
+      color: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF132033)
+          : Colors.white,
+      alignment: Alignment.center,
+      child: Text(
+        _initials(item.name),
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+      ),
+    );
+  }
+}
+
+class _TrendBadge extends StatelessWidget {
+  final String trend;
+
+  const _TrendBadge({required this.trend});
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized = trend.trim().toUpperCase();
+    final icon = switch (normalized) {
+      'UP' => Icons.arrow_upward_rounded,
+      'DOWN' => Icons.arrow_downward_rounded,
+      _ => Icons.remove_rounded,
+    };
+    final color = switch (normalized) {
+      'UP' => AppColors.emerald,
+      'DOWN' => AppColors.danger,
+      _ => AppColors.textMuted,
+    };
+
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      alignment: Alignment.center,
+      child: Icon(icon, size: 14, color: color),
     );
   }
 }
@@ -1177,109 +1284,6 @@ class _Badge extends StatelessWidget {
   }
 }
 
-class _Pill extends StatelessWidget {
-  final String text;
-
-  const _Pill({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: context.appPalette.secondaryFill,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-      ),
-    );
-  }
-}
-
-class _AvatarBadge extends StatelessWidget {
-  final UserModel? user;
-
-  const _AvatarBadge({required this.user});
-
-  @override
-  Widget build(BuildContext context) {
-    final avatarUrl = _avatarUrl(user?.profilePictureUrl);
-    final initials = _initials(user?.fullName ?? 'User');
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 72,
-          height: 72,
-          padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            gradient: user?.isPremium == true
-                ? const LinearGradient(colors: [Color(0xFFFFD166), AppColors.gold])
-                : LinearGradient(
-                    colors: [
-                      AppColors.aqua.withValues(alpha: 0.24),
-                      AppColors.aqua.withValues(alpha: 0.08),
-                    ],
-                  ),
-            borderRadius: BorderRadius.circular(22),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: avatarUrl != null
-                ? Image.network(
-                    avatarUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _avatarFallback(context, initials),
-                  )
-                : _avatarFallback(context, initials),
-          ),
-        ),
-        if (user?.isPremium == true)
-          Positioned(
-            right: -6,
-            top: -6,
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: AppColors.gold,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  width: 2,
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'PRO',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.black,
-                      fontSize: 8,
-                      fontWeight: FontWeight.w900,
-                    ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _avatarFallback(BuildContext context, String initials) {
-    return Container(
-      color: Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF132033)
-          : Colors.white,
-      alignment: Alignment.center,
-      child: Text(initials, style: Theme.of(context).textTheme.titleMedium),
-    );
-  }
-}
-
 class _SubjectRowData {
   final String title;
   final int score;
@@ -1298,11 +1302,6 @@ class _BadgeData {
 
 String _tr(BuildContext context, String ru, String en) =>
     Localizations.localeOf(context).languageCode == 'ru' ? ru : en;
-
-String _firstName(String? fullName) {
-  final clean = (fullName ?? '').trim();
-  return clean.isEmpty ? 'User' : clean.split(RegExp(r'\s+')).first;
-}
 
 String _cleanText(String raw, String fallback) {
   final value = raw.trim();

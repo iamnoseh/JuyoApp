@@ -8,6 +8,7 @@ class UserModel {
   final int eloRating;
   final int streak;
   final int points;
+  final int? currentLeagueId;
   final String? currentLeagueName;
   final bool isPremium;
 
@@ -42,6 +43,7 @@ class UserModel {
     this.eloRating = 1000,
     this.streak = 0,
     this.points = 0,
+    this.currentLeagueId,
     this.currentLeagueName,
     this.isPremium = false,
     this.province,
@@ -114,6 +116,8 @@ class UserModel {
       eloRating: _asInt(json['eloRating'] ?? json['EloRating'], defaultValue: 1000),
       streak: _asInt(json['streak'] ?? json['Streak'], defaultValue: 0),
       points: _asInt(json['points'] ?? json['Points'], defaultValue: 0),
+      currentLeagueId:
+          _asNullableInt(json['currentLeagueId'] ?? json['CurrentLeagueId']),
       currentLeagueName:
           _asNullableString(json['currentLeagueName'] ?? json['CurrentLeagueName']),
       isPremium: isPremium,

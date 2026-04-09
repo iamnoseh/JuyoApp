@@ -3,6 +3,7 @@ import 'package:juyo/core/models/user_model.dart';
 import 'package:juyo/features/home/data/models/admission_stats_model.dart';
 import 'package:juyo/features/home/data/models/dashboard_stats_model.dart';
 import 'package:juyo/features/home/data/models/league_leaderboard_model.dart';
+import 'package:juyo/features/home/data/models/test_activity_model.dart';
 import 'package:juyo/features/home/domain/entities/dashboard_data.dart';
 
 class DashboardRemoteDataSource {
@@ -64,6 +65,13 @@ class DashboardRemoteDataSource {
     return DashboardStatsModel.fromJson(data);
   }
 
+  Future<TestActivityModel?> getTestActivity({int days = 30}) async {
+    final response = await dio.get('/User/test-activity?days=$days');
+    final data = _extractMap(response.data);
+    if (data == null) return null;
+    return TestActivityModel.fromJson(data);
+  }
+
   Future<AdmissionStatsModel?> getAdmissionStats() async {
     try {
       final response = await dio.get('/Admission/stats');
@@ -90,10 +98,11 @@ class DashboardRemoteDataSource {
         .toList();
   }
 
-  Future<List<LeagueLeaderboardModel>> getLeagueLeaderboard(
+  Future<List<LeagueLeaderboardModel>> getLeagueStandings(
+    int leagueId,
     String currentUserId,
   ) async {
-    final response = await dio.get('/League/leaderboard');
+    final response = await dio.get('/League/$leagueId/standings');
     final data = _extractList(response.data);
     return data
         .whereType<Map>()
