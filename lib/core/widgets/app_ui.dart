@@ -5,6 +5,8 @@ import 'package:juyo/app/di/service_locator.dart';
 import 'package:juyo/core/l10n/locale_controller.dart';
 import 'package:juyo/core/theme/app_theme.dart';
 import 'package:juyo/core/theme/theme_mode_controller.dart';
+import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:juyo/features/auth/presentation/bloc/auth_event.dart';
 
 enum AppShellTab { dashboard, tests, menu, league, profile }
 
@@ -462,6 +464,7 @@ class AppScaffold extends StatelessWidget {
   final Widget? topBar;
   final EdgeInsetsGeometry padding;
   final bool scrollable;
+  final bool showHeader;
 
   const AppScaffold({
     super.key,
@@ -472,6 +475,7 @@ class AppScaffold extends StatelessWidget {
     this.topBar,
     this.padding = const EdgeInsets.fromLTRB(16, 16, 16, 20),
     this.scrollable = true,
+    this.showHeader = true,
   });
 
   @override
@@ -486,12 +490,14 @@ class AppScaffold extends StatelessWidget {
               topBar!,
               const SizedBox(height: AppSpacing.lg),
             ],
-            SectionHeader(
-              title: title,
-              subtitle: subtitle,
-              trailing: trailing,
-            ),
-            const SizedBox(height: AppSpacing.lg),
+            if (showHeader) ...[
+              SectionHeader(
+                title: title,
+                subtitle: subtitle,
+                trailing: trailing,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+            ],
             if (scrollable)
               Expanded(child: SingleChildScrollView(child: child))
             else
@@ -945,14 +951,16 @@ class _TopStatPill extends StatelessWidget {
 class _QuickMenuItem {
   final String label;
   final IconData icon;
-  final String route;
+  final String? route;
   final bool shellRoute;
+  final bool isLogout;
 
   const _QuickMenuItem({
     required this.label,
     required this.icon,
-    required this.route,
+    this.route,
     this.shellRoute = false,
+    this.isLogout = false,
   });
 }
 
@@ -999,6 +1007,11 @@ Future<void> showAppQuickMenuSheet(BuildContext context) {
       icon: Icons.workspace_premium_rounded,
       route: AppRoutes.premium,
     ),
+    _QuickMenuItem(
+      label: isRu ? 'Выйти' : 'Logout',
+      icon: Icons.logout_rounded,
+      isLogout: true,
+    ),
   ];
 
   return showGeneralDialog<void>(
@@ -1043,7 +1056,9 @@ Future<void> showAppQuickMenuSheet(BuildContext context) {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
               itemBuilder: (itemContext, index) {
                 final item = items[index];
-                final iconColor = item.route == AppRoutes.premium
+                final iconColor = item.isLogout
+                    ? AppColors.danger
+                    : item.route == AppRoutes.premium
                     ? AppColors.gold
                     : Theme.of(itemContext).textTheme.bodyMedium?.color;
 
@@ -1051,10 +1066,18 @@ Future<void> showAppQuickMenuSheet(BuildContext context) {
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   onTap: () {
                     Navigator.of(dialogContext).pop();
+                    if (item.isLogout) {
+                      getIt<AuthBloc>().add(const AuthLoggedOut());
+                      router.go(AppRoutes.login);
+                      return;
+                    }
+                    if (item.route == null) {
+                      return;
+                    }
                     if (item.shellRoute) {
-                      router.go(item.route);
+                      router.go(item.route!);
                     } else {
-                      router.push(item.route);
+                      router.push(item.route!);
                     }
                   },
                   child: Padding(

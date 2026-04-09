@@ -16,6 +16,7 @@ class DashboardOverviewPage extends StatelessWidget {
     return AppScaffold(
       topBar: const AppTopStatsBar(),
       title: l10n.dashboardTitle,
+      showHeader: false,
       child: const _DashboardBody(),
     );
   }
