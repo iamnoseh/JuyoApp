@@ -12,9 +12,8 @@ class ProfileRoutePage extends StatelessWidget {
     final l10n = context.l10n;
 
     return AppScaffold(
+      topBar: const AppTopStatsBar(),
       title: l10n.profileTitle,
-      subtitle: 'Demo profile adapted from the frontend layout',
-      trailing: const AppHeaderActions(),
       child: const _ProfileBody(),
     );
   }
@@ -160,8 +159,8 @@ class _ProfileBody extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        Row(
-          children: const [
+        const Row(
+          children: [
             Expanded(
               child: _ProfileStatCard(
                 label: 'League',
@@ -195,7 +194,7 @@ class _ProfileBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ProfileSectionTitle(
+              const _ProfileSectionTitle(
                 title: 'Academic mission',
                 icon: LucideIcons.target,
                 color: AppColors.gold,
@@ -245,16 +244,16 @@ class _ProfileBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ProfileSectionTitle(
+              const _ProfileSectionTitle(
                 title: 'Achievements',
                 icon: LucideIcons.award,
                 color: AppColors.gold,
               ),
               const SizedBox(height: 14),
-              Wrap(
+              const Wrap(
                 spacing: 12,
                 runSpacing: 12,
-                children: const [
+                children: [
                   _ProfileBadge(label: 'First Step', icon: LucideIcons.star),
                   _ProfileBadge(label: 'Top Student', icon: LucideIcons.trophy),
                   _ProfileBadge(label: 'Fast Learner', icon: LucideIcons.zap),
@@ -269,7 +268,7 @@ class _ProfileBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ProfileSectionTitle(
+              const _ProfileSectionTitle(
                 title: 'Skill progress',
                 icon: LucideIcons.activity,
                 color: AppColors.aqua,
@@ -288,7 +287,7 @@ class _ProfileBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ProfileSectionTitle(
+              const _ProfileSectionTitle(
                 title: 'Last 5 tests',
                 icon: LucideIcons.bookOpen,
                 color: AppColors.emerald,
@@ -392,9 +391,20 @@ class _ProfileBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.gold.withValues(alpha: 0.12),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.gold.withValues(alpha: 0.16),
+            AppColors.gold.withValues(alpha: 0.07),
+          ],
+        ),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.18)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.gold.withValues(alpha: 0.12),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

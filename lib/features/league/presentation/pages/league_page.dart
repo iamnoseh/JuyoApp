@@ -75,6 +75,7 @@ class _LeagueStudentPageState extends State<LeagueStudentPage> {
     final l10n = context.l10n;
 
     return AppScaffold(
+      topBar: const AppTopStatsBar(),
       title: l10n.leagueTitle,
       subtitle: l10n.leagueSubtitle,
       child: _loading

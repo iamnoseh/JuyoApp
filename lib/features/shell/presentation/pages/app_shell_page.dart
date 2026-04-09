@@ -21,26 +21,32 @@ class AppShellPage extends StatelessWidget {
       body: AuroraBackground(child: child),
       bottomNavigationBar: AppBottomNav(
         activeTab: _activeTabForLocation(location),
+        onMenuTap: () => showAppQuickMenuSheet(context),
         onTap: (tab) {
-          switch (tab) {
-            case AppShellTab.dashboard:
-              context.go(AppRoutes.dashboard);
-            case AppShellTab.duel:
-              context.go(AppRoutes.duel);
-            case AppShellTab.tests:
-              context.go(AppRoutes.tests);
-            case AppShellTab.league:
-              context.go(AppRoutes.league);
-            case AppShellTab.profile:
-              context.go(AppRoutes.profile);
+          if (tab == AppShellTab.dashboard) {
+            context.go(AppRoutes.dashboard);
+            return;
           }
+          if (tab == AppShellTab.tests) {
+            context.go(AppRoutes.tests);
+            return;
+          }
+          if (tab == AppShellTab.menu) {
+            showAppQuickMenuSheet(context);
+            return;
+          }
+          if (tab == AppShellTab.league) {
+            context.go(AppRoutes.league);
+            return;
+          }
+          context.go(AppRoutes.profile);
         },
       ),
     );
   }
 
   AppShellTab _activeTabForLocation(String path) {
-    if (path.startsWith(AppRoutes.duel)) return AppShellTab.duel;
+    if (path.startsWith(AppRoutes.duel)) return AppShellTab.menu;
     if (path.startsWith(AppRoutes.tests)) return AppShellTab.tests;
     if (path.startsWith(AppRoutes.league)) return AppShellTab.league;
     if (path.startsWith(AppRoutes.profile)) return AppShellTab.profile;

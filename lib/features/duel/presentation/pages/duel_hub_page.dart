@@ -25,6 +25,7 @@ class _DuelHubPageState extends State<DuelHubPage> {
     final l10n = context.l10n;
 
     return AppScaffold(
+      topBar: const AppTopStatsBar(),
       title: l10n.duelTitle,
       subtitle: l10n.duelSubtitle,
       child: Column(

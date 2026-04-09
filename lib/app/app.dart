@@ -11,6 +11,11 @@ import 'package:juyo/l10n/app_localizations.dart';
 class JuyoApp extends StatelessWidget {
   const JuyoApp({super.key});
 
+  static const _supportedLocales = [
+    Locale('ru'),
+    Locale('en'),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -34,16 +39,16 @@ class JuyoApp extends StatelessWidget {
           routerConfig: AppRouter.router,
           localeResolutionCallback: (locale, supportedLocales) {
             if (locale == null) {
-              return const Locale('tg');
+              return const Locale('ru');
             }
             for (final supportedLocale in supportedLocales) {
               if (supportedLocale.languageCode == locale.languageCode) {
                 return supportedLocale;
               }
             }
-            return const Locale('tg');
+            return const Locale('ru');
           },
-          supportedLocales: AppLocalizations.supportedLocales,
+          supportedLocales: _supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
         ),
       ),

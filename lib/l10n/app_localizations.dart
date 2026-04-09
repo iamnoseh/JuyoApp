@@ -95,620 +95,620 @@ abstract class AppLocalizations {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
-    Locale('tg'),
     Locale('ru'),
-    Locale('en')
+    Locale('en'),
+    Locale('tg')
   ];
 
   /// No description provided for @appTitle.
   ///
-  /// In tg, this message translates to:
+  /// In ru, this message translates to:
   /// **'JUYO Mobile'**
   String get appTitle;
 
   /// No description provided for @languageName.
   ///
-  /// In tg, this message translates to:
-  /// **'Тоҷикӣ'**
+  /// In ru, this message translates to:
+  /// **'Русский'**
   String get languageName;
 
   /// No description provided for @commonContinue.
   ///
-  /// In tg, this message translates to:
-  /// **'Давом додан'**
+  /// In ru, this message translates to:
+  /// **'Продолжить'**
   String get commonContinue;
 
   /// No description provided for @commonSave.
   ///
-  /// In tg, this message translates to:
-  /// **'Сабт кардан'**
+  /// In ru, this message translates to:
+  /// **'Сохранить'**
   String get commonSave;
 
   /// No description provided for @commonCancel.
   ///
-  /// In tg, this message translates to:
-  /// **'Бекор кардан'**
+  /// In ru, this message translates to:
+  /// **'Отмена'**
   String get commonCancel;
 
   /// No description provided for @commonBack.
   ///
-  /// In tg, this message translates to:
-  /// **'Бозгашт'**
+  /// In ru, this message translates to:
+  /// **'Назад'**
   String get commonBack;
 
   /// No description provided for @commonRetry.
   ///
-  /// In tg, this message translates to:
-  /// **'Аз нав'**
+  /// In ru, this message translates to:
+  /// **'Повторить'**
   String get commonRetry;
 
   /// No description provided for @commonLoading.
   ///
-  /// In tg, this message translates to:
-  /// **'Боргирӣ...'**
+  /// In ru, this message translates to:
+  /// **'Загрузка...'**
   String get commonLoading;
 
   /// No description provided for @commonSoon.
   ///
-  /// In tg, this message translates to:
-  /// **'Ба зудӣ дастрас мешавад'**
+  /// In ru, this message translates to:
+  /// **'Скоро будет доступно'**
   String get commonSoon;
 
   /// No description provided for @commonPremium.
   ///
-  /// In tg, this message translates to:
+  /// In ru, this message translates to:
   /// **'Premium'**
   String get commonPremium;
 
   /// No description provided for @commonShare.
   ///
-  /// In tg, this message translates to:
-  /// **'Мубодила'**
+  /// In ru, this message translates to:
+  /// **'Поделиться'**
   String get commonShare;
 
   /// No description provided for @commonCopied.
   ///
-  /// In tg, this message translates to:
-  /// **'Нусхабардорӣ шуд'**
+  /// In ru, this message translates to:
+  /// **'Скопировано'**
   String get commonCopied;
 
   /// No description provided for @commonLogout.
   ///
-  /// In tg, this message translates to:
-  /// **'Баромадан'**
+  /// In ru, this message translates to:
+  /// **'Выйти'**
   String get commonLogout;
 
   /// No description provided for @commonProfile.
   ///
-  /// In tg, this message translates to:
-  /// **'Профил'**
+  /// In ru, this message translates to:
+  /// **'Профиль'**
   String get commonProfile;
 
   /// No description provided for @commonDashboard.
   ///
-  /// In tg, this message translates to:
-  /// **'Асосӣ'**
+  /// In ru, this message translates to:
+  /// **'Главная'**
   String get commonDashboard;
 
   /// No description provided for @commonTests.
   ///
-  /// In tg, this message translates to:
-  /// **'Тестҳо'**
+  /// In ru, this message translates to:
+  /// **'Тесты'**
   String get commonTests;
 
   /// No description provided for @commonDuel.
   ///
-  /// In tg, this message translates to:
-  /// **'Дуэл'**
+  /// In ru, this message translates to:
+  /// **'Дуэль'**
   String get commonDuel;
 
   /// No description provided for @commonLeague.
   ///
-  /// In tg, this message translates to:
+  /// In ru, this message translates to:
   /// **'Лига'**
   String get commonLeague;
 
   /// No description provided for @commonAnalytics.
   ///
-  /// In tg, this message translates to:
+  /// In ru, this message translates to:
   /// **'Аналитика'**
   String get commonAnalytics;
 
   /// No description provided for @commonPractice.
   ///
-  /// In tg, this message translates to:
+  /// In ru, this message translates to:
   /// **'Практика'**
   String get commonPractice;
 
   /// No description provided for @commonSchoolLeaderboard.
   ///
-  /// In tg, this message translates to:
-  /// **'Рейтинги мактабҳо'**
+  /// In ru, this message translates to:
+  /// **'Рейтинг школ'**
   String get commonSchoolLeaderboard;
 
   /// No description provided for @commonRedList.
   ///
-  /// In tg, this message translates to:
-  /// **'Рӯйхати сурх'**
+  /// In ru, this message translates to:
+  /// **'Красный список'**
   String get commonRedList;
 
   /// No description provided for @commonReferral.
   ///
-  /// In tg, this message translates to:
-  /// **'Реферал'**
+  /// In ru, this message translates to:
+  /// **'Рефералы'**
   String get commonReferral;
 
   /// No description provided for @commonSettings.
   ///
-  /// In tg, this message translates to:
-  /// **'Танзимот'**
+  /// In ru, this message translates to:
+  /// **'Настройки'**
   String get commonSettings;
 
   /// No description provided for @emptyTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Ҳоло маълумот нест'**
+  /// In ru, this message translates to:
+  /// **'Пока нет данных'**
   String get emptyTitle;
 
   /// No description provided for @emptySubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Маълумот баъд аз навсозӣ пайдо мешавад.'**
+  /// In ru, this message translates to:
+  /// **'Данные появятся после обновления.'**
   String get emptySubtitle;
 
   /// No description provided for @errorTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Хато рӯй дод'**
+  /// In ru, this message translates to:
+  /// **'Произошла ошибка'**
   String get errorTitle;
 
   /// No description provided for @lockedTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Ин имконият танҳо дар Premium аст'**
+  /// In ru, this message translates to:
+  /// **'Эта функция доступна только в Premium'**
   String get lockedTitle;
 
   /// No description provided for @lockedSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Барои кушодани ин қисм ба саҳифаи Premium гузаред.'**
+  /// In ru, this message translates to:
+  /// **'Перейдите на страницу Premium, чтобы открыть этот раздел.'**
   String get lockedSubtitle;
 
   /// No description provided for @splashTagline.
   ///
-  /// In tg, this message translates to:
-  /// **'Омодагии босифат ба имтиҳон'**
+  /// In ru, this message translates to:
+  /// **'Качественная подготовка к экзамену'**
   String get splashTagline;
 
   /// No description provided for @landingHeroTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Омодагӣ ба имтиҳонро дар мобил идома деҳ'**
+  /// In ru, this message translates to:
+  /// **'Продолжайте подготовку к экзамену в мобильном приложении'**
   String get landingHeroTitle;
 
   /// No description provided for @landingHeroSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Тестҳо, дуэл, рейтинг ва пешрафт дар як барномаи ягона.'**
+  /// In ru, this message translates to:
+  /// **'Тесты, дуэли, рейтинги и прогресс в одном приложении.'**
   String get landingHeroSubtitle;
 
   /// No description provided for @landingPrimaryCta.
   ///
-  /// In tg, this message translates to:
-  /// **'Ворид шудан'**
+  /// In ru, this message translates to:
+  /// **'Войти'**
   String get landingPrimaryCta;
 
   /// No description provided for @landingSecondaryCta.
   ///
-  /// In tg, this message translates to:
-  /// **'Эҷоди аккаунт'**
+  /// In ru, this message translates to:
+  /// **'Создать аккаунт'**
   String get landingSecondaryCta;
 
   /// No description provided for @landingFeatureFast.
   ///
-  /// In tg, this message translates to:
-  /// **'Оғози зуд'**
+  /// In ru, this message translates to:
+  /// **'Быстрый старт'**
   String get landingFeatureFast;
 
   /// No description provided for @landingFeatureFastSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Ворид шавед ва фавран ба омӯзиш гузаред.'**
+  /// In ru, this message translates to:
+  /// **'Войдите и сразу переходите к обучению.'**
   String get landingFeatureFastSubtitle;
 
   /// No description provided for @landingFeatureAi.
   ///
-  /// In tg, this message translates to:
-  /// **'Роҳи омӯзиши оқилона'**
+  /// In ru, this message translates to:
+  /// **'Умный путь обучения'**
   String get landingFeatureAi;
 
   /// No description provided for @landingFeatureAiSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Пешрафт ва заъфҳоро бинед.'**
+  /// In ru, this message translates to:
+  /// **'Следите за прогрессом и слабыми местами.'**
   String get landingFeatureAiSubtitle;
 
   /// No description provided for @landingFeatureLeague.
   ///
-  /// In tg, this message translates to:
-  /// **'Лига ва дуэл'**
+  /// In ru, this message translates to:
+  /// **'Лиги и дуэли'**
   String get landingFeatureLeague;
 
   /// No description provided for @landingFeatureLeagueSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Бо дигарон рақобат кунед ва XP гиред.'**
+  /// In ru, this message translates to:
+  /// **'Соревнуйтесь с другими и зарабатывайте XP.'**
   String get landingFeatureLeagueSubtitle;
 
   /// No description provided for @authLoginTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Ворид шудан'**
+  /// In ru, this message translates to:
+  /// **'Вход'**
   String get authLoginTitle;
 
   /// No description provided for @authLoginSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Омодагии худро идома диҳед'**
+  /// In ru, this message translates to:
+  /// **'Продолжите свою подготовку'**
   String get authLoginSubtitle;
 
   /// No description provided for @authRegisterTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Эҷоди аккаунт'**
+  /// In ru, this message translates to:
+  /// **'Создать аккаунт'**
   String get authRegisterTitle;
 
   /// No description provided for @authRegisterSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Омӯзишро имрӯз оғоз кунед'**
+  /// In ru, this message translates to:
+  /// **'Начните обучение уже сегодня'**
   String get authRegisterSubtitle;
 
   /// No description provided for @authForgotTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Барқарорсозии рамз'**
+  /// In ru, this message translates to:
+  /// **'Восстановление пароля'**
   String get authForgotTitle;
 
   /// No description provided for @authPhoneLabel.
   ///
-  /// In tg, this message translates to:
-  /// **'Рақами телефон'**
+  /// In ru, this message translates to:
+  /// **'Номер телефона'**
   String get authPhoneLabel;
 
   /// No description provided for @authPhoneHint.
   ///
-  /// In tg, this message translates to:
+  /// In ru, this message translates to:
   /// **'+992 900 00 00 00'**
   String get authPhoneHint;
 
   /// No description provided for @authPasswordLabel.
   ///
-  /// In tg, this message translates to:
-  /// **'Рамз'**
+  /// In ru, this message translates to:
+  /// **'Пароль'**
   String get authPasswordLabel;
 
   /// No description provided for @authConfirmPasswordLabel.
   ///
-  /// In tg, this message translates to:
-  /// **'Такрори рамз'**
+  /// In ru, this message translates to:
+  /// **'Повторите пароль'**
   String get authConfirmPasswordLabel;
 
   /// No description provided for @authFirstNameLabel.
   ///
-  /// In tg, this message translates to:
-  /// **'Ном'**
+  /// In ru, this message translates to:
+  /// **'Имя'**
   String get authFirstNameLabel;
 
   /// No description provided for @authLastNameLabel.
   ///
-  /// In tg, this message translates to:
-  /// **'Насаб'**
+  /// In ru, this message translates to:
+  /// **'Фамилия'**
   String get authLastNameLabel;
 
   /// No description provided for @authReferralCodeLabel.
   ///
-  /// In tg, this message translates to:
-  /// **'Коди рефералӣ'**
+  /// In ru, this message translates to:
+  /// **'Реферальный код'**
   String get authReferralCodeLabel;
 
   /// No description provided for @authForgotPassword.
   ///
-  /// In tg, this message translates to:
-  /// **'Рамзро фаромӯш кардед?'**
+  /// In ru, this message translates to:
+  /// **'Забыли пароль?'**
   String get authForgotPassword;
 
   /// No description provided for @authNoAccount.
   ///
-  /// In tg, this message translates to:
-  /// **'Аккаунт надоред?'**
+  /// In ru, this message translates to:
+  /// **'Нет аккаунта?'**
   String get authNoAccount;
 
   /// No description provided for @authHasAccount.
   ///
-  /// In tg, this message translates to:
-  /// **'Аккаунт доред?'**
+  /// In ru, this message translates to:
+  /// **'Уже есть аккаунт?'**
   String get authHasAccount;
 
   /// No description provided for @authSignIn.
   ///
-  /// In tg, this message translates to:
-  /// **'Ворид шудан'**
+  /// In ru, this message translates to:
+  /// **'Войти'**
   String get authSignIn;
 
   /// No description provided for @authSignUp.
   ///
-  /// In tg, this message translates to:
-  /// **'Сабти ном'**
+  /// In ru, this message translates to:
+  /// **'Регистрация'**
   String get authSignUp;
 
   /// No description provided for @authSendCode.
   ///
-  /// In tg, this message translates to:
-  /// **'Фиристодани код'**
+  /// In ru, this message translates to:
+  /// **'Отправить код'**
   String get authSendCode;
 
   /// No description provided for @authVerifyCode.
   ///
-  /// In tg, this message translates to:
-  /// **'Тасдиқ'**
+  /// In ru, this message translates to:
+  /// **'Подтвердить'**
   String get authVerifyCode;
 
   /// No description provided for @authResetPassword.
   ///
-  /// In tg, this message translates to:
-  /// **'Нав кардани рамз'**
+  /// In ru, this message translates to:
+  /// **'Обновить пароль'**
   String get authResetPassword;
 
   /// No description provided for @authOtpLabel.
   ///
-  /// In tg, this message translates to:
-  /// **'Коди тасдиқ'**
+  /// In ru, this message translates to:
+  /// **'Код подтверждения'**
   String get authOtpLabel;
 
   /// No description provided for @authOtpHint.
   ///
-  /// In tg, this message translates to:
+  /// In ru, this message translates to:
   /// **'0000'**
   String get authOtpHint;
 
   /// No description provided for @authInvalidFields.
   ///
-  /// In tg, this message translates to:
-  /// **'Лутфан ҳамаи майдонҳоро дуруст пур кунед'**
+  /// In ru, this message translates to:
+  /// **'Пожалуйста, заполните все поля корректно'**
   String get authInvalidFields;
 
   /// No description provided for @authPasswordMismatch.
   ///
-  /// In tg, this message translates to:
-  /// **'Рамзҳо мувофиқат намекунанд'**
+  /// In ru, this message translates to:
+  /// **'Пароли не совпадают'**
   String get authPasswordMismatch;
 
   /// No description provided for @authBackToLogin.
   ///
-  /// In tg, this message translates to:
-  /// **'Ба саҳифаи воридшавӣ'**
+  /// In ru, this message translates to:
+  /// **'Ко входу'**
   String get authBackToLogin;
 
   /// No description provided for @authStepPhone.
   ///
-  /// In tg, this message translates to:
-  /// **'Қадами 1 аз 3'**
+  /// In ru, this message translates to:
+  /// **'Шаг 1 из 3'**
   String get authStepPhone;
 
   /// No description provided for @authStepOtp.
   ///
-  /// In tg, this message translates to:
-  /// **'Қадами 2 аз 3'**
+  /// In ru, this message translates to:
+  /// **'Шаг 2 из 3'**
   String get authStepOtp;
 
   /// No description provided for @authStepReset.
   ///
-  /// In tg, this message translates to:
-  /// **'Қадами 3 аз 3'**
+  /// In ru, this message translates to:
+  /// **'Шаг 3 из 3'**
   String get authStepReset;
 
   /// No description provided for @authResendCode.
   ///
-  /// In tg, this message translates to:
-  /// **'Бозфиристодани код'**
+  /// In ru, this message translates to:
+  /// **'Отправить повторно'**
   String get authResendCode;
 
   /// No description provided for @shellGreeting.
   ///
-  /// In tg, this message translates to:
-  /// **'Салом'**
+  /// In ru, this message translates to:
+  /// **'Здравствуйте'**
   String get shellGreeting;
 
   /// No description provided for @shellPublicInvite.
   ///
-  /// In tg, this message translates to:
-  /// **'Даъвати дуэл'**
+  /// In ru, this message translates to:
+  /// **'Приглашение на дуэль'**
   String get shellPublicInvite;
 
   /// No description provided for @dashboardTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Панели асосӣ'**
+  /// In ru, this message translates to:
+  /// **'Главная панель'**
   String get dashboardTitle;
 
   /// No description provided for @dashboardSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Пешрафт, ҳадафҳо ва фаъолияти шумо'**
+  /// In ru, this message translates to:
+  /// **'Ваш прогресс, цели и активность'**
   String get dashboardSubtitle;
 
   /// No description provided for @dashboardOpenProfile.
   ///
-  /// In tg, this message translates to:
-  /// **'Кушодани профил'**
+  /// In ru, this message translates to:
+  /// **'Открыть профиль'**
   String get dashboardOpenProfile;
 
   /// No description provided for @testsTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Маркази тестҳо'**
+  /// In ru, this message translates to:
+  /// **'Центр тестов'**
   String get testsTitle;
 
   /// No description provided for @testsSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Режими мувофиқро интихоб кунед'**
+  /// In ru, this message translates to:
+  /// **'Выберите подходящий режим'**
   String get testsSubtitle;
 
   /// No description provided for @testsSubjectMode.
   ///
-  /// In tg, this message translates to:
-  /// **'Тест аз рӯйи фан'**
+  /// In ru, this message translates to:
+  /// **'Тест по предмету'**
   String get testsSubjectMode;
 
   /// No description provided for @testsExamMode.
   ///
-  /// In tg, this message translates to:
-  /// **'Имтиҳон'**
+  /// In ru, this message translates to:
+  /// **'Экзамен'**
   String get testsExamMode;
 
   /// No description provided for @testsPracticeMode.
   ///
-  /// In tg, this message translates to:
+  /// In ru, this message translates to:
   /// **'Практика'**
   String get testsPracticeMode;
 
   /// No description provided for @testsDuelMode.
   ///
-  /// In tg, this message translates to:
-  /// **'Дуэл'**
+  /// In ru, this message translates to:
+  /// **'Дуэль'**
   String get testsDuelMode;
 
   /// No description provided for @leagueTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Лигаҳо'**
+  /// In ru, this message translates to:
+  /// **'Лиги'**
   String get leagueTitle;
 
   /// No description provided for @leagueSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Ҷойгоҳ ва рақобати худро пайгирӣ кунед'**
+  /// In ru, this message translates to:
+  /// **'Следите за местом и соревнованием'**
   String get leagueSubtitle;
 
   /// No description provided for @duelTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Дуэл'**
+  /// In ru, this message translates to:
+  /// **'Дуэль'**
   String get duelTitle;
 
   /// No description provided for @duelSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Рақобати зинда ва даъватҳои хусусӣ'**
+  /// In ru, this message translates to:
+  /// **'Живое соревнование и приватные приглашения'**
   String get duelSubtitle;
 
   /// No description provided for @duelInviteCodeLabel.
   ///
-  /// In tg, this message translates to:
-  /// **'Коди даъват'**
+  /// In ru, this message translates to:
+  /// **'Код приглашения'**
   String get duelInviteCodeLabel;
 
   /// No description provided for @duelJoinButton.
   ///
-  /// In tg, this message translates to:
-  /// **'Пайваст шудан'**
+  /// In ru, this message translates to:
+  /// **'Присоединиться'**
   String get duelJoinButton;
 
   /// No description provided for @duelCreateInvite.
   ///
-  /// In tg, this message translates to:
-  /// **'Сохтани даъват'**
+  /// In ru, this message translates to:
+  /// **'Создать приглашение'**
   String get duelCreateInvite;
 
   /// No description provided for @profileTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Профили ман'**
+  /// In ru, this message translates to:
+  /// **'Мой профиль'**
   String get profileTitle;
 
   /// No description provided for @profileEdit.
   ///
-  /// In tg, this message translates to:
-  /// **'Таҳрири профил'**
+  /// In ru, this message translates to:
+  /// **'Редактировать профиль'**
   String get profileEdit;
 
   /// No description provided for @referralTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Реферал'**
+  /// In ru, this message translates to:
+  /// **'Рефералы'**
   String get referralTitle;
 
   /// No description provided for @referralSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Дӯст даъват кунед ва XP гиред'**
+  /// In ru, this message translates to:
+  /// **'Приглашайте друзей и получайте XP'**
   String get referralSubtitle;
 
   /// No description provided for @premiumTitle.
   ///
-  /// In tg, this message translates to:
+  /// In ru, this message translates to:
   /// **'Premium'**
   String get premiumTitle;
 
   /// No description provided for @premiumSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Ҳамаи имкониятҳоро боз кунед'**
+  /// In ru, this message translates to:
+  /// **'Откройте все возможности'**
   String get premiumSubtitle;
 
   /// No description provided for @redListTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Рӯйхати сурх'**
+  /// In ru, this message translates to:
+  /// **'Красный список'**
   String get redListTitle;
 
   /// No description provided for @redListSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Саволҳои заифро такрор кунед'**
+  /// In ru, this message translates to:
+  /// **'Повторяйте слабые вопросы'**
   String get redListSubtitle;
 
   /// No description provided for @schoolTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Рейтинги мактабҳо'**
+  /// In ru, this message translates to:
+  /// **'Рейтинг школ'**
   String get schoolTitle;
 
   /// No description provided for @schoolSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Мавқеи мактаби худро бинед'**
+  /// In ru, this message translates to:
+  /// **'Смотрите позицию своей школы'**
   String get schoolSubtitle;
 
   /// No description provided for @inviteTitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Шумо ба дуэл даъват шудед'**
+  /// In ru, this message translates to:
+  /// **'Вас пригласили на дуэль'**
   String get inviteTitle;
 
   /// No description provided for @inviteSubtitle.
   ///
-  /// In tg, this message translates to:
-  /// **'Ба аккаунт дароед ё сабти ном кунед, то ба дуэл пайваст шавед.'**
+  /// In ru, this message translates to:
+  /// **'Войдите или зарегистрируйтесь, чтобы присоединиться к матчу.'**
   String get inviteSubtitle;
 
   /// No description provided for @premiumGoToPlans.
   ///
-  /// In tg, this message translates to:
-  /// **'Кушодани нақшаҳо'**
+  /// In ru, this message translates to:
+  /// **'Открыть планы'**
   String get premiumGoToPlans;
 
   /// No description provided for @appLocaleTg.
   ///
-  /// In tg, this message translates to:
+  /// In ru, this message translates to:
   /// **'TJ'**
   String get appLocaleTg;
 
   /// No description provided for @appLocaleRu.
   ///
-  /// In tg, this message translates to:
+  /// In ru, this message translates to:
   /// **'RU'**
   String get appLocaleRu;
 }

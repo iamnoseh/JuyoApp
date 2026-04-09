@@ -14,9 +14,8 @@ class DashboardOverviewPage extends StatelessWidget {
     final l10n = context.l10n;
 
     return AppScaffold(
+      topBar: const AppTopStatsBar(),
       title: l10n.dashboardTitle,
-      subtitle: 'Demo dashboard adapted from the frontend structure',
-      trailing: const AppHeaderActions(),
       child: const _DashboardBody(),
     );
   }
@@ -27,8 +26,6 @@ class _DashboardBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textMuted = Theme.of(context).textTheme.bodyMedium?.color;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -37,12 +34,12 @@ class _DashboardBody extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Welcome back, Demo User',
+                'Welcome back',
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: 10),
               Text(
-                'Keep building momentum. Your mobile app is now running on demo content first, just like we planned.',
+                'Keep building momentum and continue your learning streak today.',
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: 16),
@@ -81,15 +78,15 @@ class _DashboardBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _CardTitle(
+              const _CardTitle(
                 title: 'Monthly activity',
                 icon: Icons.bar_chart_rounded,
                 color: AppColors.aqua,
               ),
               const SizedBox(height: 14),
-              Row(
+              const Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
-                children: const [
+                children: [
                   _BarDay(label: 'Mon', value: 0.42),
                   _BarDay(label: 'Tue', value: 0.64),
                   _BarDay(label: 'Wed', value: 0.58),
@@ -107,13 +104,13 @@ class _DashboardBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _CardTitle(
+              const _CardTitle(
                 title: 'League status',
                 icon: Icons.emoji_events_rounded,
                 color: AppColors.gold,
               ),
               const SizedBox(height: 14),
-              Row(
+              const Row(
                 children: [
                   Expanded(
                     child: _MetricTile(
@@ -148,7 +145,7 @@ class _DashboardBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _CardTitle(
+              const _CardTitle(
                 title: 'Admission goal',
                 icon: LucideIcons.target,
                 color: AppColors.gold,
@@ -208,7 +205,7 @@ class _DashboardBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _CardTitle(
+              const _CardTitle(
                 title: 'Cluster subjects',
                 icon: Icons.layers_rounded,
                 color: AppColors.aqua,
@@ -227,7 +224,7 @@ class _DashboardBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _CardTitle(
+              const _CardTitle(
                 title: 'Daily goals',
                 icon: Icons.checklist_rounded,
                 color: AppColors.emerald,
@@ -258,16 +255,16 @@ class _DashboardBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _CardTitle(
+              const _CardTitle(
                 title: 'Achievements',
                 icon: Icons.workspace_premium_rounded,
                 color: AppColors.gold,
               ),
               const SizedBox(height: 14),
-              Wrap(
+              const Wrap(
                 spacing: 12,
                 runSpacing: 12,
-                children: const [
+                children: [
                   _AchievementBadge(label: 'First Step', icon: LucideIcons.star),
                   _AchievementBadge(label: 'Top 10', icon: LucideIcons.trophy),
                   _AchievementBadge(label: '7 Day Streak', icon: LucideIcons.flame),
@@ -276,11 +273,6 @@ class _DashboardBody extends StatelessWidget {
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Optimized for mobile preview: reduced blur, reduced repaint pressure, demo-first content.',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: textMuted),
         ),
       ],
     );
@@ -459,9 +451,20 @@ class _AchievementBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.gold.withValues(alpha: 0.12),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.gold.withValues(alpha: 0.16),
+            AppColors.gold.withValues(alpha: 0.07),
+          ],
+        ),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.18)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.gold.withValues(alpha: 0.12),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

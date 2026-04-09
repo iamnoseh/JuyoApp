@@ -24,7 +24,7 @@ class LocaleController extends ChangeNotifier {
     return switch (localStorageService.readString(_storageKey)) {
       'ru' => const Locale('ru'),
       'en' => const Locale('en'),
-      _ => const Locale('tg'),
+      _ => const Locale('ru'),
     };
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:juyo/core/l10n/l10n.dart';
 import 'package:juyo/core/network/api_client.dart';
+import 'package:juyo/core/theme/app_theme.dart';
 import 'package:juyo/core/widgets/app_ui.dart';
 
 class PremiumStudentPage extends StatefulWidget {
@@ -109,37 +110,15 @@ class _PremiumStudentPageState extends State<PremiumStudentPage> {
                                 ..._plans.map(
                                   (plan) => Padding(
                                     padding: const EdgeInsets.only(bottom: 12),
-                                    child: GlassCard(
+                                    child: _PlanCard(
+                                      selected: _selectedPlanId == (plan['id'] as num?)?.toInt(),
+                                      title: plan['name']?.toString() ?? 'Plan',
+                                      priceLabel: '${plan['price'] ?? 0} TJS',
                                       onTap: () {
                                         setState(() {
                                           _selectedPlanId = (plan['id'] as num?)?.toInt();
                                         });
                                       },
-                                      child: Row(
-                                        children: [
-                                          Radio<int>(
-                                            value: (plan['id'] as num?)?.toInt() ?? 0,
-                                            groupValue: _selectedPlanId,
-                                            onChanged: (value) => setState(() => _selectedPlanId = value),
-                                          ),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  plan['name']?.toString() ?? 'Plan',
-                                                  style: Theme.of(context).textTheme.titleMedium,
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  '${plan['price'] ?? 0} TJS',
-                                                  style: Theme.of(context).textTheme.bodyMedium,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
                                     ),
                                   ),
                                 ),
@@ -170,6 +149,60 @@ class _PremiumStudentPageState extends State<PremiumStudentPage> {
                       ],
                     ),
         ),
+      ),
+    );
+  }
+}
+
+class _PlanCard extends StatelessWidget {
+  final bool selected;
+  final String title;
+  final String priceLabel;
+  final VoidCallback onTap;
+
+  const _PlanCard({
+    required this.selected,
+    required this.title,
+    required this.priceLabel,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: selected ? AppColors.gold : Colors.transparent,
+              border: Border.all(
+                color: selected
+                    ? AppColors.gold
+                    : Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.4) ??
+                        Colors.white24,
+                width: 1.6,
+              ),
+            ),
+            child: selected
+                ? const Icon(Icons.check, size: 14, color: Colors.white)
+                : null,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(priceLabel, style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

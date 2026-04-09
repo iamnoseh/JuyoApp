@@ -42,6 +42,7 @@ class _TestsHomePageState extends State<TestsHomePage> {
     final l10n = context.l10n;
 
     return AppScaffold(
+      topBar: const AppTopStatsBar(),
       title: l10n.testsTitle,
       subtitle: l10n.testsSubtitle,
       child: _loading
