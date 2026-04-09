@@ -1,10 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
-import 'package:juyo/app/di/service_locator.dart';
 import 'package:juyo/app/router/app_routes.dart';
-import 'package:juyo/app/router/go_router_refresh_stream.dart';
-import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:juyo/features/auth/presentation/bloc/auth_state.dart';
 import 'package:juyo/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:juyo/features/auth/presentation/pages/login_page.dart';
 import 'package:juyo/features/auth/presentation/pages/register_page.dart';
@@ -15,7 +11,6 @@ import 'package:juyo/features/league/presentation/pages/league_page.dart';
 import 'package:juyo/features/premium/presentation/pages/premium_page.dart';
 import 'package:juyo/features/profile/presentation/pages/profile_edit_route_page.dart';
 import 'package:juyo/features/profile/presentation/pages/profile_route_page.dart';
-import 'package:juyo/features/public/presentation/pages/landing_page.dart';
 import 'package:juyo/features/red_list/presentation/pages/red_list_page.dart';
 import 'package:juyo/features/referral/presentation/pages/referral_page.dart';
 import 'package:juyo/features/school/presentation/pages/school_leaderboard_page.dart';
@@ -27,35 +22,17 @@ import 'package:juyo/features/tests/presentation/pages/test_runner_page.dart';
 import 'package:juyo/features/tests/presentation/pages/tests_home_page.dart';
 
 class AppRouter {
-  static final AuthBloc _authBloc = getIt<AuthBloc>();
-
   static final GoRouter router = GoRouter(
-    initialLocation: AppRoutes.splash,
-    refreshListenable: GoRouterRefreshStream(_authBloc.stream),
+    initialLocation: AppRoutes.login,
     redirect: (context, state) {
-      final authState = _authBloc.state;
-      final isAuthed = authState is AuthenticatedState && authState.session.isStudent;
       final path = state.matchedLocation;
-      final isPublic = path == AppRoutes.splash ||
-          path == AppRoutes.landing ||
-          path == AppRoutes.login ||
-          path == AppRoutes.register ||
-          path == AppRoutes.forgotPassword ||
-          path.startsWith(AppRoutes.duelInvite);
 
       if (path == AppRoutes.splash) {
-        return isAuthed ? AppRoutes.dashboard : AppRoutes.landing;
-      }
-
-      if (!isAuthed && !isPublic) {
         return AppRoutes.login;
       }
 
-      if (isAuthed &&
-          (path == AppRoutes.login ||
-              path == AppRoutes.register ||
-              path == AppRoutes.landing)) {
-        return AppRoutes.dashboard;
+      if (path == AppRoutes.landing) {
+        return AppRoutes.login;
       }
 
       return null;
@@ -64,10 +41,6 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.splash,
         builder: (context, state) => const SizedBox.shrink(),
-      ),
-      GoRoute(
-        path: AppRoutes.landing,
-        builder: (context, state) => const LandingPage(),
       ),
       GoRoute(
         path: AppRoutes.login,

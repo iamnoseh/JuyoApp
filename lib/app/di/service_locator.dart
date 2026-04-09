@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:juyo/core/network/dio_factory.dart';
 import 'package:juyo/core/storage/local_storage_service.dart';
 import 'package:juyo/core/storage/secure_storage_service.dart';
+import 'package:juyo/core/theme/theme_mode_controller.dart';
 import 'package:juyo/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:juyo/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:juyo/features/auth/domain/repositories/auth_repository.dart';
@@ -39,6 +40,12 @@ Future<void> setupServiceLocator() async {
   if (!getIt.isRegistered<LocalStorageService>()) {
     final localStorage = await LocalStorageService.create();
     getIt.registerLazySingleton<LocalStorageService>(() => localStorage);
+  }
+
+  if (!getIt.isRegistered<ThemeModeController>()) {
+    getIt.registerLazySingleton<ThemeModeController>(
+      () => ThemeModeController(getIt<LocalStorageService>()),
+    );
   }
 
   if (!getIt.isRegistered<Dio>()) {
