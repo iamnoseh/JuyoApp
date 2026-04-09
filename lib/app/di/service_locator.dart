@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
+import 'package:juyo/core/l10n/locale_controller.dart';
 import 'package:juyo/core/network/dio_factory.dart';
 import 'package:juyo/core/storage/local_storage_service.dart';
 import 'package:juyo/core/storage/secure_storage_service.dart';
@@ -45,6 +46,12 @@ Future<void> setupServiceLocator() async {
   if (!getIt.isRegistered<ThemeModeController>()) {
     getIt.registerLazySingleton<ThemeModeController>(
       () => ThemeModeController(getIt<LocalStorageService>()),
+    );
+  }
+
+  if (!getIt.isRegistered<LocaleController>()) {
+    getIt.registerLazySingleton<LocaleController>(
+      () => LocaleController(getIt<LocalStorageService>()),
     );
   }
 

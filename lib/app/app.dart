@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:juyo/app/di/service_locator.dart';
 import 'package:juyo/app/router/app_router.dart';
+import 'package:juyo/core/l10n/locale_controller.dart';
 import 'package:juyo/core/theme/app_theme.dart';
 import 'package:juyo/core/theme/theme_mode_controller.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
@@ -19,13 +20,17 @@ class JuyoApp extends StatelessWidget {
         ),
       ],
       child: AnimatedBuilder(
-        animation: getIt<ThemeModeController>(),
+        animation: Listenable.merge([
+          getIt<ThemeModeController>(),
+          getIt<LocaleController>(),
+        ]),
         builder: (context, _) => MaterialApp.router(
           debugShowCheckedModeBanner: false,
           title: 'Juyo',
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: getIt<ThemeModeController>().themeMode,
+          locale: getIt<LocaleController>().locale,
           routerConfig: AppRouter.router,
           localeResolutionCallback: (locale, supportedLocales) {
             if (locale == null) {

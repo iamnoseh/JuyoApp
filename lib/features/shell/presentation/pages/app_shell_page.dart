@@ -17,7 +17,7 @@ class AppShellPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true,
+      extendBody: false,
       body: AuroraBackground(child: child),
       bottomNavigationBar: AppBottomNav(
         activeTab: _activeTabForLocation(location),

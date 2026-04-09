@@ -16,7 +16,7 @@ class DashboardOverviewPage extends StatelessWidget {
     return AppScaffold(
       title: l10n.dashboardTitle,
       subtitle: 'Demo dashboard adapted from the frontend structure',
-      trailing: const AppThemeModeButton(),
+      trailing: const AppHeaderActions(),
       child: const _DashboardBody(),
     );
   }

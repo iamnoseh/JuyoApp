@@ -14,7 +14,7 @@ class ProfileRoutePage extends StatelessWidget {
     return AppScaffold(
       title: l10n.profileTitle,
       subtitle: 'Demo profile adapted from the frontend layout',
-      trailing: const AppThemeModeButton(),
+      trailing: const AppHeaderActions(),
       child: const _ProfileBody(),
     );
   }

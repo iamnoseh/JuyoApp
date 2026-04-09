@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:juyo/app/di/service_locator.dart';
+import 'package:juyo/core/l10n/locale_controller.dart';
 import 'package:juyo/core/theme/app_theme.dart';
 import 'package:juyo/core/theme/theme_mode_controller.dart';
 
@@ -406,7 +407,7 @@ class AppScaffold extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.trailing,
-    this.padding = const EdgeInsets.fromLTRB(16, 16, 16, 120),
+    this.padding = const EdgeInsets.fromLTRB(16, 16, 16, 20),
     this.scrollable = true,
   });
 
@@ -576,6 +577,59 @@ class AppThemeModeButton extends StatelessWidget {
         isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
         color: Theme.of(context).colorScheme.onSurface,
       ),
+    );
+  }
+}
+
+class AppLanguageButton extends StatelessWidget {
+  const AppLanguageButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = getIt<LocaleController>();
+    final palette = context.appPalette;
+    final currentCode = controller.locale.languageCode.toUpperCase();
+
+    return PopupMenuButton<String>(
+      tooltip: 'Language',
+      onSelected: (value) => controller.setLocale(Locale(value)),
+      itemBuilder: (context) => const [
+        PopupMenuItem<String>(value: 'tg', child: Text('TJ')),
+        PopupMenuItem<String>(value: 'ru', child: Text('RU')),
+        PopupMenuItem<String>(value: 'en', child: Text('EN')),
+      ],
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: palette.secondaryFill,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: palette.border),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          currentCode,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+      ),
+    );
+  }
+}
+
+class AppHeaderActions extends StatelessWidget {
+  const AppHeaderActions({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppLanguageButton(),
+        SizedBox(width: 8),
+        AppThemeModeButton(),
+      ],
     );
   }
 }
