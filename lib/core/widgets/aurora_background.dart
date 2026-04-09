@@ -15,26 +15,29 @@ class AuroraBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Stack(
       fit: StackFit.expand,
       children: [
-        const DecoratedBox(
+        DecoratedBox(
           decoration: BoxDecoration(
-            color: AppColors.base,
+            color: palette.backgroundStart,
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [AppColors.base, AppColors.surface],
+              colors: [palette.backgroundStart, palette.backgroundEnd],
             ),
           ),
         ),
-        if (showMesh) const _AuroraLayer(),
+        if (showMesh) _AuroraLayer(isDark: isDark, meshColor: palette.mesh),
         Positioned.fill(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: AppColors.base.withValues(alpha: 0.14),
+                color: palette.backdropTint,
               ),
             ),
           ),
@@ -46,24 +49,47 @@ class AuroraBackground extends StatelessWidget {
 }
 
 class _AuroraLayer extends StatelessWidget {
-  const _AuroraLayer();
+  const _AuroraLayer({
+    required this.isDark,
+    required this.meshColor,
+  });
+
+  final bool isDark;
+  final Color meshColor;
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _AuroraPainter(),
+      painter: _AuroraPainter(
+        aquaColor: AppColors.aqua.withValues(alpha: isDark ? 0.24 : 0.18),
+        goldColor: AppColors.gold.withValues(alpha: isDark ? 0.18 : 0.12),
+        emeraldColor: AppColors.emerald.withValues(alpha: isDark ? 0.12 : 0.08),
+        meshColor: meshColor,
+      ),
       child: const SizedBox.expand(),
     );
   }
 }
 
 class _AuroraPainter extends CustomPainter {
+  const _AuroraPainter({
+    required this.aquaColor,
+    required this.goldColor,
+    required this.emeraldColor,
+    required this.meshColor,
+  });
+
+  final Color aquaColor;
+  final Color goldColor;
+  final Color emeraldColor;
+  final Color meshColor;
+
   @override
   void paint(Canvas canvas, Size size) {
     final aquaPaint = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppColors.aqua.withValues(alpha: 0.24),
+          aquaColor,
           AppColors.aqua.withValues(alpha: 0.0),
         ],
       ).createShader(
@@ -76,7 +102,7 @@ class _AuroraPainter extends CustomPainter {
     final goldPaint = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppColors.gold.withValues(alpha: 0.18),
+          goldColor,
           AppColors.gold.withValues(alpha: 0.0),
         ],
       ).createShader(
@@ -89,7 +115,7 @@ class _AuroraPainter extends CustomPainter {
     final emeraldPaint = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppColors.emerald.withValues(alpha: 0.12),
+          emeraldColor,
           AppColors.emerald.withValues(alpha: 0.0),
         ],
       ).createShader(
@@ -104,7 +130,7 @@ class _AuroraPainter extends CustomPainter {
     canvas.drawRect(Offset.zero & size, emeraldPaint);
 
     final meshPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.025)
+      ..color = meshColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     const spacing = 36.0;

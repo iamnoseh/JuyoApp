@@ -19,16 +19,24 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     final content = ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
+            color: palette.glass,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.cardStroke),
-            boxShadow: AppShadows.glass,
+            border: Border.all(color: palette.cardStroke),
+            boxShadow: [
+              BoxShadow(
+                color: palette.shadow,
+                blurRadius: 28,
+                offset: const Offset(0, 14),
+              ),
+            ],
           ),
           padding: padding,
           child: child,
@@ -133,15 +141,17 @@ class AppSecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: OutlinedButton.icon(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-          side: const BorderSide(color: AppColors.border),
-          backgroundColor: Colors.white.withValues(alpha: 0.03),
+          foregroundColor: Theme.of(context).colorScheme.onSurface,
+          side: BorderSide(color: palette.border),
+          backgroundColor: palette.secondaryFill,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
@@ -177,6 +187,8 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final secondaryText = Theme.of(context).textTheme.bodyMedium?.color;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -185,7 +197,7 @@ class AppTextField extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: secondaryText,
                   fontWeight: FontWeight.w700,
                 ),
           ),
@@ -201,7 +213,7 @@ class AppTextField extends StatelessWidget {
             hintText: hint,
             prefixIcon: prefixIcon == null
                 ? null
-                : Icon(prefixIcon, color: AppColors.textSecondary, size: 18),
+                : Icon(prefixIcon, color: secondaryText, size: 18),
             suffixIcon: suffix,
           ),
         ),
@@ -244,6 +256,8 @@ class StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -259,7 +273,7 @@ class StatChip extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
                   fontWeight: FontWeight.w700,
                 ),
           ),
@@ -318,10 +332,12 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final iconColor = Theme.of(context).textTheme.bodyMedium?.color;
+
     return GlassCard(
       child: Column(
         children: [
-          Icon(icon, size: 32, color: AppColors.textSecondary),
+          Icon(icon, size: 32, color: iconColor),
           const SizedBox(height: 12),
           Text(title, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 6),
@@ -436,6 +452,9 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+    final inactiveColor = Theme.of(context).textTheme.bodyMedium?.color ?? AppColors.textSecondary;
+
     return SafeArea(
       top: false,
       child: Padding(
@@ -447,9 +466,9 @@ class AppBottomNav extends StatelessWidget {
             child: Container(
               height: 72,
               decoration: BoxDecoration(
-                color: AppColors.surface.withValues(alpha: 0.92),
+                color: palette.navSurface,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: palette.border),
               ),
               child: Row(
                 children: [
@@ -457,30 +476,35 @@ class AppBottomNav extends StatelessWidget {
                     label: 'Home',
                     icon: Icons.grid_view_rounded,
                     active: activeTab == AppShellTab.dashboard,
+                    inactiveColor: inactiveColor,
                     onTap: () => onTap(AppShellTab.dashboard),
                   ),
                   _NavItem(
                     label: 'Duel',
                     icon: Icons.flash_on_rounded,
                     active: activeTab == AppShellTab.duel,
+                    inactiveColor: inactiveColor,
                     onTap: () => onTap(AppShellTab.duel),
                   ),
                   _NavItem(
                     label: 'Tests',
                     icon: Icons.menu_book_rounded,
                     active: activeTab == AppShellTab.tests,
+                    inactiveColor: inactiveColor,
                     onTap: () => onTap(AppShellTab.tests),
                   ),
                   _NavItem(
                     label: 'League',
                     icon: Icons.emoji_events_rounded,
                     active: activeTab == AppShellTab.league,
+                    inactiveColor: inactiveColor,
                     onTap: () => onTap(AppShellTab.league),
                   ),
                   _NavItem(
                     label: 'Profile',
                     icon: Icons.person_rounded,
                     active: activeTab == AppShellTab.profile,
+                    inactiveColor: inactiveColor,
                     onTap: () => onTap(AppShellTab.profile),
                   ),
                 ],
@@ -497,12 +521,14 @@ class _NavItem extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool active;
+  final Color inactiveColor;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.label,
     required this.icon,
     required this.active,
+    required this.inactiveColor,
     required this.onTap,
   });
 
@@ -517,13 +543,13 @@ class _NavItem extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: active ? AppColors.gold : AppColors.textSecondary,
+              color: active ? AppColors.gold : inactiveColor,
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: active ? AppColors.gold : AppColors.textSecondary,
+                    color: active ? AppColors.gold : inactiveColor,
                     fontWeight: FontWeight.w700,
                   ),
             ),
