@@ -42,42 +42,52 @@ class _LoginPageState extends State<LoginPage> {
     return AuthLayout(
       title: l10n.authLoginTitle,
       subtitle: l10n.authLoginSubtitle,
-      child: Column(
-        children: [
-          AppTextField(
-            label: l10n.authPhoneLabel,
-            hint: l10n.authPhoneHint,
-            prefixIcon: LucideIcons.phone,
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-          ),
-          const SizedBox(height: 16),
-          AppTextField(
-            label: l10n.authPasswordLabel,
-            hint: 'password',
-            prefixIcon: LucideIcons.lock,
-            controller: _passwordController,
-            obscureText: true,
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () => context.push(AppRoutes.forgotPassword),
-              child: Text(l10n.authForgotPassword),
+      child: AutofillGroup(
+        child: Column(
+          children: [
+            AppTextField(
+              label: l10n.authPhoneLabel,
+              hint: l10n.authPhoneHint,
+              prefixIcon: LucideIcons.phone,
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              autofillHints: const [AutofillHints.telephoneNumber],
+              enableSuggestions: false,
+              autocorrect: false,
+              textInputAction: TextInputAction.next,
             ),
-          ),
-          const SizedBox(height: 8),
-          AppPrimaryButton(
-            label: l10n.authSignIn,
-            onPressed: _submit,
-          ),
-          const SizedBox(height: 12),
-          AppSecondaryButton(
-            label: l10n.authSignUp,
-            onPressed: () => context.push(AppRoutes.register),
-          ),
-        ],
+            const SizedBox(height: 16),
+            AppTextField(
+              label: l10n.authPasswordLabel,
+              hint: 'password',
+              prefixIcon: LucideIcons.lock,
+              controller: _passwordController,
+              obscureText: true,
+              autofillHints: const [AutofillHints.password],
+              enableSuggestions: false,
+              autocorrect: false,
+              textInputAction: TextInputAction.done,
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => context.push(AppRoutes.forgotPassword),
+                child: Text(l10n.authForgotPassword),
+              ),
+            ),
+            const SizedBox(height: 8),
+            AppPrimaryButton(
+              label: l10n.authSignIn,
+              onPressed: _submit,
+            ),
+            const SizedBox(height: 12),
+            AppSecondaryButton(
+              label: l10n.authSignUp,
+              onPressed: () => context.push(AppRoutes.register),
+            ),
+          ],
+        ),
       ),
     );
   }

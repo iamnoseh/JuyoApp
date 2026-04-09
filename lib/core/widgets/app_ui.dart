@@ -172,6 +172,10 @@ class AppTextField extends StatelessWidget {
   final bool obscureText;
   final Widget? suffix;
   final int? maxLength;
+  final Iterable<String>? autofillHints;
+  final bool enableSuggestions;
+  final bool autocorrect;
+  final TextInputAction? textInputAction;
 
   const AppTextField({
     super.key,
@@ -183,6 +187,10 @@ class AppTextField extends StatelessWidget {
     this.obscureText = false,
     this.suffix,
     this.maxLength,
+    this.autofillHints,
+    this.enableSuggestions = true,
+    this.autocorrect = true,
+    this.textInputAction,
   });
 
   @override
@@ -202,11 +210,19 @@ class AppTextField extends StatelessWidget {
                 ),
           ),
         ),
-        TextField(
+        TextFormField(
           controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
           maxLength: maxLength,
+          maxLines: 1,
+          minLines: 1,
+          expands: false,
+          textAlignVertical: TextAlignVertical.center,
+          autofillHints: autofillHints,
+          enableSuggestions: enableSuggestions,
+          autocorrect: autocorrect,
+          textInputAction: textInputAction,
           style: Theme.of(context).textTheme.bodyLarge,
           decoration: InputDecoration(
             counterText: '',
@@ -605,27 +621,34 @@ class AppLanguageButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = getIt<LocaleController>();
     final palette = context.appPalette;
-    final currentCode = controller.locale.languageCode.toUpperCase();
+    final currentCode = switch (controller.locale.languageCode) {
+      'tg' => 'TJ',
+      'ru' => 'RU',
+      'en' => 'EN',
+      _ => 'TJ',
+    };
     final height = compact ? 36.0 : 40.0;
     final horizontalPadding = compact ? 10.0 : 12.0;
 
-    return PopupMenuButton<String>(
-      tooltip: 'Language',
-      onSelected: (value) => controller.setLocale(Locale(value)),
-      itemBuilder: (context) => const [
-        PopupMenuItem<String>(value: 'tg', child: Text('TJ')),
-        PopupMenuItem<String>(value: 'ru', child: Text('RU')),
-        PopupMenuItem<String>(value: 'en', child: Text('EN')),
-      ],
-      child: Container(
-        height: height,
-        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-        decoration: BoxDecoration(
-          color: palette.secondaryFill,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: palette.border),
+    return SizedBox(
+      height: height,
+      child: TextButton(
+        onPressed: () {
+          final nextLocale = switch (controller.locale.languageCode) {
+            'tg' => const Locale('ru'),
+            'ru' => const Locale('en'),
+            _ => const Locale('tg'),
+          };
+          controller.setLocale(nextLocale);
+        },
+        style: TextButton.styleFrom(
+          backgroundColor: palette.secondaryFill,
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            side: BorderSide(color: palette.border),
+          ),
         ),
-        alignment: Alignment.center,
         child: Text(
           currentCode,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
