@@ -1,9 +1,14 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
+import 'package:juyo/app/di/service_locator.dart';
 import 'package:juyo/app/router/app_routes.dart';
+import 'package:juyo/app/router/go_router_refresh_stream.dart';
 import 'package:juyo/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:juyo/features/auth/presentation/pages/auth_splash_page.dart';
 import 'package:juyo/features/auth/presentation/pages/login_page.dart';
 import 'package:juyo/features/auth/presentation/pages/register_page.dart';
+import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:juyo/features/auth/presentation/bloc/auth_state.dart';
 import 'package:juyo/features/duel/presentation/pages/duel_hub_page.dart';
 import 'package:juyo/features/duel/presentation/pages/duel_invite_page.dart';
 import 'package:juyo/features/home/presentation/pages/dashboard_overview_page.dart';
@@ -23,15 +28,34 @@ import 'package:juyo/features/tests/presentation/pages/tests_home_page.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: AppRoutes.login,
+    initialLocation: AppRoutes.splash,
+    refreshListenable: GoRouterRefreshStream(getIt<AuthBloc>().stream),
     redirect: (context, state) {
       final path = state.matchedLocation;
+      final authState = getIt<AuthBloc>().state;
 
-      if (path == AppRoutes.splash) {
+      final isAuthRoute = path == AppRoutes.login ||
+          path == AppRoutes.register ||
+          path == AppRoutes.forgotPassword;
+      final isPublicRoute = path == AppRoutes.splash || path.startsWith(AppRoutes.duelInvite);
+      final isProtectedRoute = !isAuthRoute && !isPublicRoute;
+
+      if (authState is AuthInitial || authState is AuthLoading) {
+        return path == AppRoutes.splash ? null : AppRoutes.splash;
+      }
+
+      if (authState is AuthenticatedState) {
+        if (path == AppRoutes.splash || isAuthRoute) {
+          return AppRoutes.dashboard;
+        }
+        return null;
+      }
+
+      if (isProtectedRoute) {
         return AppRoutes.login;
       }
 
-      if (path == AppRoutes.landing) {
+      if (path == AppRoutes.splash || path == AppRoutes.landing) {
         return AppRoutes.login;
       }
 
@@ -40,7 +64,7 @@ class AppRouter {
     routes: [
       GoRoute(
         path: AppRoutes.splash,
-        builder: (context, state) => const SizedBox.shrink(),
+        builder: (context, state) => const AuthSplashPage(),
       ),
       GoRoute(
         path: AppRoutes.login,

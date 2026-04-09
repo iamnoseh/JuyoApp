@@ -20,6 +20,10 @@ class AuthLoginInProgress extends AuthState {
   const AuthLoginInProgress();
 }
 
+class AuthRegisterInProgress extends AuthState {
+  const AuthRegisterInProgress();
+}
+
 class AuthenticatedState extends AuthState {
   final AuthSession session;
 

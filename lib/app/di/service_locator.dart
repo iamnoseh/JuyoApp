@@ -10,8 +10,13 @@ import 'package:juyo/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:juyo/features/auth/domain/repositories/auth_repository.dart';
 import 'package:juyo/features/auth/domain/usecases/login_use_case.dart';
 import 'package:juyo/features/auth/domain/usecases/logout_use_case.dart';
+import 'package:juyo/features/auth/domain/usecases/register_use_case.dart';
+import 'package:juyo/features/auth/domain/usecases/reset_password_use_case.dart';
 import 'package:juyo/features/auth/domain/usecases/restore_session_use_case.dart';
+import 'package:juyo/features/auth/domain/usecases/send_otp_use_case.dart';
+import 'package:juyo/features/auth/domain/usecases/verify_otp_use_case.dart';
 import 'package:juyo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:juyo/features/auth/presentation/bloc/password_recovery_bloc.dart';
 import 'package:juyo/features/home/data/datasources/dashboard_remote_data_source.dart';
 import 'package:juyo/features/home/data/repositories/dashboard_repository_impl.dart';
 import 'package:juyo/features/home/domain/repositories/dashboard_repository.dart';
@@ -84,6 +89,12 @@ Future<void> setupServiceLocator() async {
     );
   }
 
+  if (!getIt.isRegistered<RegisterUseCase>()) {
+    getIt.registerLazySingleton<RegisterUseCase>(
+      () => RegisterUseCase(getIt<AuthRepository>()),
+    );
+  }
+
   if (!getIt.isRegistered<LogoutUseCase>()) {
     getIt.registerLazySingleton<LogoutUseCase>(
       () => LogoutUseCase(getIt<AuthRepository>()),
@@ -100,8 +111,37 @@ Future<void> setupServiceLocator() async {
     getIt.registerLazySingleton<AuthBloc>(
       () => AuthBloc(
         loginUseCase: getIt<LoginUseCase>(),
+        registerUseCase: getIt<RegisterUseCase>(),
         restoreSessionUseCase: getIt<RestoreSessionUseCase>(),
         logoutUseCase: getIt<LogoutUseCase>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<SendOtpUseCase>()) {
+    getIt.registerLazySingleton<SendOtpUseCase>(
+      () => SendOtpUseCase(getIt<AuthRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<VerifyOtpUseCase>()) {
+    getIt.registerLazySingleton<VerifyOtpUseCase>(
+      () => VerifyOtpUseCase(getIt<AuthRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ResetPasswordUseCase>()) {
+    getIt.registerLazySingleton<ResetPasswordUseCase>(
+      () => ResetPasswordUseCase(getIt<AuthRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<PasswordRecoveryBloc>()) {
+    getIt.registerFactory<PasswordRecoveryBloc>(
+      () => PasswordRecoveryBloc(
+        sendOtpUseCase: getIt<SendOtpUseCase>(),
+        verifyOtpUseCase: getIt<VerifyOtpUseCase>(),
+        resetPasswordUseCase: getIt<ResetPasswordUseCase>(),
       ),
     );
   }

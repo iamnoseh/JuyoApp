@@ -5,12 +5,14 @@ class AuthSession extends Equatable {
   final String? userId;
   final String? role;
   final bool isAuthenticated;
+  final DateTime? expiresAt;
 
   const AuthSession({
     required this.token,
     required this.userId,
     required this.role,
     required this.isAuthenticated,
+    this.expiresAt,
   });
 
   bool get isStudent {
@@ -31,6 +33,15 @@ class AuthSession extends Equatable {
     return tokens.contains('student');
   }
 
+  bool get isExpired {
+    final expiry = expiresAt;
+    if (expiry == null) {
+      return false;
+    }
+
+    return DateTime.now().toUtc().isAfter(expiry.toUtc());
+  }
+
   @override
-  List<Object?> get props => [token, userId, role, isAuthenticated];
+  List<Object?> get props => [token, userId, role, isAuthenticated, expiresAt];
 }

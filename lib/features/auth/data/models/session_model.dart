@@ -1,4 +1,5 @@
 import 'package:juyo/core/utils/token_utils.dart';
+import 'package:juyo/features/auth/data/models/auth_response_model.dart';
 import 'package:juyo/features/auth/domain/entities/auth_session.dart';
 
 class SessionModel extends AuthSession {
@@ -7,18 +8,28 @@ class SessionModel extends AuthSession {
     required super.userId,
     required super.role,
     required super.isAuthenticated,
+    super.expiresAt,
   });
 
   factory SessionModel.fromToken(String token) {
     final payload = TokenUtils.decodePayload(token);
-    final role = _extractRole(payload);
-    final userId = _extractUserId(payload);
-
     return SessionModel(
       token: token,
-      userId: userId,
-      role: role,
+      userId: _extractUserId(payload),
+      role: _extractRole(payload),
       isAuthenticated: token.isNotEmpty,
+      expiresAt: _extractExpiresAt(payload),
+    );
+  }
+
+  factory SessionModel.fromAuthResponse(AuthResponseModel response) {
+    final payload = TokenUtils.decodePayload(response.token);
+    return SessionModel(
+      token: response.token,
+      userId: _extractUserId(payload) ?? response.userId,
+      role: _extractRole(payload) ?? response.role,
+      isAuthenticated: response.token.isNotEmpty,
+      expiresAt: _extractExpiresAt(payload) ?? response.expiresAt,
     );
   }
 
@@ -62,6 +73,26 @@ class SessionModel extends AuthSession {
       if (value != null && value.trim().isNotEmpty) {
         return value;
       }
+    }
+
+    return null;
+  }
+
+  static DateTime? _extractExpiresAt(Map<String, dynamic>? payload) {
+    if (payload == null) return null;
+
+    final rawExp = payload['exp'] ?? payload['Exp'] ?? payload['expiresAt'] ?? payload['ExpiresAt'];
+    if (rawExp is num) {
+      return DateTime.fromMillisecondsSinceEpoch(rawExp.toInt() * 1000, isUtc: true);
+    }
+
+    if (rawExp is String) {
+      final parsedNumber = int.tryParse(rawExp);
+      if (parsedNumber != null) {
+        return DateTime.fromMillisecondsSinceEpoch(parsedNumber * 1000, isUtc: true);
+      }
+
+      return DateTime.tryParse(rawExp)?.toUtc();
     }
 
     return null;
