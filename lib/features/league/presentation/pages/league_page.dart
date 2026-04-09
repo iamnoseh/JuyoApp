@@ -30,14 +30,17 @@ class _LeagueStudentPageState extends State<LeagueStudentPage> {
   Future<void> _loadLeagues() async {
     try {
       final response = await ApiClient.dio.get('/League');
-      final raw = response.data is Map ? response.data['data'] ?? response.data : response.data;
+      final raw = response.data is Map
+          ? response.data['data'] ?? response.data
+          : response.data;
       final leagues = (raw as List<dynamic>? ?? const [])
           .whereType<Map>()
           .map((item) => Map<String, dynamic>.from(item))
           .toList();
       setState(() {
         _leagues = leagues;
-        _selectedLeagueId = leagues.isEmpty ? null : (leagues.first['id'] as num?)?.toInt();
+        _selectedLeagueId =
+            leagues.isEmpty ? null : (leagues.first['id'] as num?)?.toInt();
       });
       if (_selectedLeagueId != null) {
         await _loadStandings(_selectedLeagueId!);
@@ -56,7 +59,9 @@ class _LeagueStudentPageState extends State<LeagueStudentPage> {
     try {
       setState(() => _loading = true);
       final response = await ApiClient.dio.get('/League/$leagueId/standings');
-      final raw = response.data is Map ? response.data['data'] ?? response.data : response.data;
+      final raw = response.data is Map
+          ? response.data['data'] ?? response.data
+          : response.data;
       final standings = (raw as List<dynamic>? ?? const [])
           .whereType<Map>()
           .map((item) => Map<String, dynamic>.from(item))
@@ -97,7 +102,8 @@ class _LeagueStudentPageState extends State<LeagueStudentPage> {
                             final id = (league['id'] as num?)?.toInt();
                             final selected = id == _selectedLeagueId;
                             return ChoiceChip(
-                              label: Text(league['name']?.toString() ?? 'League'),
+                              label:
+                                  Text(league['name']?.toString() ?? 'League'),
                               selected: selected,
                               onSelected: (_) {
                                 if (id == null) return;
@@ -123,12 +129,15 @@ class _LeagueStudentPageState extends State<LeagueStudentPage> {
                               padding: const EdgeInsets.only(bottom: 10),
                               child: _StandingCard(
                                 item: item,
-                                isExpanded: _expandedStandingKey == _standingKey(item),
+                                isExpanded:
+                                    _expandedStandingKey == _standingKey(item),
                                 onToggle: () {
                                   final key = _standingKey(item);
                                   setState(() {
                                     _expandedStandingKey =
-                                        _expandedStandingKey == key ? null : key;
+                                        _expandedStandingKey == key
+                                            ? null
+                                            : key;
                                   });
                                 },
                               ),
@@ -203,20 +212,22 @@ class _StandingCard extends StatelessWidget {
                             fullName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                            style:
+                                Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           '$weeklyXp XP',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontSize: 12,
-                                color: AppColors.gold,
-                                fontWeight: FontWeight.w800,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontSize: 12,
+                                    color: AppColors.gold,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                         ),
                         const SizedBox(width: 6),
                         _TrendBadge(trend: trend),
@@ -236,9 +247,10 @@ class _StandingCard extends StatelessWidget {
                           schoolName ?? '',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontSize: 11,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontSize: 11,
+                                  ),
                         ),
                       ),
                     ),
@@ -353,7 +365,6 @@ class _RankBadge extends StatelessWidget {
                     ),
               ),
             ),
-      ),
     );
   }
 }
@@ -413,7 +424,8 @@ class _LeagueAvatar extends StatelessWidget {
                 ? Image.network(
                     avatarUrl!,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _AvatarFallback(initials: initials),
+                    errorBuilder: (_, __, ___) =>
+                        _AvatarFallback(initials: initials),
                   )
                 : _AvatarFallback(initials: initials),
           ),
@@ -492,7 +504,8 @@ class _TrendBadge extends StatelessWidget {
     final color = switch (trend) {
       _StandingTrend.up => AppColors.emerald,
       _StandingTrend.down => AppColors.danger,
-      _StandingTrend.stable => Theme.of(context).textTheme.bodySmall?.color ?? AppColors.slate,
+      _StandingTrend.stable =>
+        Theme.of(context).textTheme.bodySmall?.color ?? AppColors.slate,
     };
     final icon = switch (trend) {
       _StandingTrend.up => Icons.arrow_upward_rounded,
