@@ -56,8 +56,8 @@ class AppThemePalette extends ThemeExtension<AppThemePalette> {
   final Color shadow;
 
   static const light = AppThemePalette(
-    backgroundStart: Color(0xFFF7FAFF),
-    backgroundEnd: Color(0xFFE8F1FF),
+    backgroundStart: Color(0xFFF8FAFC),
+    backgroundEnd: Color(0xFFF8FAFC),
     backdropTint: Color(0x80FFFFFF),
     glass: Color(0xD9FFFFFF),
     border: Color(0x1F0F172A),

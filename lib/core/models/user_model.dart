@@ -114,7 +114,15 @@ class UserModel {
       role: roleString,
       xp: _asInt(json['xp'] ?? json['XP'], defaultValue: 0),
       eloRating: _asInt(json['eloRating'] ?? json['EloRating'], defaultValue: 1000),
-      streak: _asInt(json['streak'] ?? json['Streak'], defaultValue: 0),
+      streak: _asInt(
+        json['streak'] ??
+            json['Streak'] ??
+            json['currentStreak'] ??
+            json['CurrentStreak'] ??
+            json['dailyStreak'] ??
+            json['DailyStreak'],
+        defaultValue: 0,
+      ),
       points: _asInt(json['points'] ?? json['Points'], defaultValue: 0),
       currentLeagueId:
           _asNullableInt(json['currentLeagueId'] ?? json['CurrentLeagueId']),

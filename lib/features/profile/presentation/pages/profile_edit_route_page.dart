@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:juyo/app/di/service_locator.dart';
-import 'package:juyo/core/theme/app_theme.dart';
+import 'package:juyo/core/widgets/app_ui.dart';
 import 'package:juyo/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:juyo/features/profile/presentation/bloc/profile_event.dart';
 import 'package:juyo/features/profile/presentation/bloc/profile_state.dart';
@@ -21,8 +21,8 @@ class ProfileEditRoutePage extends StatelessWidget {
         child: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
             if (state is ProfileLoading || state is ProfileInitial) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.aqua),
+              return const JuyoPageLoader(
+                message: 'Loading profile',
               );
             }
 

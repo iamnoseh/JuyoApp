@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:juyo/app/router/app_routes.dart';
@@ -44,6 +46,11 @@ class GlassCard extends StatelessWidget {
                 ],
         ),
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.10)
+              : const Color(0xFFE2E8F0),
+        ),
         boxShadow: [
           BoxShadow(
             color: palette.shadow.withValues(alpha: isDark ? 0.46 : 0.14),
@@ -172,13 +179,18 @@ class AppSecondaryButton extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           foregroundColor: Theme.of(context).colorScheme.onSurface,
-          side: BorderSide(color: Colors.white.withValues(alpha: isDark ? 0.08 : 0.0)),
+          side: BorderSide(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.16)
+                : const Color(0xFFD7DEE8),
+          ),
           backgroundColor: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.white.withValues(alpha: 0.82),
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.white.withValues(alpha: 0.94),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
+          elevation: 0,
         ),
         icon: icon == null ? const SizedBox.shrink() : Icon(icon, size: 18),
         label: Text(label),
@@ -457,6 +469,91 @@ class ErrorState extends StatelessWidget {
   }
 }
 
+class JuyoPageLoader extends StatelessWidget {
+  final String? message;
+
+  const JuyoPageLoader({
+    super.key,
+    this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'JUYO',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  letterSpacing: 6,
+                  fontWeight: FontWeight.w900,
+                ),
+          ),
+          const SizedBox(height: 14),
+          const _JuyoLoadingDots(),
+        ],
+      ),
+    );
+  }
+}
+
+class _JuyoLoadingDots extends StatefulWidget {
+  const _JuyoLoadingDots();
+
+  @override
+  State<_JuyoLoadingDots> createState() => _JuyoLoadingDotsState();
+}
+
+class _JuyoLoadingDotsState extends State<_JuyoLoadingDots>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(4, (index) {
+            final shifted = (_controller.value - index * 0.16) % 1.0;
+            final active = shifted < 0.45;
+            final scale = active ? 1.12 : 0.72;
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: 8,
+              height: 8,
+              transform: Matrix4.identity()..scale(scale),
+              decoration: BoxDecoration(
+                color: AppColors.aqua.withValues(alpha: active ? 0.95 : 0.28),
+                shape: BoxShape.circle,
+              ),
+            );
+          }),
+        );
+      },
+    );
+  }
+}
+
 class AppScaffold extends StatelessWidget {
   final Widget child;
   final String title;
@@ -481,31 +578,56 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: padding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (topBar != null) ...[
-              topBar!,
-              const SizedBox(height: AppSpacing.lg),
-            ],
-            if (showHeader) ...[
-              SectionHeader(
-                title: title,
-                subtitle: subtitle,
-                trailing: trailing,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-            ],
-            if (scrollable)
-              Expanded(child: SingleChildScrollView(child: child))
-            else
-              Expanded(child: child),
-          ],
+    final contentTopOffset = topBar == null ? 0.0 : 48.0;
+    const bottomOverlaySpace = 104.0;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        SafeArea(
+          child: Padding(
+            padding: padding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (contentTopOffset > 0) SizedBox(height: contentTopOffset),
+                if (showHeader) ...[
+                  SectionHeader(
+                    title: title,
+                    subtitle: subtitle,
+                    trailing: trailing,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+                if (scrollable)
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.only(bottom: bottomOverlaySpace),
+                      child: child,
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: bottomOverlaySpace),
+                      child: child,
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
-      ),
+        if (topBar != null)
+          Positioned(
+            left: 16,
+            right: 16,
+            top: 0,
+            child: SafeArea(
+              bottom: false,
+              child: topBar!,
+            ),
+          ),
+      ],
     );
   }
 }
@@ -739,6 +861,384 @@ class _NavItem extends StatelessWidget {
   }
 }
 
+class AppGlassBottomNav extends StatelessWidget {
+  final AppShellTab activeTab;
+  final ValueChanged<AppShellTab> onTap;
+  final VoidCallback onMenuTap;
+
+  const AppGlassBottomNav({
+    super.key,
+    required this.activeTab,
+    required this.onTap,
+    required this.onMenuTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isRu = Localizations.localeOf(context).languageCode == 'ru';
+    final inactiveColor =
+        Theme.of(context).textTheme.bodyMedium?.color ?? AppColors.textSecondary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final activeIndex = _indexForTab(activeTab);
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+              height: 78,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [
+                          Colors.white.withValues(alpha: 0.13),
+                          Colors.white.withValues(alpha: 0.05),
+                        ]
+                      : [
+                          Colors.white.withValues(alpha: 0.76),
+                          Colors.white.withValues(alpha: 0.50),
+                        ],
+                ),
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: isDark ? 0.07 : 0.44),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.32 : 0.12),
+                    blurRadius: 30,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final itemWidth = constraints.maxWidth / 5;
+                  return Stack(
+                    children: [
+                      AnimatedPositioned(
+                        duration: const Duration(milliseconds: 360),
+                        curve: Curves.easeOutBack,
+                        left: itemWidth * activeIndex + 5,
+                        top: 5,
+                        bottom: 5,
+                        width: itemWidth - 10,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.gold.withValues(alpha: 0.24),
+                                AppColors.aqua.withValues(alpha: 0.10),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(26),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.gold.withValues(alpha: 0.16),
+                                blurRadius: 18,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          _NavItem(
+                            label: isRu ? 'Главная' : 'Home',
+                            icon: Icons.grid_view_rounded,
+                            active: activeTab == AppShellTab.dashboard,
+                            inactiveColor: inactiveColor,
+                            onTap: () => onTap(AppShellTab.dashboard),
+                          ),
+                          _NavItem(
+                            label: isRu ? 'Тесты' : 'Tests',
+                            icon: Icons.menu_book_rounded,
+                            active: activeTab == AppShellTab.tests,
+                            inactiveColor: inactiveColor,
+                            onTap: () => onTap(AppShellTab.tests),
+                          ),
+                          _CenterMenuButton(
+                            active: activeTab == AppShellTab.menu,
+                            onTap: onMenuTap,
+                            label: isRu ? 'Меню' : 'Menu',
+                          ),
+                          _NavItem(
+                            label: isRu ? 'Лига' : 'League',
+                            icon: Icons.emoji_events_rounded,
+                            active: activeTab == AppShellTab.league,
+                            inactiveColor: inactiveColor,
+                            onTap: () => onTap(AppShellTab.league),
+                          ),
+                          _NavItem(
+                            label: isRu ? 'Профиль' : 'Profile',
+                            icon: Icons.person_rounded,
+                            active: activeTab == AppShellTab.profile,
+                            inactiveColor: inactiveColor,
+                            onTap: () => onTap(AppShellTab.profile),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  int _indexForTab(AppShellTab tab) {
+    return switch (tab) {
+      AppShellTab.dashboard => 0,
+      AppShellTab.tests => 1,
+      AppShellTab.menu => 2,
+      AppShellTab.league => 3,
+      AppShellTab.profile => 4,
+    };
+  }
+}
+
+class AppTelegramBottomNav extends StatelessWidget {
+  final AppShellTab activeTab;
+  final ValueChanged<AppShellTab> onTap;
+  final VoidCallback onMenuTap;
+
+  const AppTelegramBottomNav({
+    super.key,
+    required this.activeTab,
+    required this.onTap,
+    required this.onMenuTap,
+  });
+
+  static const Color _navInk = Color(0xFF0B1220);
+  static const Color _navStroke = Color(0x1FFFFFFF);
+
+  @override
+  Widget build(BuildContext context) {
+    final isRu = Localizations.localeOf(context).languageCode == 'ru';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inactiveColor = isDark
+        ? Colors.white.withValues(alpha: 0.62)
+        : const Color(0xFF475569);
+    const activeColor = AppColors.gold;
+    final activeIndex = _indexForTab(activeTab);
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+              height: 68,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? _navInk.withValues(alpha: 0.56)
+                    : Colors.white.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.10)
+                      : Colors.white.withValues(alpha: 0.86),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color:
+                        Colors.black.withValues(alpha: isDark ? 0.18 : 0.05),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final itemWidth = constraints.maxWidth / 5;
+
+                  return Stack(
+                    children: [
+                      AnimatedPositioned(
+                        duration: const Duration(milliseconds: 320),
+                        curve: Curves.easeOutCubic,
+                        left: itemWidth * activeIndex,
+                        top: 0,
+                        bottom: 0,
+                        width: itemWidth,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(999),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.11)
+                                      : Colors.white.withValues(alpha: 0.82),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(
+                                      alpha: isDark ? 0.14 : 0.92,
+                                    ),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: isDark ? 0.10 : 0.05,
+                                      ),
+                                      blurRadius: 14,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          _TelegramNavItem(
+                            label: isRu ? 'Главная' : 'Home',
+                            icon: Icons.grid_view_rounded,
+                            active: activeTab == AppShellTab.dashboard,
+                            activeTextColor: activeColor,
+                            inactiveColor: inactiveColor,
+                            onTap: () => onTap(AppShellTab.dashboard),
+                          ),
+                          _TelegramNavItem(
+                            label: isRu ? 'Тесты' : 'Tests',
+                            icon: Icons.menu_book_rounded,
+                            active: activeTab == AppShellTab.tests,
+                            activeTextColor: activeColor,
+                            inactiveColor: inactiveColor,
+                            onTap: () => onTap(AppShellTab.tests),
+                          ),
+                          _TelegramNavItem(
+                            label: isRu ? 'Меню' : 'Menu',
+                            icon: Icons.apps_rounded,
+                            active: activeTab == AppShellTab.menu,
+                            activeTextColor: activeColor,
+                            inactiveColor: inactiveColor,
+                            onTap: onMenuTap,
+                          ),
+                          _TelegramNavItem(
+                            label: isRu ? 'Лига' : 'League',
+                            icon: Icons.emoji_events_rounded,
+                            active: activeTab == AppShellTab.league,
+                            activeTextColor: activeColor,
+                            inactiveColor: inactiveColor,
+                            onTap: () => onTap(AppShellTab.league),
+                          ),
+                          _TelegramNavItem(
+                            label: isRu ? 'Профиль' : 'Profile',
+                            icon: Icons.person_rounded,
+                            active: activeTab == AppShellTab.profile,
+                            activeTextColor: activeColor,
+                            inactiveColor: inactiveColor,
+                            onTap: () => onTap(AppShellTab.profile),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  int _indexForTab(AppShellTab tab) {
+    return switch (tab) {
+      AppShellTab.dashboard => 0,
+      AppShellTab.tests => 1,
+      AppShellTab.menu => 2,
+      AppShellTab.league => 3,
+      AppShellTab.profile => 4,
+    };
+  }
+}
+
+class _TelegramNavItem extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool active;
+  final Color activeTextColor;
+  final Color inactiveColor;
+  final VoidCallback onTap;
+
+  const _TelegramNavItem({
+    required this.label,
+    required this.icon,
+    required this.active,
+    required this.activeTextColor,
+    required this.inactiveColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? activeTextColor : inactiveColor;
+
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: AnimatedScale(
+          scale: active ? 1.02 : 1,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.symmetric(horizontal: 1),
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: const BoxDecoration(color: Colors.transparent),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: active ? 22 : 20, color: color),
+                const SizedBox(height: 4),
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                        color: color,
+                        fontSize: 10,
+                        fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                        height: 1,
+                        letterSpacing: 0,
+                      ),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class AppThemeModeButton extends StatelessWidget {
   final bool compact;
 
@@ -765,13 +1265,23 @@ class AppThemeModeButton extends StatelessWidget {
             padding: EdgeInsets.zero,
             style: IconButton.styleFrom(
               backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.white.withValues(alpha: 0.88),
+                  ? Colors.white.withValues(alpha: 0.10)
+                  : Colors.white.withValues(alpha: 0.72),
+              side: BorderSide(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : const Color(0xFFE2E8F0),
+              ),
+              minimumSize: Size(buttonSize, buttonSize),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             icon: Icon(
               isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
               size: compact ? 18 : 20,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.90),
             ),
           ),
         );
@@ -792,7 +1302,7 @@ class AppLanguageButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = getIt<LocaleController>();
     final height = compact ? 36.0 : 40.0;
-    final horizontalPadding = compact ? 10.0 : 12.0;
+    final horizontalPadding = compact ? 11.0 : 12.0;
 
       return AnimatedBuilder(
         animation: controller,
@@ -815,11 +1325,18 @@ class AppLanguageButton extends StatelessWidget {
             },
             style: TextButton.styleFrom(
               backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.white.withValues(alpha: 0.88),
+                  ? Colors.white.withValues(alpha: 0.10)
+                  : Colors.white.withValues(alpha: 0.72),
+              side: BorderSide(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : const Color(0xFFE2E8F0),
+              ),
+              minimumSize: Size(0, height),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderRadius: BorderRadius.circular(999),
               ),
             ),
             child: Text(
@@ -827,6 +1344,10 @@ class AppLanguageButton extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontSize: compact ? 11 : null,
                     fontWeight: FontWeight.w800,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.90),
                   ),
             ),
           ),
@@ -889,12 +1410,15 @@ class _AppTopStatsBarState extends State<AppTopStatsBar> {
   }
 
   Future<_TopStatsSnapshot> _loadStats() async {
-    if (widget.totalXp != null || widget.streak != null) {
+    if (widget.totalXp != null && widget.streak != null && widget.streak! > 0) {
       return _TopStatsSnapshot(
         xp: widget.totalXp ?? 0,
         streak: widget.streak ?? 0,
       );
     }
+
+    var xp = widget.totalXp ?? 0;
+    var streak = widget.streak ?? 0;
 
     try {
       final response = await ApiClient.dio.get('/User/profile');
@@ -902,16 +1426,49 @@ class _AppTopStatsBarState extends State<AppTopStatsBar> {
       final data = body is Map ? (body['data'] ?? body) : body;
 
       if (data is Map) {
-        final xpRaw = data['xp'] ?? data['XP'] ?? 0;
-        final streakRaw = data['streak'] ?? data['Streak'] ?? 0;
-        return _TopStatsSnapshot(
-          xp: int.tryParse(xpRaw.toString()) ?? 0,
-          streak: int.tryParse(streakRaw.toString()) ?? 0,
-        );
+        xp = widget.totalXp ?? _readInt(data, const ['xp', 'XP', 'points', 'Points']);
+        streak = widget.streak != null && widget.streak! > 0
+            ? widget.streak!
+            : _readInt(
+                data,
+                const [
+                  'streak',
+                  'Streak',
+                  'currentStreak',
+                  'CurrentStreak',
+                  'dailyStreak',
+                  'DailyStreak',
+                ],
+              );
       }
     } catch (_) {}
 
-    return const _TopStatsSnapshot(xp: 0, streak: 0);
+    if (streak <= 0) {
+      try {
+        final response = await ApiClient.dio.get('/User/activity');
+        final body = response.data;
+        final data = body is Map ? (body['data'] ?? body) : body;
+        if (data is Map) {
+          streak = _readInt(
+            data,
+            const ['currentStreak', 'CurrentStreak', 'streak', 'Streak'],
+          );
+        }
+      } catch (_) {}
+    }
+
+    return _TopStatsSnapshot(xp: xp, streak: streak);
+  }
+
+  int _readInt(Map<dynamic, dynamic> data, List<String> keys) {
+    for (final key in keys) {
+      final value = data[key];
+      if (value == null) continue;
+      if (value is int) return value;
+      final parsed = int.tryParse(value.toString());
+      if (parsed != null) return parsed;
+    }
+    return 0;
   }
 
   @override
@@ -921,34 +1478,37 @@ class _AppTopStatsBarState extends State<AppTopStatsBar> {
       builder: (context, snapshot) {
         final stats = snapshot.data ?? const _TopStatsSnapshot(xp: 0, streak: 0);
 
-        return Row(
-          children: [
-            const AppLanguageButton(compact: true),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Center(
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    _TopStatPill(
-                      icon: Icons.bolt_rounded,
-                      label: '${stats.xp} XP',
-                      color: AppColors.gold,
-                    ),
-                    _TopStatPill(
-                      icon: Icons.local_fire_department_rounded,
-                      label: '${stats.streak}',
-                      color: AppColors.emerald,
-                    ),
-                  ],
+        return SizedBox(
+          height: 42,
+          child: Row(
+            children: [
+              const AppLanguageButton(compact: true),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Center(
+                  child: Wrap(
+                    spacing: 18,
+                    runSpacing: 4,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      _TopStatPill(
+                        icon: Icons.bolt_rounded,
+                        label: '${stats.xp} XP',
+                        color: AppColors.gold,
+                      ),
+                      _TopStatPill(
+                        icon: Icons.local_fire_department_rounded,
+                        label: '${stats.streak}',
+                        color: AppColors.emerald,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            const AppThemeModeButton(compact: true),
-          ],
+              const SizedBox(width: 14),
+              const AppThemeModeButton(compact: true),
+            ],
+          ),
         );
       },
     );
@@ -978,6 +1538,9 @@ class _TopStatPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textColor =
+        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.88);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
@@ -988,23 +1551,20 @@ class _TopStatPill extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.12),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
+          Icon(icon, size: 14, color: color.withValues(alpha: 0.95)),
+          const SizedBox(width: 5),
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: textColor,
+                  fontSize: 12,
                   fontWeight: FontWeight.w800,
+                  height: 1,
                 ),
           ),
         ],
@@ -1050,6 +1610,7 @@ Future<void> showAppQuickMenuSheet(BuildContext context) {
       label: isRu ? 'Красный список' : 'Red List',
       icon: Icons.local_fire_department_outlined,
       route: AppRoutes.redList,
+      shellRoute: true,
     ),
     _QuickMenuItem(
       label: isRu ? 'Рейтинг лиги' : 'League Ranking',
@@ -1061,16 +1622,19 @@ Future<void> showAppQuickMenuSheet(BuildContext context) {
       label: isRu ? 'Рейтинг школ' : 'School Ranking',
       icon: Icons.school_outlined,
       route: AppRoutes.schoolLeaderboard,
+      shellRoute: true,
     ),
     _QuickMenuItem(
       label: isRu ? 'Пригласить друга' : 'Invite a Friend',
       icon: Icons.card_giftcard_rounded,
       route: AppRoutes.referral,
+      shellRoute: true,
     ),
     const _QuickMenuItem(
       label: 'Premium',
       icon: Icons.workspace_premium_rounded,
       route: AppRoutes.premium,
+      shellRoute: true,
     ),
     _QuickMenuItem(
       label: isRu ? 'Выйти' : 'Logout',

@@ -110,31 +110,31 @@ class AppRouter {
             path: AppRoutes.profile,
             builder: (context, state) => const ProfileRoutePage(),
           ),
+          GoRoute(
+            path: AppRoutes.profileEdit,
+            builder: (context, state) => const ProfileEditRoutePage(),
+          ),
+          GoRoute(
+            path: AppRoutes.practice,
+            builder: (context, state) => const PracticeClustersPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.premium,
+            builder: (context, state) => const PremiumStudentPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.referral,
+            builder: (context, state) => const ReferralStudentPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.redList,
+            builder: (context, state) => const RedListStudentPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.schoolLeaderboard,
+            builder: (context, state) => const SchoolLeaderboardPage(),
+          ),
         ],
-      ),
-      GoRoute(
-        path: AppRoutes.profileEdit,
-        builder: (context, state) => const ProfileEditRoutePage(),
-      ),
-      GoRoute(
-        path: AppRoutes.practice,
-        builder: (context, state) => const PracticeClustersPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.premium,
-        builder: (context, state) => const PremiumStudentPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.referral,
-        builder: (context, state) => const ReferralStudentPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.redList,
-        builder: (context, state) => const RedListStudentPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.schoolLeaderboard,
-        builder: (context, state) => const SchoolLeaderboardPage(),
       ),
       GoRoute(
         path: AppRoutes.exam,

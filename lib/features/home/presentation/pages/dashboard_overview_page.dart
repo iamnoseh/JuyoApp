@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -776,32 +777,10 @@ class _LoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
-      children: [
-        _LoadingCard(height: 180),
-        SizedBox(height: 14),
-        _LoadingCard(height: 240),
-        SizedBox(height: 14),
-        _LoadingCard(height: 220),
-      ],
-    );
-  }
-}
-
-class _LoadingCard extends StatelessWidget {
-  final double height;
-
-  const _LoadingCard({required this.height});
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassCard(
-      child: Container(
-        height: height,
-        decoration: BoxDecoration(
-          color: context.appPalette.secondaryFill,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.58,
+      child: JuyoPageLoader(
+        message: _tr(context, 'Загружаем главную', 'Loading dashboard'),
       ),
     );
   }
@@ -848,8 +827,9 @@ class _MetricBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -879,11 +859,15 @@ class _ActivityMetricBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surface = Theme.of(context).colorScheme.onSurface;
+    final labelColor = surface.withValues(alpha: 0.68);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.11),
         borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Column(
         children: [
@@ -903,7 +887,11 @@ class _ActivityMetricBox extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: labelColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
         ],
       ),

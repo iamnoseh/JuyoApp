@@ -106,8 +106,11 @@ class _ProfileScreen extends StatelessWidget {
   }) {
     if ((profileState is ProfileInitial || profileState is ProfileLoading) &&
         profile == null) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.aqua),
+      return SizedBox(
+        height: MediaQuery.of(context).size.height * 0.58,
+        child: JuyoPageLoader(
+          message: _tr(context, 'Загружаем профиль', 'Loading profile'),
+        ),
       );
     }
 
@@ -331,12 +334,27 @@ class _ProfileHeroCard extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.45),
           ),
           const SizedBox(height: 18),
-          AppSecondaryButton(
-            label: _tr(context, 'Редактировать профиль', 'Edit profile'),
-            icon: LucideIcons.pencil,
-            onPressed: () {
-              onEdit();
-            },
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFF97316), AppColors.gold],
+              ),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.gold.withValues(alpha: 0.22),
+                  blurRadius: 14,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: AppPrimaryButton(
+              label: _tr(context, 'Редактировать профиль', 'Edit profile'),
+              icon: LucideIcons.pencil,
+              onPressed: () {
+                onEdit();
+              },
+            ),
           ),
           const SizedBox(height: 14),
           _InfoPill(

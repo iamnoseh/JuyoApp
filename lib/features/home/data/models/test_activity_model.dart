@@ -17,13 +17,11 @@ class TestActivityModel {
     final rawDailyStats = json['dailyStats'] ?? json['DailyStats'];
 
     return TestActivityModel(
-      totalTests: json['totalTests'] ?? json['TotalTests'] ?? 0,
-      totalDuels: json['totalDuels'] ?? json['TotalDuels'] ?? 0,
-      totalDuelWins: json['totalDuelWins'] ?? json['TotalDuelWins'] ?? 0,
+      totalTests: _asInt(json['totalTests'] ?? json['TotalTests']),
+      totalDuels: _asInt(json['totalDuels'] ?? json['TotalDuels']),
+      totalDuelWins: _asInt(json['totalDuelWins'] ?? json['TotalDuelWins']),
       overallCorrectPercentage:
-          json['overallCorrectPercentage'] ??
-          json['OverallCorrectPercentage'] ??
-          0,
+          _asInt(json['overallCorrectPercentage'] ?? json['OverallCorrectPercentage']),
       dailyStats: (rawDailyStats as List?)
               ?.whereType<Map>()
               .map(
@@ -53,9 +51,16 @@ class TestActivityDayModel {
   factory TestActivityDayModel.fromJson(Map<String, dynamic> json) {
     return TestActivityDayModel(
       date: (json['date'] ?? json['Date'] ?? '').toString(),
-      totalAnswers: json['totalAnswers'] ?? json['TotalAnswers'] ?? 0,
-      correctAnswers: json['correctAnswers'] ?? json['CorrectAnswers'] ?? 0,
-      incorrectAnswers: json['incorrectAnswers'] ?? json['IncorrectAnswers'] ?? 0,
+      totalAnswers: _asInt(json['totalAnswers'] ?? json['TotalAnswers']),
+      correctAnswers: _asInt(json['correctAnswers'] ?? json['CorrectAnswers']),
+      incorrectAnswers: _asInt(json['incorrectAnswers'] ?? json['IncorrectAnswers']),
     );
   }
+}
+
+int _asInt(dynamic value) {
+  if (value == null) return 0;
+  if (value is int) return value;
+  if (value is num) return value.round();
+  return int.tryParse(value.toString()) ?? 0;
 }
