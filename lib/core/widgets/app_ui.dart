@@ -608,10 +608,7 @@ class AppScaffold extends StatelessWidget {
                   )
                 else
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: bottomOverlaySpace),
-                      child: child,
-                    ),
+                    child: child,
                   ),
               ],
             ),

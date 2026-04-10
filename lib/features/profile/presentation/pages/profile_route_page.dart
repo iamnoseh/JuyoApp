@@ -148,6 +148,7 @@ class _ProfileScreen extends StatelessWidget {
         await Future<void>.delayed(const Duration(milliseconds: 300));
       },
       child: ListView(
+        padding: const EdgeInsets.only(bottom: 104),
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),

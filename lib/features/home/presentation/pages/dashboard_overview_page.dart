@@ -76,6 +76,7 @@ class _DashboardOverviewPageState extends State<DashboardOverviewPage> {
             child: RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
+                padding: const EdgeInsets.only(bottom: 104),
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   if (state is DashboardLoading || state is DashboardInitial)
