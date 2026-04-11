@@ -1325,7 +1325,15 @@ class AppThemeModeButton extends StatelessWidget {
                           size: compact ? 16 : 20,
                           color: isDark
                               ? const Color(0xFF111827)
-                              : const Color(0xFF64748B),
+                              : const Color(0xFFFFC83D),
+                          shadows: isDark
+                              ? null
+                              : const [
+                                  Shadow(
+                                    color: Color(0x66F59E0B),
+                                    blurRadius: 10,
+                                  ),
+                                ],
                         ),
                       ),
                     ),

@@ -525,6 +525,7 @@ class _QrStep extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w900,
+                        color: _premiumPrimaryTextColor(context),
                       ),
                 ),
                 if (plan.description?.trim().isNotEmpty ?? false) ...[
@@ -593,10 +594,11 @@ class _QrStep extends StatelessWidget {
                     'Scan the QR or use the code to complete payment',
                   ),
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: _premiumPrimaryTextColor(context),
+                    ),
+              ),
                 const SizedBox(height: 14),
                 _QrPreview(
                   imageUrl: _resolveAssetUrl(plan.qrCodeUrl),
@@ -673,6 +675,7 @@ class _UploadStep extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
+                    color: _premiumPrimaryTextColor(context),
                   ),
             ),
             const SizedBox(height: 14),
@@ -772,10 +775,11 @@ class _DoneStep extends StatelessWidget {
             Text(
               _tr(context, 'Чек отправлен!', 'Receipt submitted!'),
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-            ),
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: _premiumPrimaryTextColor(context),
+                ),
+          ),
             const SizedBox(height: 8),
             Text(
               _tr(
@@ -935,6 +939,7 @@ class _HeroCard extends StatelessWidget {
             ),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w900,
+                  color: _premiumPrimaryTextColor(context),
                 ),
           ),
           const SizedBox(height: 8),
@@ -1044,6 +1049,7 @@ class _PlanCard extends StatelessWidget {
                       plan.name,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w900,
+                            color: _premiumPrimaryTextColor(context),
                           ),
                     ),
                     if (plan.description?.trim().isNotEmpty ?? false) ...[
@@ -1068,6 +1074,7 @@ class _PlanCard extends StatelessWidget {
                   '${_formatPrice(plan.price)} TJS / ${plan.durationMonths} ${_tr(context, 'мес.', 'mo')}',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
+                        color: _premiumPrimaryTextColor(context),
                       ),
                 ),
               ),
@@ -1199,11 +1206,11 @@ class _QrPreview extends StatelessWidget {
             ),
             child: Text(
               amountLabel,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.gold,
-                  ),
-            ),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.gold,
+                ),
+          ),
           ),
         ],
       ),
@@ -1284,6 +1291,7 @@ class _ScannedCodeCard extends StatelessWidget {
             code,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w700,
+                  color: _premiumPrimaryTextColor(context),
                 ),
           ),
         ],
@@ -1382,6 +1390,7 @@ class _ReceiptDropzone extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w800,
+                          color: _premiumPrimaryTextColor(context),
                         ),
                   ),
                   const SizedBox(height: 6),
@@ -1522,6 +1531,7 @@ class _StatusBanner extends StatelessWidget {
               text,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w800,
+                    color: _premiumPrimaryTextColor(context),
                   ),
             ),
           ),
@@ -1558,6 +1568,7 @@ class _FeatureChip extends StatelessWidget {
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w700,
+                  color: _premiumPrimaryTextColor(context),
                 ),
           ),
         ],
@@ -1649,6 +1660,7 @@ class _ProgressLine extends StatelessWidget {
               text,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: _premiumPrimaryTextColor(context),
                   ),
             ),
           ),
@@ -1897,6 +1909,13 @@ String _formatPrice(double value) {
     return value.toInt().toString();
   }
   return value.toStringAsFixed(2);
+}
+
+Color _premiumPrimaryTextColor(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return Theme.of(
+    context,
+  ).colorScheme.onSurface.withValues(alpha: isDark ? 0.96 : 0.92);
 }
 
 Color _premiumMutedTextColor(BuildContext context) {
