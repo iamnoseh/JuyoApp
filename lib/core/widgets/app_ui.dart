@@ -1247,9 +1247,9 @@ class AppThemeModeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = getIt<ThemeModeController>();
-    final height = compact ? 40.0 : 48.0;
-    final width = compact ? 104.0 : 138.0;
-    final knobSize = compact ? 32.0 : 40.0;
+    final height = compact ? 38.0 : 46.0;
+    final width = compact ? 92.0 : 124.0;
+    final knobSize = compact ? 30.0 : 38.0;
 
     return AnimatedBuilder(
       animation: controller,
@@ -1334,14 +1334,14 @@ class AppThemeModeButton extends StatelessWidget {
                           isDark ? Alignment.centerRight : Alignment.centerLeft,
                       child: Padding(
                         padding: EdgeInsets.symmetric(
-                          horizontal: compact ? 10 : 14,
+                          horizontal: compact ? 9 : 12,
                         ),
                         child: Text(
                           label,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontSize: compact ? 9.5 : 11,
+                                fontSize: compact ? 8.8 : 10.5,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: compact ? 0.1 : 0.25,
                                 color: onSurface.withValues(
@@ -1373,54 +1373,100 @@ class AppLanguageButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = getIt<LocaleController>();
-    final height = compact ? 36.0 : 40.0;
-    final horizontalPadding = compact ? 11.0 : 12.0;
+    final height = compact ? 38.0 : 46.0;
+    final width = compact ? 74.0 : 88.0;
+    final iconSize = compact ? 28.0 : 34.0;
 
-      return AnimatedBuilder(
-        animation: controller,
-        builder: (context, _) {
-          final currentCode = switch (controller.locale.languageCode) {
-            'ru' => 'RU',
-            'en' => 'EN',
-            _ => 'RU',
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final currentCode = switch (controller.locale.languageCode) {
+          'ru' => 'RU',
+          'en' => 'EN',
+          _ => 'RU',
         };
 
         return SizedBox(
+          width: width,
           height: height,
-          child: TextButton(
-            onPressed: () {
-              final nextLocale = switch (controller.locale.languageCode) {
-                'ru' => const Locale('en'),
-                _ => const Locale('ru'),
-              };
-              controller.setLocale(nextLocale);
-            },
-            style: TextButton.styleFrom(
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white.withValues(alpha: 0.10)
-                  : Colors.white.withValues(alpha: 0.72),
-              side: BorderSide(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white.withValues(alpha: 0.12)
-                    : const Color(0xFFE2E8F0),
-              ),
-              minimumSize: Size(0, height),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-            child: Text(
-              currentCode,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontSize: compact ? 11 : null,
-                    fontWeight: FontWeight.w800,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.90),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                final nextLocale = switch (controller.locale.languageCode) {
+                  'ru' => const Locale('en'),
+                  _ => const Locale('ru'),
+                };
+                controller.setLocale(nextLocale);
+              },
+              borderRadius: BorderRadius.circular(999),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 240),
+                curve: Curves.easeOutCubic,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  gradient: isDark
+                      ? const LinearGradient(
+                          colors: [Color(0xFF1D2432), Color(0xFF111827)],
+                        )
+                      : const LinearGradient(
+                          colors: [Color(0xFFFFFFFF), Color(0xFFF3F6FB)],
+                        ),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.14)
+                        : const Color(0xFFDCE5F0),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.16 : 0.06),
+                      blurRadius: compact ? 10 : 14,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: iconSize,
+                      height: iconSize,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white : const Color(0xFFF9FBFF),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.language_rounded,
+                        size: compact ? 15 : 17,
+                        color: isDark
+                            ? const Color(0xFF111827)
+                            : const Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        currentCode,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontSize: compact ? 10 : 11,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.2,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.88),
+                            ),
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                  ],
+                ),
+              ),
             ),
           ),
         );
