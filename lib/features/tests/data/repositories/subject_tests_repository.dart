@@ -13,7 +13,7 @@ class SubjectTestsRepository {
       return raw
           .whereType<Map>()
           .map((item) => SubjectTestSubject.fromMap(
-                Map<String, dynamic>.from(item as Map),
+                Map<String, dynamic>.from(item),
               ))
           .where((subject) => subject.id > 0 && subject.name.isNotEmpty)
           .toList();
@@ -29,7 +29,7 @@ class SubjectTestsRepository {
     return list
         .whereType<Map>()
         .map((item) => SubjectTestSubject.fromMap(
-              Map<String, dynamic>.from(item as Map),
+              Map<String, dynamic>.from(item),
             ))
         .where((subject) => subject.id > 0 && subject.name.isNotEmpty)
         .toList();

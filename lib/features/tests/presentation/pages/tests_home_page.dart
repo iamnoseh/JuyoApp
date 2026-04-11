@@ -178,7 +178,12 @@ class _ModeCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: Colors.white),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : const Color(0xFF475569),
+          ),
         ],
       ),
     );

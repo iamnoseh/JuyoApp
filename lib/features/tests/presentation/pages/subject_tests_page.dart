@@ -22,14 +22,22 @@ class _SubjectTestsPageState extends State<SubjectTestsPage> {
 
   bool _loading = true;
   String? _error;
-  int? _startingSubjectId;
+  String _query = '';
+  int? _startingId;
   List<SubjectTestSubject> _subjects = const [];
-  String _searchQuery = '';
+
+  List<SubjectTestSubject> get _filtered {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) return _subjects;
+    return _subjects
+        .where((item) => item.name.toLowerCase().contains(query))
+        .toList();
+  }
 
   @override
   void initState() {
     super.initState();
-    _loadSubjects();
+    _load();
   }
 
   @override
@@ -38,7 +46,7 @@ class _SubjectTestsPageState extends State<SubjectTestsPage> {
     super.dispose();
   }
 
-  Future<void> _loadSubjects() async {
+  Future<void> _load() async {
     try {
       final subjects = await _repository.getSubjects();
       if (!mounted) return;
@@ -62,7 +70,7 @@ class _SubjectTestsPageState extends State<SubjectTestsPage> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = _tr(
+        _error = _t(
           context,
           ru: 'Не удалось загрузить список предметов',
           en: 'Unable to load subjects',
@@ -71,9 +79,9 @@ class _SubjectTestsPageState extends State<SubjectTestsPage> {
     }
   }
 
-  Future<void> _startSubjectTest(SubjectTestSubject subject) async {
+  Future<void> _start(SubjectTestSubject subject) async {
     try {
-      setState(() => _startingSubjectId = subject.id);
+      setState(() => _startingId = subject.id);
       final sessionId = await _repository.startSubjectTest(subject.id);
       if (!mounted) return;
       context.push('${AppRoutes.testRunner}/$sessionId');
@@ -90,32 +98,11 @@ class _SubjectTestsPageState extends State<SubjectTestsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tr(
-              context,
-              ru: 'Не удалось начать тест',
-              en: 'Unable to start test',
-            ),
-          ),
-        ),
-      );
     } finally {
       if (mounted) {
-        setState(() => _startingSubjectId = null);
+        setState(() => _startingId = null);
       }
     }
-  }
-
-  List<SubjectTestSubject> get _filteredSubjects {
-    final query = _searchQuery.trim().toLowerCase();
-    if (query.isEmpty) return _subjects;
-    return _subjects
-        .where((subject) => subject.name.toLowerCase().contains(query))
-        .toList();
   }
 
   @override
@@ -123,84 +110,70 @@ class _SubjectTestsPageState extends State<SubjectTestsPage> {
     return AppScaffold(
       topBar: const AppTopStatsBar(),
       title: context.l10n.testsSubjectMode,
-      subtitle: _tr(
+      subtitle: _t(
         context,
-        ru: 'Выберите предмет и начните точечную тренировку',
-        en: 'Choose a subject and start focused practice',
+        ru: 'Выберите предмет и начните быструю тренировку',
+        en: 'Choose a subject and start a focused drill',
       ),
       showHeader: false,
       scrollable: false,
       child: RefreshIndicator(
         color: AppColors.aqua,
-        onRefresh: _loadSubjects,
+        onRefresh: _load,
         child: ListView(
           physics: const BouncingScrollPhysics(
             parent: AlwaysScrollableScrollPhysics(),
           ),
-          padding: const EdgeInsets.only(bottom: 132),
+          padding: const EdgeInsets.only(bottom: 128),
           children: [
-            _SubjectTestsHero(
-              totalCount: _subjects.length,
-              visibleCount: _filteredSubjects.length,
-            ),
+            _SubjectHero(total: _subjects.length, shown: _filtered.length),
             const SizedBox(height: 16),
-            _SubjectSearchField(
+            _SubjectSearchBar(
               controller: _searchController,
-              onChanged: (value) {
-                setState(() => _searchQuery = value);
-              },
+              onChanged: (value) => setState(() => _query = value),
             ),
             const SizedBox(height: 16),
             if (_loading)
               const Padding(
-                padding: EdgeInsets.only(top: 60),
+                padding: EdgeInsets.only(top: 56),
                 child: JuyoPageLoader(),
               )
             else if (_error != null)
               ErrorState(
                 title: context.l10n.errorTitle,
                 subtitle: _error,
-                onRetry: _loadSubjects,
+                onRetry: _load,
               )
             else if (_subjects.isEmpty)
               EmptyState(
                 title: context.l10n.emptyTitle,
-                subtitle: _tr(
+                subtitle: _t(
                   context,
-                  ru: 'Предметы пока недоступны. Попробуйте обновить страницу позже.',
-                  en: 'No subjects are available yet. Try refreshing again later.',
+                  ru: 'Предметы пока недоступны.',
+                  en: 'Subjects are not available yet.',
                 ),
                 icon: Icons.menu_book_rounded,
               )
             else ...[
-              _SubjectsOverviewStrip(subjects: _subjects),
-              const SizedBox(height: 16),
-              ..._filteredSubjects.map(
+              ..._filtered.map(
                 (subject) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: _SubjectTestCard(
+                  child: _SubjectCard(
                     subject: subject,
-                    isStarting: _startingSubjectId == subject.id,
-                    onTap: () => _startSubjectTest(subject),
+                    starting: _startingId == subject.id,
+                    onTap: () => _start(subject),
                   ),
                 ),
               ),
-              if (_filteredSubjects.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: EmptyState(
-                    title: _tr(
-                      context,
-                      ru: 'Ничего не найдено',
-                      en: 'Nothing found',
-                    ),
-                    subtitle: _tr(
-                      context,
-                      ru: 'Попробуйте изменить запрос поиска.',
-                      en: 'Try changing the search query.',
-                    ),
-                    icon: Icons.search_off_rounded,
+              if (_filtered.isEmpty)
+                EmptyState(
+                  title: _t(context, ru: 'Ничего не найдено', en: 'Nothing found'),
+                  subtitle: _t(
+                    context,
+                    ru: 'Попробуйте изменить запрос.',
+                    en: 'Try changing the search query.',
                   ),
+                  icon: Icons.search_off_rounded,
                 ),
             ],
           ],
@@ -210,78 +183,58 @@ class _SubjectTestsPageState extends State<SubjectTestsPage> {
   }
 }
 
-class _SubjectTestsHero extends StatelessWidget {
-  final int totalCount;
-  final int visibleCount;
+class _SubjectHero extends StatelessWidget {
+  final int total;
+  final int shown;
 
-  const _SubjectTestsHero({
-    required this.totalCount,
-    required this.visibleCount,
+  const _SubjectHero({
+    required this.total,
+    required this.shown,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryText =
-        Theme.of(context).textTheme.titleLarge?.color ?? AppColors.textPrimary;
-    final secondaryText =
-        Theme.of(context).textTheme.bodyMedium?.color ?? AppColors.textSecondary;
-
     return GlassCard(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(18),
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.aqua.withValues(alpha: 0.20),
-                      AppColors.gold.withValues(alpha: 0.18),
+                      AppColors.aqua.withValues(alpha: 0.18),
+                      AppColors.gold.withValues(alpha: 0.14),
                     ],
-                  ),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : const Color(0xFFE2E8F0),
                   ),
                 ),
                 child: const Icon(
                   Icons.auto_stories_rounded,
                   color: AppColors.aqua,
-                  size: 24,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _tr(
-                        context,
-                        ru: 'Тесты по предметам',
-                        en: 'Subject tests',
-                      ),
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: primaryText,
-                          ),
+                      _t(context, ru: 'Тесты по предметам', en: 'Subject tests'),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _tr(
+                      _t(
                         context,
-                        ru: 'Точечная тренировка по одной дисциплине без лишних шагов.',
-                        en: 'Focused practice for one discipline without extra steps.',
+                        ru: 'Один предмет, быстрый старт, чистый фокус.',
+                        en: 'One subject, quick start, clean focus.',
                       ),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: secondaryText,
-                          ),
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
                 ),
@@ -293,25 +246,17 @@ class _SubjectTestsHero extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
-              _HeroStatPill(
+              _HeroChip(
                 color: AppColors.aqua,
                 icon: Icons.library_books_rounded,
-                label: _tr(
-                  context,
-                  ru: 'Всего предметов',
-                  en: 'Total subjects',
-                ),
-                value: '$totalCount',
+                label: _t(context, ru: 'Всего', en: 'Total'),
+                value: '$total',
               ),
-              _HeroStatPill(
+              _HeroChip(
                 color: AppColors.gold,
                 icon: Icons.filter_alt_rounded,
-                label: _tr(
-                  context,
-                  ru: 'В списке',
-                  en: 'Visible now',
-                ),
-                value: '$visibleCount',
+                label: _t(context, ru: 'Показано', en: 'Shown'),
+                value: '$shown',
               ),
             ],
           ),
@@ -321,13 +266,13 @@ class _SubjectTestsHero extends StatelessWidget {
   }
 }
 
-class _HeroStatPill extends StatelessWidget {
+class _HeroChip extends StatelessWidget {
   final Color color;
   final IconData icon;
   final String label;
   final String value;
 
-  const _HeroStatPill({
+  const _HeroChip({
     required this.color,
     required this.icon,
     required this.label,
@@ -348,24 +293,12 @@ class _HeroStatPill extends StatelessWidget {
         children: [
           Icon(icon, size: 15, color: color),
           const SizedBox(width: 8),
-          Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: '$value ',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: Theme.of(context).textTheme.titleMedium?.color,
-                      ),
+          Text(
+            '$value $label',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: Theme.of(context).textTheme.titleMedium?.color,
                 ),
-                TextSpan(
-                  text: label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -373,11 +306,11 @@ class _HeroStatPill extends StatelessWidget {
   }
 }
 
-class _SubjectSearchField extends StatelessWidget {
+class _SubjectSearchBar extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
 
-  const _SubjectSearchField({
+  const _SubjectSearchBar({
     required this.controller,
     required this.onChanged,
   });
@@ -392,7 +325,7 @@ class _SubjectSearchField extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark
             ? Colors.white.withValues(alpha: 0.06)
-            : Colors.white.withValues(alpha: 0.94),
+            : Colors.white.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: isDark
@@ -401,8 +334,8 @@ class _SubjectSearchField extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: palette.shadow.withValues(alpha: isDark ? 0.24 : 0.08),
-            blurRadius: 20,
+            color: palette.shadow.withValues(alpha: isDark ? 0.20 : 0.08),
+            blurRadius: 18,
             offset: const Offset(0, 8),
           ),
         ],
@@ -417,11 +350,11 @@ class _SubjectSearchField extends StatelessWidget {
               controller: controller,
               onChanged: onChanged,
               decoration: InputDecoration(
-                isDense: true,
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
-                hintText: _tr(
+                isDense: true,
+                hintText: _t(
                   context,
                   ru: 'Поиск предмета...',
                   en: 'Search subject...',
@@ -447,81 +380,26 @@ class _SubjectSearchField extends StatelessWidget {
   }
 }
 
-class _SubjectsOverviewStrip extends StatelessWidget {
-  final List<SubjectTestSubject> subjects;
-
-  const _SubjectsOverviewStrip({
-    required this.subjects,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final preview = subjects.take(6).toList();
-
-    return SizedBox(
-      height: 42,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: preview.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          final subject = preview[index];
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppColors.aqua.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: AppColors.aqua.withValues(alpha: 0.14),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _subjectFallbackIcon(subject.name),
-                  size: 14,
-                  color: AppColors.aqua,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  subject.name,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: Theme.of(context).textTheme.titleMedium?.color,
-                      ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _SubjectTestCard extends StatelessWidget {
+class _SubjectCard extends StatelessWidget {
   final SubjectTestSubject subject;
-  final bool isStarting;
+  final bool starting;
   final VoidCallback onTap;
 
-  const _SubjectTestCard({
+  const _SubjectCard({
     required this.subject,
-    required this.isStarting,
+    required this.starting,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final secondaryText =
-        Theme.of(context).textTheme.bodyMedium?.color ?? AppColors.textSecondary;
-
     return GlassCard(
-      onTap: isStarting ? null : onTap,
+      onTap: starting ? null : onTap,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SubjectIconTile(subject: subject),
+          _SubjectIcon(subject: subject),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -529,46 +407,36 @@ class _SubjectTestCard extends StatelessWidget {
               children: [
                 Text(
                   subject.name,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
+                        height: 1.25,
                       ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 6),
                 Text(
-                  _tr(
+                  _t(
                     context,
-                    ru: 'Запустить быстрый тест по этому предмету',
-                    en: 'Start a focused test for this subject',
+                    ru: 'Быстрый тест по одному предмету с мгновенным запуском.',
+                    en: 'Quick one-subject test with instant start.',
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: secondaryText,
-                      ),
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-                const SizedBox(height: 10),
-                Row(
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    _TinyMetaChip(
-                      icon: Icons.timer_outlined,
-                      label: _tr(
-                        context,
-                        ru: 'Мгновенный старт',
-                        en: 'Instant start',
-                      ),
-                      color: AppColors.gold,
-                    ),
-                    const SizedBox(width: 8),
-                    _TinyMetaChip(
-                      icon: Icons.track_changes_rounded,
-                      label: _tr(
-                        context,
-                        ru: 'Один предмет',
-                        en: 'One subject',
-                      ),
+                    _MiniTag(
+                      label: _t(context, ru: '1 предмет', en: '1 subject'),
                       color: AppColors.aqua,
+                    ),
+                    _MiniTag(
+                      label: _t(context, ru: 'Быстрый старт', en: 'Quick start'),
+                      color: AppColors.gold,
                     ),
                   ],
                 ),
@@ -576,48 +444,41 @@ class _SubjectTestCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 180),
-            child: isStarting
-                ? const SizedBox(
-                    key: ValueKey('loading'),
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.3,
-                      color: AppColors.aqua,
-                    ),
-                  )
-                : Container(
-                    key: const ValueKey('action'),
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.gold.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: AppColors.gold.withValues(alpha: 0.16),
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.chevron_right_rounded,
-                      color: AppColors.gold,
+          starting
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.3,
+                    color: AppColors.aqua,
+                  ),
+                )
+              : Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.gold.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: AppColors.gold.withValues(alpha: 0.18),
                     ),
                   ),
-          ),
+                  child: const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.gold,
+                  ),
+                ),
         ],
       ),
     );
   }
 }
 
-class _TinyMetaChip extends StatelessWidget {
-  final IconData icon;
+class _MiniTag extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _TinyMetaChip({
-    required this.icon,
+  const _MiniTag({
     required this.label,
     required this.color,
   });
@@ -629,30 +490,23 @@ class _TinyMetaChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.14)),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: Theme.of(context).textTheme.titleMedium?.color,
-                ),
-          ),
-        ],
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Theme.of(context).textTheme.titleMedium?.color,
+            ),
       ),
     );
   }
 }
 
-class _SubjectIconTile extends StatelessWidget {
+class _SubjectIcon extends StatelessWidget {
   final SubjectTestSubject subject;
 
-  const _SubjectIconTile({
+  const _SubjectIcon({
     required this.subject,
   });
 
@@ -662,8 +516,9 @@ class _SubjectIconTile extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      width: 56,
-      height: 56,
+      width: 60,
+      height: 60,
+      padding: const EdgeInsets.all(7),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
         gradient: LinearGradient(
@@ -678,13 +533,12 @@ class _SubjectIconTile extends StatelessWidget {
               : const Color(0xFFE2E8F0),
         ),
       ),
-      padding: const EdgeInsets.all(7),
       child: imageUrl == null
           ? Center(
               child: Icon(
                 _subjectFallbackIcon(subject.name),
                 color: AppColors.aqua,
-                size: 22,
+                size: 24,
               ),
             )
           : ClipRRect(
@@ -696,7 +550,7 @@ class _SubjectIconTile extends StatelessWidget {
                   child: Icon(
                     _subjectFallbackIcon(subject.name),
                     color: AppColors.aqua,
-                    size: 22,
+                    size: 24,
                   ),
                 ),
               ),
@@ -705,11 +559,7 @@ class _SubjectIconTile extends StatelessWidget {
   }
 }
 
-String _tr(
-  BuildContext context, {
-  required String ru,
-  required String en,
-}) {
+String _t(BuildContext context, {required String ru, required String en}) {
   return Localizations.localeOf(context).languageCode == 'ru' ? ru : en;
 }
 
@@ -735,7 +585,7 @@ String _extractErrorMessage(
     return message.trim();
   }
 
-  return _tr(context, ru: ruFallback, en: enFallback);
+  return _t(context, ru: ruFallback, en: enFallback);
 }
 
 String? _resolveAssetUrl(String? rawUrl) {
@@ -743,7 +593,10 @@ String? _resolveAssetUrl(String? rawUrl) {
   if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) return rawUrl;
 
   var cleanPath = rawUrl.replaceAll('\\', '/').trim();
-  cleanPath = cleanPath.replaceFirst(RegExp(r'^/?wwwroot/', caseSensitive: false), '');
+  cleanPath = cleanPath.replaceFirst(
+    RegExp(r'^/?wwwroot/', caseSensitive: false),
+    '',
+  );
   cleanPath = cleanPath.startsWith('/') ? cleanPath.substring(1) : cleanPath;
 
   if (cleanPath.startsWith('qrcodes/') ||

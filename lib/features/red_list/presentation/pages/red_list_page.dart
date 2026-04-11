@@ -512,7 +512,7 @@ class _ChartDayGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxHeight = 124.0;
+    const maxHeight = 124.0;
     final addedHeight = 18 + ((addedCount / maxValue) * (maxHeight - 18));
     final removedHeight = 18 + ((removedCount / maxValue) * (maxHeight - 18));
 

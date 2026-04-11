@@ -1018,8 +1018,6 @@ class AppTelegramBottomNav extends StatelessWidget {
   });
 
   static const Color _navInk = Color(0xFF0B1220);
-  static const Color _navStroke = Color(0x1FFFFFFF);
-
   @override
   Widget build(BuildContext context) {
     final isRu = Localizations.localeOf(context).languageCode == 'ru';
@@ -1682,22 +1680,24 @@ class _AppTopStatsBarState extends State<AppTopStatsBar> {
               const SizedBox(width: 10),
               Expanded(
                 child: Center(
-                  child: Wrap(
-                    spacing: 12,
-                    runSpacing: 4,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      _TopStatPill(
-                        icon: Icons.bolt_rounded,
-                        label: '${stats.xp} XP',
-                        color: AppColors.gold,
-                      ),
-                      _TopStatPill(
-                        icon: Icons.local_fire_department_rounded,
-                        label: '${stats.streak}',
-                        color: AppColors.emerald,
-                      ),
-                    ],
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _TopStatPill(
+                          icon: Icons.bolt_rounded,
+                          label: '${_formatCompactTopStat(stats.xp)} XP',
+                          color: AppColors.gold,
+                        ),
+                        const SizedBox(width: 10),
+                        _TopStatPill(
+                          icon: Icons.local_fire_department_rounded,
+                          label: _formatCompactTopStat(stats.streak),
+                          color: AppColors.emerald,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1738,6 +1738,10 @@ class _TopStatPill extends StatelessWidget {
         Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.88);
 
     return Container(
+      constraints: const BoxConstraints(
+        minWidth: 58,
+        maxWidth: 104,
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -1756,6 +1760,8 @@ class _TopStatPill extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: textColor,
                   fontSize: 12,
@@ -1767,6 +1773,24 @@ class _TopStatPill extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatCompactTopStat(int value) {
+  if (value >= 1000000) {
+    final compact = value / 1000000;
+    return compact >= 10
+        ? '${compact.toStringAsFixed(0)}M'
+        : '${compact.toStringAsFixed(1)}M';
+  }
+
+  if (value >= 1000) {
+    final compact = value / 1000;
+    return compact >= 10
+        ? '${compact.toStringAsFixed(0)}K'
+        : '${compact.toStringAsFixed(1)}K';
+  }
+
+  return '$value';
 }
 
 class _QuickMenuItem {

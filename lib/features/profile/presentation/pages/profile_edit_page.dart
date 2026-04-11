@@ -366,6 +366,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                                         searchable: true,
                                         onTap: () async {
                                           if (_universities.isEmpty) return;
+                                          final referenceBloc = context.read<ReferenceBloc>();
                                           final result =
                                               await _showPickerSheet<UniversityEntity>(
                                             context,
@@ -387,9 +388,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                                             _targetMajorId = null;
                                             _majors = const [];
                                           });
-                                          context
-                                              .read<ReferenceBloc>()
-                                              .add(ReferenceMajorsRequested(result.id));
+                                          referenceBloc.add(
+                                            ReferenceMajorsRequested(result.id),
+                                          );
                                         },
                                       ),
                                       const SizedBox(height: 12),

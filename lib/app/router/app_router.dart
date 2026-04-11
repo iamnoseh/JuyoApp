@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:juyo/app/di/service_locator.dart';
 import 'package:juyo/app/router/app_routes.dart';
@@ -23,6 +22,7 @@ import 'package:juyo/features/shell/presentation/pages/app_shell_page.dart';
 import 'package:juyo/features/tests/presentation/pages/exam_page.dart';
 import 'package:juyo/features/tests/presentation/pages/practice_clusters_page.dart';
 import 'package:juyo/features/tests/presentation/pages/subject_tests_page.dart';
+import 'package:juyo/features/tests/data/models/test_session_models.dart';
 import 'package:juyo/features/tests/presentation/pages/test_result_page.dart';
 import 'package:juyo/features/tests/presentation/pages/test_runner_page.dart';
 import 'package:juyo/features/tests/presentation/pages/tests_home_page.dart';
@@ -153,9 +153,15 @@ class AppRouter {
       ),
       GoRoute(
         path: '${AppRoutes.testResult}/:sessionId',
-        builder: (context, state) => TestResultPage(
-          sessionId: state.pathParameters['sessionId'] ?? '',
-        ),
+        builder: (context, state) {
+          final extra = state.extra;
+          final payload = extra is Map ? Map<String, dynamic>.from(extra) : const <String, dynamic>{};
+          return TestResultPage(
+            sessionId: state.pathParameters['sessionId'] ?? '',
+            initialResult: payload['result'] as TestSessionResultModel?,
+            elapsedSeconds: payload['elapsedSeconds'] as int?,
+          );
+        },
       ),
     ],
   );
