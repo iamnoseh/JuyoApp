@@ -80,6 +80,7 @@ class _ProfileScreen extends StatelessWidget {
                 topBar: AppTopStatsBar(
                   totalXp: profile?.xp,
                   streak: profile?.streak,
+                  showStats: true,
                 ),
                 title: '',
                 showHeader: false,

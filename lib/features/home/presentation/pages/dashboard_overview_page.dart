@@ -69,6 +69,7 @@ class _DashboardOverviewPageState extends State<DashboardOverviewPage> {
             topBar: AppTopStatsBar(
               totalXp: user?.xp ?? 0,
               streak: user?.streak ?? 0,
+              showStats: true,
             ),
             title: '',
             showHeader: false,

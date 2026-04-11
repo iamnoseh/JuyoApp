@@ -1247,38 +1247,113 @@ class AppThemeModeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = getIt<ThemeModeController>();
-    final buttonSize = compact ? 36.0 : 40.0;
+    final height = compact ? 40.0 : 48.0;
+    final width = compact ? 104.0 : 138.0;
+    final knobSize = compact ? 32.0 : 40.0;
 
-      return AnimatedBuilder(
-        animation: controller,
-        builder: (context, _) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final onSurface = Theme.of(context).colorScheme.onSurface;
+        final borderColor = isDark
+            ? Colors.white.withValues(alpha: 0.14)
+            : const Color(0xFFDCE5F0);
+        final backgroundGradient = isDark
+            ? const LinearGradient(
+                colors: [Color(0xFF1D2432), Color(0xFF111827)],
+              )
+            : const LinearGradient(
+                colors: [Color(0xFFFFFFFF), Color(0xFFF3F6FB)],
+              );
+        final label = isDark
+            ? (compact ? 'DARK' : 'DARK MODE')
+            : (compact ? 'LIGHT' : 'LIGHT MODE');
 
-          return SizedBox(
-            width: buttonSize,
-            height: buttonSize,
-          child: IconButton(
-            onPressed: controller.toggle,
-            padding: EdgeInsets.zero,
-            style: IconButton.styleFrom(
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white.withValues(alpha: 0.10)
-                  : Colors.white.withValues(alpha: 0.72),
-              side: BorderSide(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white.withValues(alpha: 0.12)
-                    : const Color(0xFFE2E8F0),
+        return SizedBox(
+          width: width,
+          height: height,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: controller.toggle,
+              borderRadius: BorderRadius.circular(999),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutCubic,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  gradient: backgroundGradient,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: borderColor),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.07),
+                      blurRadius: compact ? 12 : 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    AnimatedAlign(
+                      duration: const Duration(milliseconds: 260),
+                      curve: Curves.easeOutCubic,
+                      alignment:
+                          isDark ? Alignment.centerLeft : Alignment.centerRight,
+                      child: Container(
+                        width: knobSize,
+                        height: knobSize,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white : const Color(0xFFF9FBFF),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(
+                                alpha: isDark ? 0.18 : 0.08,
+                              ),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          isDark
+                              ? Icons.nightlight_round_rounded
+                              : Icons.light_mode_rounded,
+                          size: compact ? 16 : 20,
+                          color: isDark
+                              ? const Color(0xFF111827)
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment:
+                          isDark ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: compact ? 10 : 14,
+                        ),
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                fontSize: compact ? 9.5 : 11,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: compact ? 0.1 : 0.25,
+                                color: onSurface.withValues(
+                                  alpha: isDark ? 0.92 : 0.82,
+                                ),
+                              ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              minimumSize: Size(buttonSize, buttonSize),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            icon: Icon(
-              isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-              size: compact ? 18 : 20,
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.90),
             ),
           ),
         );
@@ -1378,11 +1453,13 @@ class AppHeaderActions extends StatelessWidget {
 class AppTopStatsBar extends StatefulWidget {
   final int? totalXp;
   final int? streak;
+  final bool showStats;
 
   const AppTopStatsBar({
     super.key,
     this.totalXp,
     this.streak,
+    this.showStats = false,
   });
 
   @override
@@ -1395,15 +1472,24 @@ class _AppTopStatsBarState extends State<AppTopStatsBar> {
   @override
   void initState() {
     super.initState();
-    _statsFuture = _loadStats();
+    _statsFuture = _resolveStatsFuture();
   }
 
   @override
   void didUpdateWidget(covariant AppTopStatsBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.totalXp != widget.totalXp || oldWidget.streak != widget.streak) {
-      _statsFuture = _loadStats();
+    if (oldWidget.totalXp != widget.totalXp ||
+        oldWidget.streak != widget.streak ||
+        oldWidget.showStats != widget.showStats) {
+      _statsFuture = _resolveStatsFuture();
     }
+  }
+
+  Future<_TopStatsSnapshot> _resolveStatsFuture() {
+    if (!widget.showStats) {
+      return Future.value(const _TopStatsSnapshot(xp: 0, streak: 0));
+    }
+    return _loadStats();
   }
 
   Future<_TopStatsSnapshot> _loadStats() async {
@@ -1470,21 +1556,34 @@ class _AppTopStatsBarState extends State<AppTopStatsBar> {
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.showStats) {
+      return const SizedBox(
+        height: 40,
+        child: Row(
+          children: [
+            AppLanguageButton(compact: true),
+            Spacer(),
+            AppThemeModeButton(compact: true),
+          ],
+        ),
+      );
+    }
+
     return FutureBuilder<_TopStatsSnapshot>(
       future: _statsFuture,
       builder: (context, snapshot) {
         final stats = snapshot.data ?? const _TopStatsSnapshot(xp: 0, streak: 0);
 
         return SizedBox(
-          height: 42,
+          height: 40,
           child: Row(
             children: [
               const AppLanguageButton(compact: true),
-              const SizedBox(width: 14),
+              const SizedBox(width: 10),
               Expanded(
                 child: Center(
                   child: Wrap(
-                    spacing: 18,
+                    spacing: 12,
                     runSpacing: 4,
                     alignment: WrapAlignment.center,
                     children: [
@@ -1502,7 +1601,7 @@ class _AppTopStatsBarState extends State<AppTopStatsBar> {
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 10),
               const AppThemeModeButton(compact: true),
             ],
           ),

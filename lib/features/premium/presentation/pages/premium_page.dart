@@ -504,119 +504,144 @@ class _QrStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _tr(context, 'Выбранный план', 'Selected plan'),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.72),
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                plan.name,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-              ),
-              if (plan.description?.trim().isNotEmpty ?? false) ...[
-                const SizedBox(height: 6),
+    return _PremiumStepFrame(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          GlassCard(
+            child: Column(
+              children: [
                 Text(
-                  plan.description!,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  _tr(context, 'Выбранный план', 'Selected plan'),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w700,
                         color: Theme.of(context)
                             .colorScheme
                             .onSurface
-                            .withValues(alpha: 0.72),
+                            .withValues(alpha: 0.70),
                       ),
                 ),
-              ],
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: durationOptions
-                    .map(
-                      (months) => _DurationChip(
-                        months: months,
-                        selected: months == selectedMonths,
-                        onTap: () => onSelectMonths(months),
+                const SizedBox(height: 10),
+                Text(
+                  plan.name,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
                       ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: 16),
-              _SummaryPill(
-                icon: Icons.payments_outlined,
-                label: _tr(context, 'Итого', 'Total'),
-                value: '${_formatPrice(totalPrice)} TJS',
-                color: AppColors.gold,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        GlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _tr(
-                  context,
-                  'Сканируйте QR или используйте код для оплаты',
-                  'Scan the QR or use the code to complete payment',
                 ),
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(height: 14),
-              _QrPreview(
-                imageUrl: _resolveAssetUrl(plan.qrCodeUrl),
-                amountLabel: '${_formatPrice(totalPrice)} TJS',
-              ),
-              const SizedBox(height: 14),
-              _PremiumGhostButton(
-                label: _tr(context, 'Считать QR-код', 'Read QR code'),
-                icon: Icons.qr_code_scanner_rounded,
-                onPressed: onScan,
-              ),
-              if (scannedCode != null) ...[
-                const SizedBox(height: 12),
-                _ScannedCodeCard(code: scannedCode!),
-              ],
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _PremiumGhostButton(
-                      label: _tr(context, 'Назад', 'Back'),
-                      onPressed: onBack,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _PremiumFilledButton(
-                      label: _tr(context, 'Продолжить', 'Continue'),
-                      icon: Icons.arrow_forward_rounded,
-                      onPressed: onContinue,
-                    ),
+                if (plan.description?.trim().isNotEmpty ?? false) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    plan.description!,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.68),
+                        ),
                   ),
                 ],
-              ),
-            ],
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _PlanMetaTile(
+                        label: _tr(context, 'Срок', 'Duration'),
+                        value: _tr(
+                          context,
+                          '$selectedMonths мес.',
+                          '$selectedMonths mo',
+                        ),
+                        color: AppColors.emerald,
+                        icon: Icons.calendar_month_rounded,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _PlanMetaTile(
+                        label: _tr(context, 'Итого', 'Total'),
+                        value: '${_formatPrice(totalPrice)} TJS',
+                        color: AppColors.gold,
+                        icon: Icons.payments_rounded,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: durationOptions
+                      .map(
+                        (months) => _DurationChip(
+                          months: months,
+                          selected: months == selectedMonths,
+                          onTap: () => onSelectMonths(months),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 14),
+          GlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  _tr(
+                    context,
+                    'Сканируйте QR или используйте код для оплаты',
+                    'Scan the QR or use the code to complete payment',
+                  ),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 14),
+                _QrPreview(
+                  imageUrl: _resolveAssetUrl(plan.qrCodeUrl),
+                  amountLabel: '${_formatPrice(totalPrice)} TJS',
+                ),
+                const SizedBox(height: 14),
+                _PremiumGhostButton(
+                  label: _tr(context, 'Считать QR-код', 'Read QR code'),
+                  icon: Icons.qr_code_scanner_rounded,
+                  onPressed: onScan,
+                ),
+                if (scannedCode != null) ...[
+                  const SizedBox(height: 12),
+                  _ScannedCodeCard(code: scannedCode!),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _PremiumGhostButton(
+                        label: _tr(context, 'Назад', 'Back'),
+                        onPressed: onBack,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _PremiumFilledButton(
+                        label: _tr(context, 'Продолжить', 'Continue'),
+                        icon: Icons.arrow_forward_rounded,
+                        onPressed: onContinue,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -644,60 +669,74 @@ class _UploadStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _SummaryPill(
-                icon: Icons.workspace_premium_rounded,
-                label: _tr(context, 'План', 'Plan'),
-                value: plan.name,
-                color: AppColors.aqua,
-              ),
-              _SummaryPill(
-                icon: Icons.calendar_month_rounded,
-                label: _tr(context, 'Срок', 'Duration'),
-                value: _tr(context, '$selectedMonths мес.', '$selectedMonths mo'),
-                color: AppColors.emerald,
-              ),
-              _SummaryPill(
-                icon: Icons.payments_rounded,
-                label: _tr(context, 'Итого', 'Total'),
-                value: '${_formatPrice(totalPrice)} TJS',
-                color: AppColors.gold,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _ReceiptDropzone(
-            receipt: receipt,
-            onTap: onPickReceipt,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _PremiumGhostButton(
-                  label: _tr(context, 'Назад', 'Back'),
-                  onPressed: onBack,
+    return _PremiumStepFrame(
+      child: GlassCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              _tr(context, 'Подтверждение оплаты', 'Payment confirmation'),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _PlanMetaTile(
+                    label: _tr(context, 'План', 'Plan'),
+                    value: plan.name,
+                    color: AppColors.aqua,
+                    icon: Icons.workspace_premium_rounded,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _PremiumFilledButton(
-                  label: _tr(context, 'Отправить', 'Submit'),
-                  icon: Icons.cloud_upload_rounded,
-                  isLoading: submitting,
-                  onPressed: receipt == null ? null : onSubmit,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _PlanMetaTile(
+                    label: _tr(context, 'Итого', 'Total'),
+                    value: '${_formatPrice(totalPrice)} TJS',
+                    color: AppColors.gold,
+                    icon: Icons.payments_rounded,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 10),
+            _SummaryPill(
+              icon: Icons.calendar_month_rounded,
+              label: _tr(context, 'Срок', 'Duration'),
+              value: _tr(context, '$selectedMonths мес.', '$selectedMonths mo'),
+              color: AppColors.emerald,
+            ),
+            const SizedBox(height: 16),
+            _ReceiptDropzone(
+              receipt: receipt,
+              onTap: onPickReceipt,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _PremiumGhostButton(
+                    label: _tr(context, 'Назад', 'Back'),
+                    onPressed: onBack,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _PremiumFilledButton(
+                    label: _tr(context, 'Отправить', 'Submit'),
+                    icon: Icons.cloud_upload_rounded,
+                    isLoading: submitting,
+                    onPressed: receipt == null ? null : onSubmit,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -712,73 +751,155 @@ class _DoneStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      child: Column(
-        children: [
-          Container(
-            width: 74,
-            height: 74,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.emerald.withValues(alpha: 0.22),
-                  AppColors.aqua.withValues(alpha: 0.12),
-                ],
-              ),
-              border: Border.all(color: AppColors.emerald.withValues(alpha: 0.24)),
-            ),
-            child: const Icon(
-              Icons.check_circle_rounded,
-              color: AppColors.emerald,
-              size: 38,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            _tr(context, 'Чек отправлен!', 'Receipt submitted!'),
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
+    return _PremiumStepFrame(
+      child: GlassCard(
+        child: Column(
+          children: [
+            Container(
+              width: 74,
+              height: 74,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.emerald.withValues(alpha: 0.22),
+                    AppColors.aqua.withValues(alpha: 0.12),
+                  ],
                 ),
+                border: Border.all(color: AppColors.emerald.withValues(alpha: 0.24)),
+              ),
+              child: const Icon(
+                Icons.check_circle_rounded,
+                color: AppColors.emerald,
+                size: 38,
+              ),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              _tr(context, 'Чек отправлен!', 'Receipt submitted!'),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _tr(
+                context,
+                'Администратор проверит платеж, после чего Premium будет активирован.',
+                'An administrator will review your payment and activate Premium after approval.',
+              ),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.72),
+                  ),
+            ),
+            const SizedBox(height: 16),
+            _ProgressLine(
+              icon: Icons.check_circle_rounded,
+              color: AppColors.emerald,
+              text: _tr(context, 'Чек получен', 'Receipt received'),
+            ),
+            const SizedBox(height: 10),
+            _ProgressLine(
+              icon: Icons.schedule_rounded,
+              color: AppColors.gold,
+              text: _tr(context, 'Проверка администратором', 'Admin review'),
+            ),
+            const SizedBox(height: 10),
+            _ProgressLine(
+              icon: Icons.workspace_premium_rounded,
+              color: AppColors.aqua,
+              text: _tr(context, 'Активация Premium', 'Premium activation'),
+            ),
+            const SizedBox(height: 16),
+            _PremiumGhostButton(
+              label: _tr(context, 'Вернуться к планам', 'Back to plans'),
+              onPressed: onReset,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PremiumStepFrame extends StatelessWidget {
+  final Widget child;
+
+  const _PremiumStepFrame({
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _PlanMetaTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final IconData icon;
+
+  const _PlanMetaTile({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 15, color: color),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.64),
+                      ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
-            _tr(
-              context,
-              'Администратор проверит платеж, после чего Premium будет активирован.',
-              'An administrator will review your payment and activate Premium after approval.',
-            ),
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.72),
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: color,
                 ),
-          ),
-          const SizedBox(height: 16),
-          _ProgressLine(
-            icon: Icons.check_circle_rounded,
-            color: AppColors.emerald,
-            text: _tr(context, 'Чек получен', 'Receipt received'),
-          ),
-          const SizedBox(height: 10),
-          _ProgressLine(
-            icon: Icons.schedule_rounded,
-            color: AppColors.gold,
-            text: _tr(context, 'Проверка администратором', 'Admin review'),
-          ),
-          const SizedBox(height: 10),
-          _ProgressLine(
-            icon: Icons.workspace_premium_rounded,
-            color: AppColors.aqua,
-            text: _tr(context, 'Фаъолсозии Premium', 'Premium activation'),
-          ),
-          const SizedBox(height: 16),
-          _PremiumGhostButton(
-            label: _tr(context, 'Вернуться к планам', 'Back to plans'),
-            onPressed: onReset,
           ),
         ],
       ),
