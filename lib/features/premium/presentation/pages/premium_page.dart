@@ -10,6 +10,8 @@ import 'package:juyo/core/network/api_client.dart';
 import 'package:juyo/core/theme/app_theme.dart';
 import 'package:juyo/core/widgets/app_ui.dart';
 import 'package:juyo/features/premium/presentation/pages/premium_scanner_page.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PremiumStudentPage extends StatefulWidget {
   const PremiumStudentPage({super.key});
@@ -134,7 +136,7 @@ class _PremiumStudentPageState extends State<PremiumStudentPage> {
           content: Text(
             _tr(
               context,
-              'Файли чек аз 10MB зиёд аст',
+              'Файл чека не должен превышать 10MB',
               'Receipt image must be smaller than 10MB',
             ),
           ),
@@ -148,27 +150,121 @@ class _PremiumStudentPageState extends State<PremiumStudentPage> {
   }
 
   Future<void> _scanCode() async {
-    final result = await Navigator.of(context).push<String>(
-      MaterialPageRoute(builder: (_) => const PremiumScannerPage()),
-    );
-    if (!mounted || result == null || result.trim().isEmpty) return;
+    final qrUrl = _resolveAssetUrl(_selectedPlan?.qrCodeUrl);
+    if (qrUrl == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _tr(
+              context,
+              'Для этого плана QR-код пока недоступен',
+              'This plan does not have a QR code yet',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
 
-    final code = result.trim();
+    try {
+      final filePath =
+          '${Directory.systemTemp.path}\\juyo_qr_${DateTime.now().millisecondsSinceEpoch}.png';
+      await ApiClient.dio.download(qrUrl, filePath);
+
+      final controller = MobileScannerController(
+        formats: const [
+          BarcodeFormat.qrCode,
+          BarcodeFormat.code128,
+          BarcodeFormat.code39,
+          BarcodeFormat.code93,
+          BarcodeFormat.ean13,
+          BarcodeFormat.ean8,
+          BarcodeFormat.pdf417,
+          BarcodeFormat.aztec,
+          BarcodeFormat.dataMatrix,
+        ],
+      );
+
+      try {
+        final capture = await controller.analyzeImage(filePath);
+        final code = _firstBarcodeValue(capture);
+
+        if (!mounted) return;
+        if (code == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _tr(
+                  context,
+                  'Не удалось прочитать QR с изображения. Откройте его в банковом приложении вручную.',
+                  'Could not decode the QR image. Please open it in your banking app manually.',
+                ),
+              ),
+            ),
+          );
+          return;
+        }
+
+        await _handleScannedCode(code);
+      } finally {
+        await controller.dispose();
+        final file = File(filePath);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      }
+    } catch (_) {
+      if (!mounted) return;
+      final result = await Navigator.of(context).push<String>(
+        MaterialPageRoute(builder: (_) => const PremiumScannerPage()),
+      );
+      if (!mounted || result == null || result.trim().isEmpty) return;
+
+      await _handleScannedCode(result.trim());
+    }
+  }
+
+  Future<void> _handleScannedCode(String code) async {
     await Clipboard.setData(ClipboardData(text: code));
     if (!mounted) return;
 
     setState(() => _scannedCode = code);
+
+    final opened = await _tryOpenInBrowser(code);
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _tr(
-            context,
-            'Код скан шуд ва ба clipboard нусха гардид',
-            'Code scanned and copied to clipboard',
-          ),
+          opened
+              ? _tr(
+                  context,
+                  'Ссылка считана, скопирована и открыта в браузере',
+                  'Link was scanned, copied, and opened in the browser',
+                )
+              : _tr(
+                  context,
+                  'Код считан и скопирован в буфер обмена',
+                  'Code scanned and copied to clipboard',
+                ),
         ),
       ),
     );
+  }
+
+  Future<bool> _tryOpenInBrowser(String rawCode) async {
+    final uri = _parseExternalUri(rawCode);
+    if (uri == null) return false;
+
+    try {
+      return await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> _submit() async {
@@ -203,7 +299,7 @@ class _PremiumStudentPageState extends State<PremiumStudentPage> {
           content: Text(
             _tr(
               context,
-              'Чек фиристода шуд. Админ онро месанҷад.',
+              'Чек отправлен. Администратор скоро его проверит.',
               'Receipt submitted. Admin will review it shortly.',
             ),
           ),
@@ -263,10 +359,10 @@ class _PremiumStudentPageState extends State<PremiumStudentPage> {
                 )
               : _plans.isEmpty
                   ? EmptyState(
-                      title: _tr(context, 'Планҳо ҳоло нестанд', 'No plans available'),
+                      title: _tr(context, 'Сейчас нет доступных планов', 'No plans available'),
                       subtitle: _tr(
                         context,
-                        'Баъдтар боз санҷед ё бо админ тамос гиред.',
+                        'Попробуйте позже или свяжитесь с администратором.',
                         'Please check again later or contact support.',
                       ),
                       icon: Icons.workspace_premium_outlined,
@@ -282,7 +378,7 @@ class _PremiumStudentPageState extends State<PremiumStudentPage> {
                               icon: Icons.check_circle_rounded,
                               text: _tr(
                                 context,
-                                'Шумо аллакай ${_activeSubscription!.name} доред',
+                                'У вас уже активен план ${_activeSubscription!.name}',
                                 'You already have ${_activeSubscription!.name}',
                               ),
                             ),
@@ -295,7 +391,7 @@ class _PremiumStudentPageState extends State<PremiumStudentPage> {
                               icon: Icons.schedule_rounded,
                               text: _tr(
                                 context,
-                                'Пардохти шумо дар навбати санҷиш аст',
+                                'Ваш платеж сейчас находится на проверке',
                                 'Your payment is currently under review',
                               ),
                             ),
@@ -416,7 +512,7 @@ class _QrStep extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _tr(context, 'Нақшаи интихобшуда', 'Selected plan'),
+                _tr(context, 'Выбранный план', 'Selected plan'),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: Theme.of(context)
@@ -461,7 +557,7 @@ class _QrStep extends StatelessWidget {
               const SizedBox(height: 16),
               _SummaryPill(
                 icon: Icons.payments_outlined,
-                label: _tr(context, 'Ҳамагӣ', 'Total'),
+                label: _tr(context, 'Итого', 'Total'),
                 value: '${_formatPrice(totalPrice)} TJS',
                 color: AppColors.gold,
               ),
@@ -476,7 +572,7 @@ class _QrStep extends StatelessWidget {
               Text(
                 _tr(
                   context,
-                  'QR-ро скан кунед ё кодро барои пардохт истифода баред',
+                  'Сканируйте QR или используйте код для оплаты',
                   'Scan the QR or use the code to complete payment',
                 ),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -489,8 +585,8 @@ class _QrStep extends StatelessWidget {
                 amountLabel: '${_formatPrice(totalPrice)} TJS',
               ),
               const SizedBox(height: 14),
-              AppSecondaryButton(
-                label: _tr(context, 'Скан кардани QR / Barcode', 'Scan QR / Barcode'),
+              _PremiumGhostButton(
+                label: _tr(context, 'Считать QR-код', 'Read QR code'),
                 icon: Icons.qr_code_scanner_rounded,
                 onPressed: onScan,
               ),
@@ -502,15 +598,15 @@ class _QrStep extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: AppSecondaryButton(
-                      label: _tr(context, 'Бозгашт', 'Back'),
+                    child: _PremiumGhostButton(
+                      label: _tr(context, 'Назад', 'Back'),
                       onPressed: onBack,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: AppPrimaryButton(
-                      label: _tr(context, 'Идома', 'Continue'),
+                    child: _PremiumFilledButton(
+                      label: _tr(context, 'Продолжить', 'Continue'),
                       icon: Icons.arrow_forward_rounded,
                       onPressed: onContinue,
                     ),
@@ -564,13 +660,13 @@ class _UploadStep extends StatelessWidget {
               ),
               _SummaryPill(
                 icon: Icons.calendar_month_rounded,
-                label: _tr(context, 'Мӯҳлат', 'Duration'),
-                value: _tr(context, '$selectedMonths моҳ', '$selectedMonths mo'),
+                label: _tr(context, 'Срок', 'Duration'),
+                value: _tr(context, '$selectedMonths мес.', '$selectedMonths mo'),
                 color: AppColors.emerald,
               ),
               _SummaryPill(
                 icon: Icons.payments_rounded,
-                label: _tr(context, 'Ҳамагӣ', 'Total'),
+                label: _tr(context, 'Итого', 'Total'),
                 value: '${_formatPrice(totalPrice)} TJS',
                 color: AppColors.gold,
               ),
@@ -585,15 +681,15 @@ class _UploadStep extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: AppSecondaryButton(
-                  label: _tr(context, 'Бозгашт', 'Back'),
+                child: _PremiumGhostButton(
+                  label: _tr(context, 'Назад', 'Back'),
                   onPressed: onBack,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: AppPrimaryButton(
-                  label: _tr(context, 'Фиристодан', 'Submit'),
+                child: _PremiumFilledButton(
+                  label: _tr(context, 'Отправить', 'Submit'),
                   icon: Icons.cloud_upload_rounded,
                   isLoading: submitting,
                   onPressed: receipt == null ? null : onSubmit,
@@ -640,7 +736,7 @@ class _DoneStep extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            _tr(context, 'Чек фиристода шуд!', 'Receipt submitted!'),
+            _tr(context, 'Чек отправлен!', 'Receipt submitted!'),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w900,
@@ -650,7 +746,7 @@ class _DoneStep extends StatelessWidget {
           Text(
             _tr(
               context,
-              'Администратор пардохтро месанҷад ва баъд Premium фаъол мешавад.',
+              'Администратор проверит платеж, после чего Premium будет активирован.',
               'An administrator will review your payment and activate Premium after approval.',
             ),
             textAlign: TextAlign.center,
@@ -665,13 +761,13 @@ class _DoneStep extends StatelessWidget {
           _ProgressLine(
             icon: Icons.check_circle_rounded,
             color: AppColors.emerald,
-            text: _tr(context, 'Чек қабул шуд', 'Receipt received'),
+            text: _tr(context, 'Чек получен', 'Receipt received'),
           ),
           const SizedBox(height: 10),
           _ProgressLine(
             icon: Icons.schedule_rounded,
             color: AppColors.gold,
-            text: _tr(context, 'Санҷиши админ', 'Admin review'),
+            text: _tr(context, 'Проверка администратором', 'Admin review'),
           ),
           const SizedBox(height: 10),
           _ProgressLine(
@@ -680,8 +776,8 @@ class _DoneStep extends StatelessWidget {
             text: _tr(context, 'Фаъолсозии Premium', 'Premium activation'),
           ),
           const SizedBox(height: 16),
-          AppSecondaryButton(
-            label: _tr(context, 'Бозгашт ба нақшаҳо', 'Back to plans'),
+          _PremiumGhostButton(
+            label: _tr(context, 'Вернуться к планам', 'Back to plans'),
             onPressed: onReset,
           ),
         ],
@@ -712,7 +808,7 @@ class _HeroCard extends StatelessWidget {
                 const Icon(Icons.auto_awesome_rounded, color: AppColors.gold, size: 14),
                 const SizedBox(width: 6),
                 Text(
-                  _tr(context, 'Premium дастрасӣ', 'Premium access'),
+                  _tr(context, 'Premium доступ', 'Premium access'),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.gold,
@@ -725,7 +821,7 @@ class _HeroCard extends StatelessWidget {
           Text(
             _tr(
               context,
-              'Ҳамаи имкониятҳои JUYO-ро кушоед',
+              'Откройте все возможности JUYO',
               'Unlock the full JUYO experience',
             ),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -736,7 +832,7 @@ class _HeroCard extends StatelessWidget {
           Text(
             _tr(
               context,
-              'Тестҳои бештар, аналитикаи васеъ ва ҳамаи feature-ҳои баста дар як ҷо.',
+              'Больше тестов, расширенная аналитика и все закрытые функции в одном месте.',
               'More tests, deeper analytics, and every locked feature in one place.',
             ),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -753,15 +849,15 @@ class _HeroCard extends StatelessWidget {
             children: [
               _FeatureChip(
                 icon: Icons.menu_book_rounded,
-                label: _tr(context, 'Тестҳои бемаҳдуд', 'Unlimited tests'),
+                label: _tr(context, 'Безлимитные тесты', 'Unlimited tests'),
               ),
               _FeatureChip(
                 icon: Icons.analytics_rounded,
-                label: _tr(context, 'Аналитикаи пурра', 'Advanced analytics'),
+                label: _tr(context, 'Расширенная аналитика', 'Advanced analytics'),
               ),
               _FeatureChip(
                 icon: Icons.local_fire_department_rounded,
-                label: _tr(context, 'Red List ва Duel', 'Red List and Duel'),
+                label: _tr(context, 'Red List и Duel', 'Red List and Duel'),
               ),
             ],
           ),
@@ -798,7 +894,7 @@ class _PlanCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                _tr(context, 'Машҳур', 'Popular'),
+                _tr(context, 'Популярный', 'Popular'),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.gold,
                       fontWeight: FontWeight.w800,
@@ -866,7 +962,7 @@ class _PlanCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '${_formatPrice(plan.price)} TJS / ${plan.durationMonths} ${_tr(context, 'моҳ', 'mo')}',
+                  '${_formatPrice(plan.price)} TJS / ${plan.durationMonths} ${_tr(context, 'мес.', 'mo')}',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -875,8 +971,8 @@ class _PlanCard extends StatelessWidget {
               const SizedBox(width: 12),
               SizedBox(
                 width: 128,
-                child: AppPrimaryButton(
-                  label: _tr(context, 'Интихоб', 'Choose'),
+                child: _PremiumFilledButton(
+                  label: _tr(context, 'Выбрать', 'Choose'),
                   icon: Icons.arrow_forward_rounded,
                   onPressed: onTap,
                 ),
@@ -926,7 +1022,7 @@ class _DurationChip extends StatelessWidget {
           ),
         ),
         child: Text(
-          _tr(context, '$months моҳ', '$months mo'),
+          _tr(context, '$months мес.', '$months mo'),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: color.withValues(alpha: selected ? 1 : 0.78),
                 fontWeight: FontWeight.w800,
@@ -966,15 +1062,22 @@ class _QrPreview extends StatelessWidget {
         children: [
           AspectRatio(
             aspectRatio: 1,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: imageUrl != null
-                  ? Image.network(
-                      imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const _QrPlaceholder(),
-                    )
-                  : const _QrPlaceholder(),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: imageUrl != null
+                    ? Image.network(
+                        imageUrl!,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const _QrPlaceholder(),
+                      )
+                    : const _QrPlaceholder(),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -1024,7 +1127,7 @@ class _QrPlaceholder extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              _tr(context, 'QR ҳоло дастрас нест', 'QR will be available soon'),
+              _tr(context, 'QR скоро будет доступен', 'QR will be available soon'),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context)
                         .colorScheme
@@ -1060,7 +1163,7 @@ class _ScannedCodeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _tr(context, 'Коди сканшуда', 'Scanned code'),
+            _tr(context, 'Отсканированный код', 'Scanned code'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: AppColors.aqua,
@@ -1142,7 +1245,7 @@ class _ReceiptDropzone extends StatelessWidget {
                       ),
                       TextButton(
                         onPressed: onTap,
-                        child: Text(_tr(context, 'Иваз кардан', 'Change')),
+                        child: Text(_tr(context, 'Изменить', 'Change')),
                       ),
                     ],
                   ),
@@ -1162,7 +1265,7 @@ class _ReceiptDropzone extends StatelessWidget {
                   Text(
                     _tr(
                       context,
-                      'Чеки пардохтро интихоб кунед',
+                      'Выберите чек об оплате',
                       'Choose your payment receipt',
                     ),
                     textAlign: TextAlign.center,
@@ -1174,7 +1277,7 @@ class _ReceiptDropzone extends StatelessWidget {
                   Text(
                     _tr(
                       context,
-                      'JPG ё PNG, то 10MB. Аз gallery ё камера гирифтан мумкин.',
+                      'JPG или PNG, до 10MB. Можно выбрать из галереи или камеры.',
                       'JPG or PNG, up to 10MB. You can choose from gallery or camera.',
                     ),
                     textAlign: TextAlign.center,
@@ -1450,6 +1553,133 @@ class _ProgressLine extends StatelessWidget {
   }
 }
 
+class _PremiumFilledButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final bool isLoading;
+  final IconData? icon;
+
+  const _PremiumFilledButton({
+    required this.label,
+    this.onPressed,
+    this.isLoading = false,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 46,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF59E0B), Color(0xFFEA7C09)],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.gold.withValues(alpha: 0.20),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ElevatedButton(
+          onPressed: isLoading ? null : onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            foregroundColor: Colors.black,
+            shadowColor: Colors.transparent,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          child: isLoading
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.2,
+                    color: Colors.black,
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, size: 16),
+                      const SizedBox(width: 6),
+                    ],
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.black,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PremiumGhostButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+
+  const _PremiumGhostButton({
+    required this.label,
+    this.onPressed,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return SizedBox(
+      height: 46,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+          backgroundColor: isDark
+              ? Colors.white.withValues(alpha: 0.06)
+              : Colors.white.withValues(alpha: 0.92),
+          side: BorderSide(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.10)
+                : const Color(0xFFD8E2EE),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        icon: icon == null ? const SizedBox.shrink() : Icon(icon, size: 16),
+        label: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SubscriptionPlan {
   final int id;
   final String name;
@@ -1562,6 +1792,38 @@ String _formatPrice(double value) {
     return value.toInt().toString();
   }
   return value.toStringAsFixed(2);
+}
+
+String? _firstBarcodeValue(BarcodeCapture? capture) {
+  if (capture == null) return null;
+  for (final barcode in capture.barcodes) {
+    final value = barcode.rawValue?.trim();
+    if (value != null && value.isNotEmpty) {
+      return value;
+    }
+  }
+  return null;
+}
+
+Uri? _parseExternalUri(String rawCode) {
+  final trimmed = rawCode.trim();
+  if (trimmed.isEmpty) return null;
+
+  final direct = Uri.tryParse(trimmed);
+  if (direct != null &&
+      (direct.scheme == 'http' || direct.scheme == 'https') &&
+      direct.host.isNotEmpty) {
+    return direct;
+  }
+
+  if (trimmed.startsWith('www.')) {
+    final webUri = Uri.tryParse('https://$trimmed');
+    if (webUri != null && webUri.host.isNotEmpty) {
+      return webUri;
+    }
+  }
+
+  return null;
 }
 
 String? _resolveAssetUrl(String? rawUrl) {
