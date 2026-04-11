@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.CAMERA" />
     <application
-        android:label="juyo"
+        android:label="JUYO"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

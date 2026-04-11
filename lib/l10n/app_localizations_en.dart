@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'JUYO Mobile';
+  String get appTitle => 'JUYO';
 
   @override
   String get languageName => 'English';

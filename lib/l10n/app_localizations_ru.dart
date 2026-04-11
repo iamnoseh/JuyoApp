@@ -9,7 +9,7 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
-  String get appTitle => 'JUYO Mobile';
+  String get appTitle => 'JUYO';
 
   @override
   String get languageName => 'Русский';

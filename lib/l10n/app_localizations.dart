@@ -103,7 +103,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In ru, this message translates to:
-  /// **'JUYO Mobile'**
+  /// **'JUYO'**
   String get appTitle;
 
   /// No description provided for @languageName.

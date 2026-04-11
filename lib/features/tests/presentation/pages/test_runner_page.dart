@@ -153,6 +153,19 @@ class _TestRunnerPageState extends State<TestRunnerPage> {
       setState(() {
         _feedback = feedback;
         _answered = Map<int, bool>.from(_answered)..[question.id] = true;
+        if (question.isInRedList) {
+          final delta = feedback.isCorrect ? 1 : -1;
+          final updated = (question.redListCorrectCount + delta).clamp(0, 3);
+          _questions = _questions
+              .asMap()
+              .entries
+              .map(
+                (entry) => entry.key == _index
+                    ? entry.value.copyWith(redListCorrectCount: updated)
+                    : entry.value,
+              )
+              .toList();
+        }
       });
     } on DioException catch (error) {
       if (!mounted) return;
@@ -348,8 +361,18 @@ class _TestRunnerPageState extends State<TestRunnerPage> {
                           _metaBadge(question.subjectName, AppColors.aqua),
                           if ((question.topic ?? '').trim().isNotEmpty)
                             _metaBadge(question.topic!, AppColors.gold),
+                          _metaBadge(
+                            _difficultyLabel(context, question.difficulty),
+                            _difficultyColor(question.difficulty),
+                          ),
                         ],
                       ),
+                      if (question.isInRedList) ...[
+                        const SizedBox(height: 14),
+                        _RedListQuestionBadge(
+                          count: question.redListCorrectCount,
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       Text(
                         question.content,
@@ -736,6 +759,87 @@ class _TestRunnerPageState extends State<TestRunnerPage> {
   }
 }
 
+class _RedListQuestionBadge extends StatelessWidget {
+  final int count;
+
+  const _RedListQuestionBadge({
+    required this.count,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final safeCount = count.clamp(0, 3);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.danger.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.danger.withValues(alpha: 0.16),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.danger.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.local_fire_department_rounded,
+                  color: AppColors.danger,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _t(context, ru: 'Красный список', en: 'Red List'),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                ),
+              ),
+              Text(
+                '$safeCount/3',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.danger,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 8,
+              value: safeCount / 3,
+              backgroundColor: AppColors.danger.withValues(alpha: 0.12),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.danger),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _t(
+              context,
+              ru: 'Прогресс выхода из красного списка',
+              en: 'Progress to leave the red list',
+            ),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 enum _OptionState { normal, selected, correct, incorrect }
 
 _OptionState _singleChoiceState({
@@ -799,6 +903,32 @@ String _normalize(String? value) {
 
 String _t(BuildContext context, {required String ru, required String en}) {
   return Localizations.localeOf(context).languageCode == 'ru' ? ru : en;
+}
+
+String _difficultyLabel(BuildContext context, int difficulty) {
+  switch (difficulty) {
+    case 1:
+      return _t(context, ru: 'Легкий', en: 'Easy');
+    case 2:
+      return _t(context, ru: 'Средний', en: 'Medium');
+    case 3:
+      return _t(context, ru: 'Сложный', en: 'Hard');
+    default:
+      return _t(context, ru: 'Средний', en: 'Medium');
+  }
+}
+
+Color _difficultyColor(int difficulty) {
+  switch (difficulty) {
+    case 1:
+      return AppColors.emerald;
+    case 2:
+      return AppColors.gold;
+    case 3:
+      return AppColors.danger;
+    default:
+      return AppColors.gold;
+  }
 }
 
 String _extractError(DioException error, {required String fallback}) {

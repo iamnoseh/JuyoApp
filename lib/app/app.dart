@@ -31,7 +31,7 @@ class JuyoApp extends StatelessWidget {
         ]),
         builder: (context, _) => MaterialApp.router(
           debugShowCheckedModeBanner: false,
-          title: 'Juyo',
+          title: 'JUYO',
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: getIt<ThemeModeController>().themeMode,

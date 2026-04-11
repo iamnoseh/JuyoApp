@@ -67,6 +67,36 @@ class TestQuestionModel {
     required this.redListCorrectCount,
   });
 
+  TestQuestionModel copyWith({
+    int? id,
+    String? content,
+    String? imageUrl,
+    int? subjectId,
+    String? subjectName,
+    String? topic,
+    int? difficulty,
+    TestQuestionType? type,
+    List<TestAnswerOption>? answers,
+    List<String>? matchOptions,
+    bool? isInRedList,
+    int? redListCorrectCount,
+  }) {
+    return TestQuestionModel(
+      id: id ?? this.id,
+      content: content ?? this.content,
+      imageUrl: imageUrl ?? this.imageUrl,
+      subjectId: subjectId ?? this.subjectId,
+      subjectName: subjectName ?? this.subjectName,
+      topic: topic ?? this.topic,
+      difficulty: difficulty ?? this.difficulty,
+      type: type ?? this.type,
+      answers: answers ?? this.answers,
+      matchOptions: matchOptions ?? this.matchOptions,
+      isInRedList: isInRedList ?? this.isInRedList,
+      redListCorrectCount: redListCorrectCount ?? this.redListCorrectCount,
+    );
+  }
+
   factory TestQuestionModel.fromMap(Map<String, dynamic> map) {
     final answersRaw = map['answers'] ?? map['Answers'];
     final optionsRaw = map['matchOptions'] ?? map['MatchOptions'];

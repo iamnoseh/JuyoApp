@@ -9,7 +9,7 @@ class AppLocalizationsTg extends AppLocalizations {
   AppLocalizationsTg([String locale = 'tg']) : super(locale);
 
   @override
-  String get appTitle => 'JUYO Mobile';
+  String get appTitle => 'JUYO';
 
   @override
   String get languageName => 'Тоҷикӣ';
