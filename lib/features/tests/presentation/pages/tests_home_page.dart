@@ -51,7 +51,11 @@ class _TestsHomePageState extends State<TestsHomePage> {
               children: [
                 _ModeCard(
                   title: l10n.testsPracticeMode,
-                  subtitle: 'Cluster based practice tests',
+                  subtitle: _modeSubtitle(
+                    context,
+                    ru: 'Тренировка по кластерам с быстрым стартом',
+                    en: 'Cluster-based practice with a quick start',
+                  ),
                   icon: Icons.auto_graph_rounded,
                   color: AppColors.aqua,
                   onTap: () => _guardedNavigate(
@@ -62,7 +66,11 @@ class _TestsHomePageState extends State<TestsHomePage> {
                 const SizedBox(height: 12),
                 _ModeCard(
                   title: l10n.testsExamMode,
-                  subtitle: 'Simulated exam mode',
+                  subtitle: _modeSubtitle(
+                    context,
+                    ru: 'Режим, похожий на реальный экзамен',
+                    en: 'Simulation mode close to the real exam',
+                  ),
                   icon: Icons.school_rounded,
                   color: AppColors.gold,
                   onTap: () => _guardedNavigate(
@@ -73,7 +81,11 @@ class _TestsHomePageState extends State<TestsHomePage> {
                 const SizedBox(height: 12),
                 _ModeCard(
                   title: l10n.testsDuelMode,
-                  subtitle: 'Live competition and invite duels',
+                  subtitle: _modeSubtitle(
+                    context,
+                    ru: 'Живые дуэли и приватные приглашения',
+                    en: 'Live duels and private invites',
+                  ),
                   icon: Icons.flash_on_rounded,
                   color: AppColors.emerald,
                   onTap: () => _guardedNavigate(
@@ -84,12 +96,14 @@ class _TestsHomePageState extends State<TestsHomePage> {
                 const SizedBox(height: 12),
                 _ModeCard(
                   title: l10n.testsSubjectMode,
-                  subtitle: 'Choose one subject and practice deeply',
+                  subtitle: _modeSubtitle(
+                    context,
+                    ru: 'Выберите предмет и начните точечную тренировку',
+                    en: 'Choose one subject and practice deeply',
+                  ),
                   icon: Icons.menu_book_rounded,
                   color: AppColors.textPrimary,
-                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.commonSoon)),
-                  ),
+                  onTap: () => context.push(AppRoutes.subjectTests),
                 ),
               ],
             ),
@@ -113,6 +127,14 @@ class _TestsHomePageState extends State<TestsHomePage> {
     if (!mounted) return;
     context.push(path);
   }
+}
+
+String _modeSubtitle(
+  BuildContext context, {
+  required String ru,
+  required String en,
+}) {
+  return Localizations.localeOf(context).languageCode == 'ru' ? ru : en;
 }
 
 class _ModeCard extends StatelessWidget {

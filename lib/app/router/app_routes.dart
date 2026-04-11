@@ -7,6 +7,7 @@ abstract final class AppRoutes {
   static const dashboard = '/dashboard';
   static const duel = '/duel';
   static const tests = '/tests';
+  static const subjectTests = '/tests/subjects';
   static const league = '/league';
   static const profile = '/profile';
   static const profileEdit = '/profile/edit';

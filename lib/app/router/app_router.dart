@@ -22,6 +22,7 @@ import 'package:juyo/features/school/presentation/pages/school_leaderboard_page.
 import 'package:juyo/features/shell/presentation/pages/app_shell_page.dart';
 import 'package:juyo/features/tests/presentation/pages/exam_page.dart';
 import 'package:juyo/features/tests/presentation/pages/practice_clusters_page.dart';
+import 'package:juyo/features/tests/presentation/pages/subject_tests_page.dart';
 import 'package:juyo/features/tests/presentation/pages/test_result_page.dart';
 import 'package:juyo/features/tests/presentation/pages/test_runner_page.dart';
 import 'package:juyo/features/tests/presentation/pages/tests_home_page.dart';
@@ -101,6 +102,10 @@ class AppRouter {
           GoRoute(
             path: AppRoutes.tests,
             builder: (context, state) => const TestsHomePage(),
+          ),
+          GoRoute(
+            path: AppRoutes.subjectTests,
+            builder: (context, state) => const SubjectTestsPage(),
           ),
           GoRoute(
             path: AppRoutes.league,
