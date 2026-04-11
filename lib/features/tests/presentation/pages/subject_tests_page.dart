@@ -126,7 +126,7 @@ class _SubjectTestsPageState extends State<SubjectTestsPage> {
           ),
           padding: const EdgeInsets.only(bottom: 128),
           children: [
-            _SubjectHero(total: _subjects.length, shown: _filtered.length),
+            const _SubjectHero(),
             const SizedBox(height: 16),
             _SubjectSearchBar(
               controller: _searchController,
@@ -167,7 +167,11 @@ class _SubjectTestsPageState extends State<SubjectTestsPage> {
               ),
               if (_filtered.isEmpty)
                 EmptyState(
-                  title: _t(context, ru: 'Ничего не найдено', en: 'Nothing found'),
+                  title: _t(
+                    context,
+                    ru: 'Ничего не найдено',
+                    en: 'Nothing found',
+                  ),
                   subtitle: _t(
                     context,
                     ru: 'Попробуйте изменить запрос.',
@@ -184,121 +188,52 @@ class _SubjectTestsPageState extends State<SubjectTestsPage> {
 }
 
 class _SubjectHero extends StatelessWidget {
-  final int total;
-  final int shown;
-
-  const _SubjectHero({
-    required this.total,
-    required this.shown,
-  });
+  const _SubjectHero();
 
   @override
   Widget build(BuildContext context) {
     return GlassCard(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.aqua.withValues(alpha: 0.18),
-                      AppColors.gold.withValues(alpha: 0.14),
-                    ],
-                  ),
-                ),
-                child: const Icon(
-                  Icons.auto_stories_rounded,
-                  color: AppColors.aqua,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _t(context, ru: 'Тесты по предметам', en: 'Subject tests'),
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _t(
-                        context,
-                        ru: 'Один предмет, быстрый старт, чистый фокус.',
-                        en: 'One subject, quick start, clean focus.',
-                      ),
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _HeroChip(
-                color: AppColors.aqua,
-                icon: Icons.library_books_rounded,
-                label: _t(context, ru: 'Всего', en: 'Total'),
-                value: '$total',
-              ),
-              _HeroChip(
-                color: AppColors.gold,
-                icon: Icons.filter_alt_rounded,
-                label: _t(context, ru: 'Показано', en: 'Shown'),
-                value: '$shown',
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeroChip extends StatelessWidget {
-  final Color color;
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _HeroChip({
-    required this.color,
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
-      ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: color),
-          const SizedBox(width: 8),
-          Text(
-            '$value $label',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: Theme.of(context).textTheme.titleMedium?.color,
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.aqua.withValues(alpha: 0.18),
+                  AppColors.gold.withValues(alpha: 0.14),
+                ],
+              ),
+            ),
+            child: const Icon(
+              Icons.auto_stories_rounded,
+              color: AppColors.aqua,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _t(context, ru: 'Тесты по предметам', en: 'Subject tests'),
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  _t(
+                    context,
+                    ru: 'Один предмет, быстрый старт, чистый фокус.',
+                    en: 'One subject, quick start, clean focus.',
+                  ),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -425,21 +360,6 @@ class _SubjectCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _MiniTag(
-                      label: _t(context, ru: '1 предмет', en: '1 subject'),
-                      color: AppColors.aqua,
-                    ),
-                    _MiniTag(
-                      label: _t(context, ru: 'Быстрый старт', en: 'Quick start'),
-                      color: AppColors.gold,
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
@@ -469,35 +389,6 @@ class _SubjectCard extends StatelessWidget {
                   ),
                 ),
         ],
-      ),
-    );
-  }
-}
-
-class _MiniTag extends StatelessWidget {
-  final String label;
-  final Color color;
-
-  const _MiniTag({
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: Theme.of(context).textTheme.titleMedium?.color,
-            ),
       ),
     );
   }
@@ -590,7 +481,9 @@ String _extractErrorMessage(
 
 String? _resolveAssetUrl(String? rawUrl) {
   if (rawUrl == null || rawUrl.trim().isEmpty) return null;
-  if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) return rawUrl;
+  if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+    return rawUrl;
+  }
 
   var cleanPath = rawUrl.replaceAll('\\', '/').trim();
   cleanPath = cleanPath.replaceFirst(
