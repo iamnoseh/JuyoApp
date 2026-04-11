@@ -516,10 +516,7 @@ class _QrStep extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.70),
+                        color: _premiumHintTextColor(context),
                       ),
                 ),
                 const SizedBox(height: 10),
@@ -536,10 +533,7 @@ class _QrStep extends StatelessWidget {
                     plan.description!,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.68),
+                          color: _premiumMutedTextColor(context),
                         ),
                   ),
                 ],
@@ -791,10 +785,7 @@ class _DoneStep extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.72),
+                    color: _premiumMutedTextColor(context),
                   ),
             ),
             const SizedBox(height: 16),
@@ -882,10 +873,7 @@ class _PlanMetaTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.64),
+                        color: _premiumHintTextColor(context),
                       ),
                 ),
               ),
@@ -957,10 +945,7 @@ class _HeroCard extends StatelessWidget {
               'More tests, deeper analytics, and every locked feature in one place.',
             ),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.72),
+                  color: _premiumMutedTextColor(context),
                 ),
           ),
           const SizedBox(height: 14),
@@ -1066,10 +1051,7 @@ class _PlanCard extends StatelessWidget {
                       Text(
                         plan.description!,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withValues(alpha: 0.68),
+                              color: _premiumHintTextColor(context),
                             ),
                       ),
                     ],
@@ -1145,7 +1127,13 @@ class _DurationChip extends StatelessWidget {
         child: Text(
           _tr(context, '$months мес.', '$months mo'),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: color.withValues(alpha: selected ? 1 : 0.78),
+                color: selected
+                    ? color
+                    : Theme.of(context).colorScheme.onSurface.withValues(
+                          alpha: Theme.of(context).brightness == Brightness.dark
+                              ? 0.88
+                              : 0.76,
+                        ),
                 fontWeight: FontWeight.w800,
               ),
         ),
@@ -1244,16 +1232,17 @@ class _QrPlaceholder extends StatelessWidget {
             Icon(
               Icons.qr_code_rounded,
               size: 62,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.20),
+              color: Theme.of(context).colorScheme.onSurface.withValues(
+                    alpha: Theme.of(context).brightness == Brightness.dark
+                        ? 0.34
+                        : 0.20,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
               _tr(context, 'QR скоро будет доступен', 'QR will be available soon'),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.56),
+                    color: _premiumMutedTextColor(context),
                   ),
             ),
           ],
@@ -1377,10 +1366,11 @@ class _ReceiptDropzone extends StatelessWidget {
                   Icon(
                     Icons.cloud_upload_rounded,
                     size: 42,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.28),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(
+                          alpha: Theme.of(context).brightness == Brightness.dark
+                              ? 0.42
+                              : 0.28,
+                        ),
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -1403,10 +1393,7 @@ class _ReceiptDropzone extends StatelessWidget {
                     ),
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.66),
+                          color: _premiumHintTextColor(context),
                         ),
                   ),
                 ],
@@ -1613,10 +1600,7 @@ class _SummaryPill extends StatelessWidget {
                   text: '$label: ',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.66),
+                        color: _premiumHintTextColor(context),
                       ),
                 ),
                 TextSpan(
@@ -1774,11 +1758,11 @@ class _PremiumGhostButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
           backgroundColor: isDark
-              ? Colors.white.withValues(alpha: 0.06)
+              ? Colors.white.withValues(alpha: 0.08)
               : Colors.white.withValues(alpha: 0.92),
           side: BorderSide(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.10)
+                ? Colors.white.withValues(alpha: 0.14)
                 : const Color(0xFFD8E2EE),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1913,6 +1897,20 @@ String _formatPrice(double value) {
     return value.toInt().toString();
   }
   return value.toStringAsFixed(2);
+}
+
+Color _premiumMutedTextColor(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return Theme.of(
+    context,
+  ).colorScheme.onSurface.withValues(alpha: isDark ? 0.86 : 0.72);
+}
+
+Color _premiumHintTextColor(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return Theme.of(
+    context,
+  ).colorScheme.onSurface.withValues(alpha: isDark ? 0.78 : 0.64);
 }
 
 String? _firstBarcodeValue(BarcodeCapture? capture) {

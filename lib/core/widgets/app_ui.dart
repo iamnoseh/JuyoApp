@@ -1375,17 +1375,14 @@ class AppLanguageButton extends StatelessWidget {
     final controller = getIt<LocaleController>();
     final height = compact ? 38.0 : 46.0;
     final width = compact ? 74.0 : 88.0;
-    final iconSize = compact ? 28.0 : 34.0;
+    final knobSize = compact ? 30.0 : 38.0;
 
     return AnimatedBuilder(
       animation: controller,
       builder: (context, _) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final currentCode = switch (controller.locale.languageCode) {
-          'ru' => 'RU',
-          'en' => 'EN',
-          _ => 'RU',
-        };
+        final isRu = controller.locale.languageCode != 'en';
+        final currentCode = isRu ? 'RU' : 'EN';
 
         return SizedBox(
           width: width,
@@ -1401,11 +1398,11 @@ class AppLanguageButton extends StatelessWidget {
                 controller.setLocale(nextLocale);
               },
               borderRadius: BorderRadius.circular(999),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 240),
-                curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 240),
+                  curve: Curves.easeOutCubic,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
                   gradient: isDark
                       ? const LinearGradient(
                           colors: [Color(0xFF1D2432), Color(0xFF111827)],
@@ -1427,43 +1424,63 @@ class AppLanguageButton extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Row(
+                child: Stack(
                   children: [
-                    Container(
-                      width: iconSize,
-                      height: iconSize,
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white : const Color(0xFFF9FBFF),
-                        shape: BoxShape.circle,
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: compact ? 10 : 12,
                       ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.language_rounded,
-                        size: compact ? 15 : 17,
-                        color: isDark
-                            ? const Color(0xFF111827)
-                            : const Color(0xFF64748B),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _LanguageToggleLabel(
+                            label: 'RU',
+                            active: isRu,
+                            compact: compact,
+                          ),
+                          _LanguageToggleLabel(
+                            label: 'EN',
+                            active: !isRu,
+                            compact: compact,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        currentCode,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontSize: compact ? 10 : 11,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.2,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withValues(alpha: 0.88),
+                    AnimatedAlign(
+                      duration: const Duration(milliseconds: 240),
+                      curve: Curves.easeOutCubic,
+                      alignment:
+                          isRu ? Alignment.centerLeft : Alignment.centerRight,
+                      child: Container(
+                        width: knobSize,
+                        height: knobSize,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white : const Color(0xFFF9FBFF),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(
+                                alpha: isDark ? 0.16 : 0.08,
+                              ),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
                             ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          currentCode,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                fontSize: compact ? 9 : 10,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.15,
+                                color: isDark
+                                    ? const Color(0xFF111827)
+                                    : const Color(0xFF475569),
+                              ),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 2),
                   ],
                 ),
               ),
@@ -1471,6 +1488,35 @@ class AppLanguageButton extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _LanguageToggleLabel extends StatelessWidget {
+  final String label;
+  final bool active;
+  final bool compact;
+
+  const _LanguageToggleLabel({
+    required this.label,
+    required this.active,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedDefaultTextStyle(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+            fontSize: compact ? 8.6 : 10,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.2,
+            color: Theme.of(context).colorScheme.onSurface.withValues(
+                  alpha: active ? 0.18 : 0.76,
+                ),
+          ),
+      child: Text(label),
     );
   }
 }
